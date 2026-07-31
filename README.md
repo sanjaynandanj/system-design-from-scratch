@@ -14,8 +14,8 @@
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
-**226 lessons. 20 phases. Every system taken apart down to the hardware
-before a single cloud service gets name-dropped.**
+**252 lessons. 22 phases. Every system taken apart down to the hardware —
+and then mapped to the real AWS, GCP, and Azure services that run it.**
 
 You don't just learn system design. You rebuild it. From the spinning
 disk up to the multi-region deployment. By hand.
@@ -60,9 +60,11 @@ flowchart TD
     P13 --> P14[🔐 14 Security]
     P14 --> P15[☁️ 15 Cloud & Infra]
     P15 --> P16[🏎️ 16 Performance]
-    P16 --> P17[🏗️ 17 Case Studies]
-    P17 --> P18[🎤 18 Interview Mastery]
-    P18 --> P19[🏆 19 Capstones]
+    P16 --> P17[🛰️ 17 Advanced Distributed]
+    P17 --> P18[🌩️ 18 AWS / GCP / Azure]
+    P18 --> P19[🏗️ 19 Case Studies]
+    P19 --> P20[🎤 20 Interview Mastery]
+    P20 --> P21[🏆 21 Capstones]
 ```
 
 | # | Phase | Lessons | You will be able to… |
@@ -84,9 +86,11 @@ flowchart TD
 | 14 | [🔐 Security & Identity](phases/14-security/README.md) | 10 | Threat-model your own designs |
 | 15 | [☁️ Cloud, Containers & Infrastructure](phases/15-cloud-and-infrastructure/README.md) | 12 | Deploy to multi-region without fear |
 | 16 | [🏎️ Performance Engineering](phases/16-performance-engineering/README.md) | 10 | Hunt p99 latency like a professional |
-| 17 | [🏗️ Case Studies — Design the Classics](phases/17-case-studies/README.md) | 16 | Whiteboard Twitter, Uber, YouTube… |
-| 18 | [🎤 Interview Mastery](phases/18-interview-mastery/README.md) | 8 | Pass the loop, at your target level |
-| 19 | [🏆 Capstone Projects](phases/19-capstones/README.md) | 8 | Ship real distributed systems |
+| 17 | [🛰️ Advanced Distributed Systems](phases/17-advanced-distributed-systems/README.md) | 12 | Wield fencing tokens and TrueTime |
+| 18 | [🌩️ AWS, GCP & Azure in Practice](phases/18-cloud-catalog/README.md) | 14 | Map any design to real cloud services |
+| 19 | [🏗️ Case Studies — Design the Classics](phases/19-case-studies/README.md) | 16 | Whiteboard Twitter, Uber, YouTube… |
+| 20 | [🎤 Interview Mastery](phases/20-interview-mastery/README.md) | 8 | Pass the loop, at your target level |
+| 21 | [🏆 Capstone Projects](phases/21-capstones/README.md) | 8 | Ship real distributed systems |
 
 ## Runnable Code
 
@@ -112,6 +116,21 @@ code/
 Run any of them: `python code/consistent_hashing.py` — each file is a
 lesson in itself, with a demo in `__main__`.
 
+## Hands-On Projects
+
+One level up from single-file primitives: small but real multi-component
+systems in [`projects/`](projects/), each with a build guide (README) and
+a runnable stdlib-only reference implementation:
+
+| Project | You build | Run it |
+|---|---|---|
+| [`distributed-kv-store/`](projects/distributed-kv-store/) | Hash ring + replication + quorum reads, survives a node kill | `python projects/distributed-kv-store/kv_store.py --demo` |
+| [`message-broker/`](projects/message-broker/) | Topics, partitions, on-disk commit log, consumer groups | `python projects/message-broker/broker.py --demo` |
+| [`mini-cdn/`](projects/mini-cdn/) | Edge caches, origin shield, purge propagation | `python projects/mini-cdn/cdn.py --demo` |
+| [`url-shortener-service/`](projects/url-shortener-service/) | Real HTTP service: base62, SQLite, LRU, rate limiting | `python projects/url-shortener-service/shortener.py --demo` |
+| [`metrics-pipeline/`](projects/metrics-pipeline/) | Events → tumbling windows → p99 alerts → ASCII dashboard | `python projects/metrics-pipeline/pipeline.py --demo` |
+| [`job-scheduler/`](projects/job-scheduler/) | Distributed cron: leader election, failover, retries | `python projects/job-scheduler/scheduler.py --demo` |
+
 ## How to Use This
 
 1. **Beginner?** Start at Phase 0 and go in order. The phases form a
@@ -119,7 +138,7 @@ lesson in itself, with a demo in `__main__`.
 2. **Experienced?** Jump to the phase that scares you. Each lesson is
    self-contained enough to read standalone.
 3. **Interview in two weeks?** Do Phase 0, skim 4–9, then live in
-   Phases 17–18.
+   Phases 19–20.
 4. **Track progress** on the website — checkboxes persist in your
    browser, and every lesson title links to a styled reader page.
 

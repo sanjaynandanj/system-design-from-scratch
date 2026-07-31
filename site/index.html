@@ -140,6 +140,7 @@
   <a href="#how">How</a>
   <a href="#curriculum">Curriculum</a>
   <a href="#code">Code</a>
+  <a href="#projects">Projects</a>
   <a href="#glossary">Glossary</a>
   <a href="#about">About</a>
 </nav>
@@ -148,8 +149,8 @@
   <div class="wrap">
     <div class="kicker">free · open-source · exhaustive</div>
     <h1>System Design<br><em>From Scratch</em></h1>
-    <p class="sub" id="hero-sub">226 lessons. 20 phases. Every system rebuilt from the hardware up
-    before a single cloud service gets name-dropped.</p>
+    <p class="sub" id="hero-sub">252 lessons. 22 phases. Every system rebuilt from the hardware up —
+    and then mapped to the real AWS, GCP, and Azure services that run it.</p>
     <div class="ascii">┌─────────┐      ┌─────────┐      ┌─────────┐
 │ CLIENT  │─────▶│   LB    │─────▶│ SERVER  │──┐
 └─────────┘      └─────────┘      └─────────┘  │
@@ -162,10 +163,11 @@
       <a class="btn" href="../README.md">Read the README</a>
     </div>
     <div class="stats wrap">
-      <div class="stat"><div class="num" id="stat-lessons">226</div><div class="label">lessons</div></div>
-      <div class="stat"><div class="num" id="stat-phases">20</div><div class="label">phases</div></div>
+      <div class="stat"><div class="num" id="stat-lessons">252</div><div class="label">lessons</div></div>
+      <div class="stat"><div class="num" id="stat-phases">22</div><div class="label">phases</div></div>
       <div class="stat"><div class="num" id="stat-code">12</div><div class="label">from-scratch builds</div></div>
-      <div class="stat"><div class="num" id="stat-hours">~180</div><div class="label">hours of content</div></div>
+      <div class="stat"><div class="num" id="stat-projects">6</div><div class="label">hands-on projects</div></div>
+      <div class="stat"><div class="num" id="stat-hours">~220</div><div class="label">hours of content</div></div>
     </div>
   </div>
 </header>
@@ -209,6 +211,16 @@
     <p class="secsub">Dependency-free Python implementations of the primitives that run the internet.
     Each is a lesson in itself — run <code style="font-family:var(--mono);color:var(--warn)">python code/&lt;file&gt;.py</code>.</p>
     <div class="code-grid" id="code-grid"></div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="wrap">
+    <h2 class="sec">Hands-on projects</h2>
+    <p class="secsub">Small but real multi-component systems in <code style="font-family:var(--mono);color:var(--warn)">projects/</code> —
+    each with a build guide and a runnable stdlib-Python reference. Run any demo:
+    <code style="font-family:var(--mono);color:var(--warn)">python projects/&lt;name&gt;/&lt;file&gt;.py --demo</code>.</p>
+    <div class="code-grid" id="projects-grid"></div>
   </div>
 </section>
 
@@ -350,6 +362,18 @@
   document.getElementById("code-grid").innerHTML = CODE_FILES.map(([f, d]) =>
     `<div class="code-card"><code>${f}</code><p>${d}</p></div>`).join("");
 
+  // Projects grid
+  const PROJECTS = [
+    ["distributed-kv-store", "Consistent-hash ring, replication, quorum reads — survive a node kill."],
+    ["message-broker", "Topics, partitions, a real commit log on disk, consumer groups."],
+    ["mini-cdn", "Edge caches + origin shield, watch hit ratios climb, purge propagation."],
+    ["url-shortener-service", "A real HTTP service: base62, SQLite, LRU cache, rate limiting."],
+    ["metrics-pipeline", "Events → tumbling windows → p99 alerts → ASCII dashboard."],
+    ["job-scheduler", "Distributed cron: leader election, failover mid-demo, retries with backoff."]
+  ];
+  document.getElementById("projects-grid").innerHTML = PROJECTS.map(([f, d]) =>
+    `<div class="code-card"><code>${f}/</code><p>${d}</p></div>`).join("");
+
   // Glossary
   const termsEl = document.getElementById("terms");
   function renderGlossary(filter) {
@@ -365,8 +389,9 @@
   // Stats from data
   document.getElementById("stat-lessons").textContent = STATS.lessons;
   document.getElementById("stat-phases").textContent = STATS.phases;
+  document.getElementById("stat-projects").textContent = STATS.projects;
   document.getElementById("hero-sub").innerHTML =
-    `${STATS.lessons} lessons. ${STATS.phases} phases. Every system rebuilt from the hardware up before a single cloud service gets name-dropped.`;
+    `${STATS.lessons} lessons. ${STATS.phases} phases. Every system rebuilt from the hardware up — and then mapped to the real AWS, GCP, and Azure services that run it.`;
 
   refresh();
 </script>

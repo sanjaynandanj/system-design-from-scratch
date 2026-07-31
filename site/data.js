@@ -298,7 +298,45 @@ const CURRICULUM = [
     ]
   },
   {
-    id: 17, slug: "17-case-studies", emoji: "🏗️", name: "Case Studies — Design the Classics",
+    id: 17, slug: "17-advanced-distributed-systems", emoji: "🛰️", name: "Advanced Distributed Systems",
+    tagline: "Beyond consensus: the tricks that keep planet-scale systems honest.",
+    lessons: [
+      "Distributed ID generation: Snowflake, ULID, and friends",
+      "Distributed locks, leases, and fencing tokens",
+      "Clock synchronization: NTP, PTP, and TrueTime",
+      "Hybrid logical clocks",
+      "Exactly-once, end to end: idempotent consumers and dedup",
+      "Distributed caching at scale",
+      "Geo-replication and conflict resolution",
+      "Split-brain and partition playbooks",
+      "Byzantine fault tolerance (and when you actually need it)",
+      "Deterministic simulation testing",
+      "Formal methods: TLA+ for the working engineer",
+      "The papers that matter: a guided reading list"
+    ]
+  },
+  {
+    id: 18, slug: "18-cloud-catalog", emoji: "🌩️", name: "AWS, GCP & Azure in Practice",
+    tagline: "The same ideas, three price tags. Map every concept to a managed service.",
+    lessons: [
+      "The cloud mental model: regions, zones, and shared responsibility",
+      "Compute: EC2 vs Compute Engine vs Azure VMs",
+      "Object storage: S3 vs Cloud Storage vs Blob Storage",
+      "Relational databases: RDS & Aurora vs Cloud SQL & AlloyDB vs Azure SQL",
+      "NoSQL: DynamoDB vs Bigtable & Firestore vs Cosmos DB",
+      "Planet-scale SQL: Spanner vs Aurora Global vs Cosmos multi-region",
+      "Queues & events: SQS/SNS/EventBridge vs Pub/Sub vs Service Bus",
+      "Streaming: Kinesis vs Pub/Sub + Dataflow vs Event Hubs",
+      "Caching & CDN: ElastiCache/CloudFront vs Memorystore vs Front Door",
+      "Serverless: Lambda vs Cloud Functions & Cloud Run vs Azure Functions",
+      "Managed Kubernetes: EKS vs GKE vs AKS",
+      "Analytics: Redshift vs BigQuery vs Synapse",
+      "IAM & networking across the three clouds",
+      "Choosing a cloud (and surviving multi-cloud)"
+    ]
+  },
+  {
+    id: 19, slug: "19-case-studies", emoji: "🏗️", name: "Case Studies — Design the Classics",
     tagline: "Every famous system, taken apart and rebuilt on a whiteboard.",
     lessons: [
       "Design a URL shortener",
@@ -320,7 +358,7 @@ const CURRICULUM = [
     ]
   },
   {
-    id: 18, slug: "18-interview-mastery", emoji: "🎤", name: "Interview Mastery",
+    id: 20, slug: "20-interview-mastery", emoji: "🎤", name: "Interview Mastery",
     tagline: "45 minutes, one whiteboard, zero panic.",
     lessons: [
       "The 4-step interview framework",
@@ -334,7 +372,7 @@ const CURRICULUM = [
     ]
   },
   {
-    id: 19, slug: "19-capstones", emoji: "🏆", name: "Capstone Projects",
+    id: 21, slug: "21-capstones", emoji: "🏆", name: "Capstone Projects",
     tagline: "Stop reading. Start building. Ship all of it.",
     lessons: [
       "Capstone: a distributed key-value store",
@@ -353,5 +391,6 @@ const STATS = {
   lessons: CURRICULUM.reduce((n, p) => n + p.lessons.length, 0),
   phases: CURRICULUM.length,
   codeExamples: 12,
-  hours: 180
+  projects: 6,
+  hours: 220
 };
