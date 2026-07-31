@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microservices & Service Architecture — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 10</div>
+  <h1><span class="pnum">10</span> 🧩 Microservices &amp; Service Architecture</h1>
+  <div class="tagline">Distributed monoliths are still monoliths — with extra latency.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>Monolith first: when NOT to use microservices</a>
+<a href="#lesson-02"><span class="lnum">02</span>Service boundaries and domain-driven design</a>
+<a href="#lesson-03"><span class="lnum">03</span>Service discovery</a>
+<a href="#lesson-04"><span class="lnum">04</span>API gateways in depth</a>
+<a href="#lesson-05"><span class="lnum">05</span>Backend-for-frontend (BFF)</a>
+<a href="#lesson-06"><span class="lnum">06</span>Circuit breakers and bulkheads</a>
+<a href="#lesson-07"><span class="lnum">07</span>Service mesh: sidecar armies</a>
+<a href="#lesson-08"><span class="lnum">08</span>Distributed transactions in practice</a>
+<a href="#lesson-09"><span class="lnum">09</span>The strangler fig migration</a>
+<a href="#lesson-10"><span class="lnum">10</span>Serverless architectures</a>
+<a href="#lesson-11"><span class="lnum">11</span>The modular monolith</a>
+<a href="#lesson-12"><span class="lnum">12</span>Microservices antipatterns hall of shame</a>
+  </div>
+  <article>
+<blockquote>Distributed monoliths are still monoliths — with extra latency.</blockquote>
+<p>Everyone wants microservices until they have microservices. This phase is about the actual engineering discipline behind splitting a system into services: where to cut, how services find each other, what happens when one of them catches fire at 3 AM, and how to keep a hundred deployables from becoming a hundred problems. We'll build the resilience machinery — circuit breakers, discovery, sagas — from first principles, then tour the tools that productionize them. By the end you'll know when microservices are the answer, and (more importantly) when they're an expensive way to turn function calls into network outages.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> Monolith First: When NOT to Use Microservices</h2>
+<p><b>MOTTO:</b> You don't have a microservices problem; you have a modularity problem wearing a network costume.</p>
+<h3>The Problem</h3>
+<p>A five-person startup ships a "modern" architecture: 14 services, 3 message queues, a service mesh. Now every feature touches four repos, local dev requires 16 GB of Docker, and a rename is a distributed migration. Microservices trade <i>development</i> complexity for <i>operational</i> complexity — and if you don't yet have the operational muscle (CI/CD, observability, on-call), you've bought the costs before you can afford them.</p>
+<h3>The Concept</h3>
+<p>Think of a restaurant. A food truck (monolith) has one kitchen, one menu, one crew — fast to change, easy to run. A food court (microservices) lets each stall scale, hire, and cook independently — but now you need a landlord, shared plumbing, and health inspections for every stall. You open a food court when the food truck's <i>line is too long</i>, not on day one.</p>
+<pre><code>  Monolith                    Microservices
+  +-----------------+         +----+  +----+  +----+
+  | UI | API | Jobs |  ---&gt;   |Users| |Cart| |Ship|
+  |   one deploy    |         +----+  +----+  +----+
+  +-----------------+           \      |      /
+        1 process                network calls
+        1 failure mode           N^2 failure modes</code></pre>
+<h3>Build It</h3>
+<p>The honest decision procedure:</p>
+<ol><li>Count teams, not features. Microservices are an <i>organizational</i> scaling tool (Conway's Law). Fewer than ~3 teams? A well-modularized monolith wins.</li><li>Check for asymmetric scaling: does one component genuinely need 50x the replicas of the rest? That's a real reason to split.</li><li>Check for independent deploy pressure: are teams blocked waiting on each other's release trains?</li><li>Verify prerequisites: automated deploys, centralized logging, distributed tracing, on-call rotation. Missing any? Fix that first.</li><li>If you split, split <i>one</i> thing, run it in production for a quarter, and measure before splitting more.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Approach</th><th>Good for</th><th>Cost</th></tr></thead><tbody><tr><td>Monolith (Rails, Django, Spring)</td><td>Small teams, fast iteration</td><td>Scaling is all-or-nothing</td></tr><tr><td>Modular monolith</td><td>Medium teams, clean boundaries</td><td>Requires discipline, not tooling</td></tr><tr><td>Microservices</td><td>Many teams, uneven scaling</td><td>Ops burden, distributed failures</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Martin Fowler's "Monolith First" essay (2015) observed that almost all successful microservice systems he'd seen started as monoliths that were later carved up — while systems built as microservices from scratch often ended in trouble. Meanwhile, in 2023 an Amazon Prime Video team publicly wrote about consolidating a distributed serverless monitoring pipeline into a monolithic process, cutting infrastructure costs by roughly 90%. Even at hyperscalers, the boring architecture sometimes wins.</p>
+<h3>Checkpoint</h3>
+<ul><li>What is Conway's Law, and why does it make microservices an organizational tool before a technical one?</li><li>Name three operational prerequisites you should have in place before splitting a monolith.</li><li>Your two-person startup has slow deploys because of flaky tests. Is splitting into services likely to help? Why or why not?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Service Boundaries and Domain-Driven Design</h2>
+<p><b>MOTTO:</b> Cut along the seams of the business, not the layers of the code.</p>
+<h3>The Problem</h3>
+<p>The most common microservices failure isn't tooling — it's cutting in the wrong place. Split "frontend service / backend service / database service" and every user action crosses all three: you've built a layered monolith with network cables in the middle. Wrong boundaries mean chatty calls, shared databases, and lockstep deploys — all the costs of distribution, none of the autonomy.</p>
+<h3>The Concept</h3>
+<p>Domain-Driven Design (DDD) says: the business already has natural fault lines. "Billing" people and "Shipping" people barely talk, use different vocabulary, and change for different reasons. Each such area is a <b>bounded context</b> — a boundary inside which words have one precise meaning. "Order" means something different to Billing (an invoice) than to Shipping (a box). Services should map to bounded contexts, so that one business change lands in one service.</p>
+<pre><code>  Bounded contexts (good cuts)        Layer cuts (bad)
+  +---------+  +----------+           +-----------------+
+  | Billing |  | Shipping |           |   API service   |
+  | invoice |  |  parcel  |           +-----------------+
+  |  taxes  |  | tracking |           | Logic service   |
+  +---------+  +----------+           +-----------------+
+   own data      own data             |  Data service   |
+   own deploys   own deploys          +-----------------+
+                                       every request hits all 3</code></pre>
+<h3>Build It</h3>
+<ol><li>Run an event-storming session: list the domain events ("OrderPlaced", "PaymentCaptured", "ParcelShipped") on a wall with domain experts.</li><li>Cluster events by vocabulary and by who cares. Clusters ≈ bounded contexts.</li><li>For each context, define its <b>aggregate</b> — the entity cluster that must be transactionally consistent (e.g., Order + OrderLines). Aggregates never span services.</li><li>Between contexts, communicate via events or explicit APIs, and <i>translate</i> at the border (an anti-corruption layer) so one context's model doesn't leak into another.</li><li>Litmus test: can this service deploy alone? Does it own its data? Does a typical feature change touch only one service? Three yeses = a real boundary.</li></ol>
+<h3>Use It</h3>
+<p>DDD is a design method, not a product, but tooling reflects it: event storming (Miro/paper), context maps, and per-service databases. The classic references are Eric Evans's <i>Domain-Driven Design</i> (2003) and Vaughn Vernon's <i>Implementing DDD</i>.</p>
+<table><thead><tr><th>Signal</th><th>Boundary verdict</th></tr></thead><tbody><tr><td>Two services always deploy together</td><td>Wrong cut — merge them</td></tr><tr><td>One service, one team, one database</td><td>Healthy</td></tr><tr><td>Service B reads service A's tables</td><td>Shared data — not a boundary at all</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Amazon's early-2000s move from its monolithic "Obidos" architecture to service orientation came with an organizational mandate famously attributed to Jeff Bezos: all teams expose functionality only through service interfaces, no shared databases, no backdoors. The boundaries were enforced socially and technically at once — which is exactly why they held. The same decomposition later made AWS possible.</p>
+<h3>Checkpoint</h3>
+<ul><li>What is a bounded context, and why can "Order" legitimately mean different things in different services?</li><li>Why must an aggregate never span two services?</li><li>Two services share a database table. What problems does this cause, and what does it tell you about the boundary?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Service Discovery</h2>
+<p><b>MOTTO:</b> Hardcoded IPs are a promise the cloud will break by Tuesday.</p>
+<h3>The Problem</h3>
+<p>In a monolith, calling another module is a function call. In microservices, you must find the callee first — and in a cloud environment, instances are cattle: they autoscale, crash, get rescheduled, and change IPs constantly. A config file of addresses is stale the moment you write it. You need a live, queryable answer to "where is a healthy instance of <code>payments</code> right now?"</p>
+<h3>The Concept</h3>
+<p>Service discovery is a phone book that updates itself. Instances <b>register</b> on boot ("I'm payments, at 10.0.3.7:8080"), send <b>heartbeats</b> to prove they're alive, and get evicted when they go quiet. Callers <b>query</b> the registry and pick an instance.</p>
+<pre><code>        register/heartbeat        query &quot;payments?&quot;
+  payments-1 ----------+      +---------- checkout
+  payments-2 -------+  |      |
+  payments-3 (dead) |  v      v
+                 +--------------------+
+                 |  Service Registry  |
+                 |  payments:         |
+                 |   10.0.3.7  OK     |
+                 |   10.0.3.9  OK     |
+                 |   10.0.3.4  EVICTED|
+                 +--------------------+</code></pre>
+<p>Two styles: <b>client-side</b> discovery (the caller queries the registry and load-balances itself) vs <b>server-side</b> (the caller hits a stable virtual IP / load balancer that does the lookup). Client-side saves a hop but pushes logic into every client library; server-side is simpler for callers but adds infrastructure.</p>
+<h3>Build It</h3>
+<p>A toy registry is ~30 lines:</p>
+<pre><code>import time
+registry = {}  # {service: {addr: last_heartbeat}}
+TTL = 10
+
+def register(service, addr):
+    registry.setdefault(service, {})[addr] = time.time()
+
+def heartbeat(service, addr):
+    registry[service][addr] = time.time()
+
+def lookup(service):
+    now = time.time()
+    live = [a for a, t in registry.get(service, {}).items() if now - t &lt; TTL]
+    return live  # caller picks one (round-robin, random, least-loaded)</code></pre>
+<p>The hard parts are what this toy skips: the registry itself must be replicated (it's a distributed consensus problem — hello, Raft), and TTLs trade failure-detection speed against heartbeat traffic.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Style</th><th>Notes</th></tr></thead><tbody><tr><td>Consul</td><td>Both</td><td>Raft-backed, health checks, KV store</td></tr><tr><td>etcd + custom</td><td>Client-side</td><td>The primitive under Kubernetes</td></tr><tr><td>Kubernetes Services / DNS</td><td>Server-side</td><td><code>payments.default.svc</code> just resolves; kube-proxy routes</td></tr><tr><td>Eureka (Netflix)</td><td>Client-side</td><td>AP design: prefers stale data over no data</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Netflix built Eureka after moving to AWS, and made a deliberate CAP call: during a network partition, a registry that returns <i>stale</i> instance lists is better than one that returns errors — clients can still try addresses that were recently healthy. That AP-over-CP stance, documented in Netflix's engineering posts, contrasts with CP registries like ZooKeeper, where losing quorum means losing discovery exactly when the network is at its flakiest.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does a shorter heartbeat TTL detect failures faster but cost more? What's the tradeoff curve?</li><li>Contrast client-side and server-side discovery. Where does the load-balancing logic live in each?</li><li>Why might you prefer an AP (eventually consistent) registry over a CP one during a network partition?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> API Gateways in Depth</h2>
+<p><b>MOTTO:</b> One front door, or every service grows its own bouncer.</p>
+<h3>The Problem</h3>
+<p>Expose 40 services directly to the internet and each one must independently implement TLS, authentication, rate limiting, CORS, request logging, and DDoS protection. Clients must know 40 hostnames. Every cross-cutting change — say, rotating an auth scheme — becomes 40 pull requests. Edge concerns are being duplicated where they should be centralized.</p>
+<h3>The Concept</h3>
+<p>An API gateway is the building's front desk: it checks IDs (auth), stops people from barging in a hundred times a second (rate limiting), and directs visitors to the right office (routing) — so individual offices don't each need a security guard.</p>
+<pre><code>                    +-------------------------+
+  clients --------&gt; |       API GATEWAY       |
+   (one hostname)   | TLS | auth | rate limit |
+                    | routing | retries | logs|
+                    +----+--------+-------+---+
+                         |        |       |
+                         v        v       v
+                      users/   orders/  search/</code></pre>
+<h3>Build It</h3>
+<p>A gateway is a reverse proxy with policy hooks. The request pipeline:</p>
+<ol><li>Terminate TLS.</li><li>Authenticate: validate the JWT/API key <i>once</i>, then pass identity downstream as trusted headers (e.g., <code>X-User-Id</code>).</li><li>Rate limit: token bucket keyed by user/IP (Redis for shared state across gateway replicas).</li><li>Route: match path/host/header → upstream service; rewrite paths.</li><li>Resilience: per-upstream timeouts, bounded retries, circuit breaking.</li><li>Observe: assign a request ID, log, emit latency metrics.</li></ol>
+<pre><code># the essence, minus the production armor
+async def handle(req):
+    user = verify_jwt(req.headers[&quot;authorization&quot;])       # 401 on failure
+    if not bucket.take(user.id):                          # 429 on failure
+        return Response(429)
+    upstream = ROUTES.match(req.path)                     # &quot;/orders/*&quot; -&gt; orders-svc
+    return await proxy(upstream, req, headers={&quot;X-User-Id&quot;: user.id},
+                       timeout=2.0, retries=1)</code></pre>
+<p>Beware two temptations: putting business logic in the gateway (it becomes a monolith-at-the-edge that every team fights over), and unbounded retries (they amplify outages into retry storms).</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Flavor</th></tr></thead><tbody><tr><td>NGINX / HAProxy</td><td>Battle-tested reverse proxies; config-driven</td></tr><tr><td>Kong, KrakenD, Tyk</td><td>Gateways with plugin ecosystems</td></tr><tr><td>Envoy</td><td>Modern proxy core; xDS dynamic config; basis of many meshes</td></tr><tr><td>AWS API Gateway / Cloudflare</td><td>Managed; pay-per-request; less control</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Netflix's Zuul gateway — open-sourced in 2013 — fronted their streaming API and became famous for dynamic filters: routing and resilience logic that could be changed at runtime while absorbing traffic spikes and regional failovers. Zuul 2's 2018 rewrite to async non-blocking I/O was publicly documented, including the honest finding that the rewrite's efficiency gains were real but smaller than hoped — a rare, useful data point on event-loop migrations at scale.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why should JWT validation happen at the gateway instead of in every service? What must downstream services then trust?</li><li>What is a retry storm, and which two gateway settings prevent it?</li><li>Give one example of logic that belongs in the gateway and one that absolutely doesn't.</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Backend-for-Frontend (BFF)</h2>
+<p><b>MOTTO:</b> One size fits all APIs fit no one — especially not a phone on 3G.</p>
+<h3>The Problem</h3>
+<p>Your mobile app renders a home screen that needs data from five services. With a generic API, the phone makes five round trips over a high-latency radio, downloads fields it never renders, and every screen redesign becomes a negotiation with five backend teams. Web wants big nested payloads; mobile wants tiny tailored ones; your smart-TV app wants something else entirely. One general-purpose API serves all of them badly.</p>
+<h3>The Concept</h3>
+<p>A Backend-for-Frontend is a personal shopper per client type. Instead of every client assembling its own outfit from 40 racks (services), the mobile BFF picks exactly what mobile needs, in one bag, in one trip.</p>
+<pre><code>  iOS app ----&gt; [ Mobile BFF ]----+---&gt; users-svc
+                 1 round trip     +---&gt; orders-svc
+                 tailored payload +---&gt; recs-svc
+  browser ----&gt; [ Web BFF    ]----+---&gt; (same services,
+                 richer payload         different shape)</code></pre>
+<p>The BFF is owned by the <i>frontend team</i> — that's the point. Screen changes stay within one team's blast radius.</p>
+<h3>Build It</h3>
+<ol><li>One BFF per client <i>type</i> (mobile, web, TV) — not per platform team whim. Two BFFs that serve identical shapes should be one.</li><li>The BFF aggregates: fan out to services <i>in parallel</i>, assemble a view-model shaped like the screen, strip unused fields.</li><li>Handle partial failure: if recommendations time out, return the screen without them (degrade), don't 500 the whole home page.</li><li>Keep it thin: composition, translation, and caching only. Business rules live in domain services — a BFF with business logic is a monolith wearing a lanyard.</li></ol>
+<pre><code>async def home_screen(user_id):
+    user, orders, recs = await gather(
+        users.get(user_id), orders.recent(user_id, limit=3),
+        recs.top(user_id, limit=5, timeout=0.3, default=[]),  # optional
+    )
+    return {&quot;name&quot;: user.first_name,          # not the whole user object
+            &quot;orders&quot;: [slim(o) for o in orders],
+            &quot;recs&quot;: [r.title for r in recs]}</code></pre>
+<h3>Use It</h3>
+<table><thead><tr><th>Approach</th><th>Tradeoff</th></tr></thead><tbody><tr><td>Hand-rolled BFF (Node/Go service)</td><td>Full control; another service to run</td></tr><tr><td>GraphQL as universal BFF</td><td>Clients pick fields; adds resolver/caching complexity, N+1 risk</td></tr><tr><td>BFF per client + shared platform APIs</td><td>Common at scale; some duplication across BFFs by design</td></tr></tbody></table>
+<p>GraphQL and BFFs solve overlapping problems; some shops run GraphQL <i>inside</i> each BFF.</p>
+<h3>War Story</h3>
+<p>The BFF pattern was named at SoundCloud, described by Phil Calçado in his writeups of their monolith-to-microservices migration (circa 2011–2015): their single API tried to serve web, mobile, and partners, and every client change congested one team. Netflix independently converged on the same idea with its client-adapter API layer, where device teams owned server-side adaptation code — evidence that the pattern is discovered, not invented, wherever many client types meet many services.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why should a BFF be owned by the frontend team rather than the backend platform team?</li><li>Your mobile BFF and web BFF have drifted to 90% identical code. What does that suggest?</li><li>How should a BFF respond when one of five upstream calls fails, and what determines the answer?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Circuit Breakers and Bulkheads</h2>
+<p><b>MOTTO:</b> A slow dependency is more dangerous than a dead one.</p>
+<h3>The Problem</h3>
+<p>Service A calls service B. B doesn't crash — worse, it gets <i>slow</i>. A's threads pile up waiting on B, A's own callers start timing out, and the stall propagates upstream until the whole site is down because one recommendation service hiccuped. Dead services fail fast; slow services fail <i>everyone</i>.</p>
+<h3>The Concept</h3>
+<p>Two ideas from electrical engineering and shipbuilding. A <b>circuit breaker</b> trips when a dependency keeps failing: stop calling it, fail instantly, give it time to recover. A <b>bulkhead</b> partitions resources like a ship's watertight compartments: flood one compartment (thread pool), and the others stay dry.</p>
+<pre><code>  CLOSED ──(failure rate &gt; threshold)──&gt; OPEN
+    ^                                      |
+    |                              (cooldown timer)
+    |                                      v
+    +──(probe succeeds)──── HALF-OPEN ──(probe fails)──&gt; OPEN</code></pre>
+<p>Closed = calls flow, failures counted. Open = calls rejected immediately (fast failure + fallback). Half-open = let a few probes through; success closes the breaker, failure re-opens it.</p>
+<h3>Build It</h3>
+<pre><code>import time
+
+class CircuitBreaker:
+    def __init__(self, threshold=5, cooldown=30):
+        self.failures, self.threshold = 0, threshold
+        self.cooldown, self.opened_at = cooldown, None
+
+    def call(self, fn, fallback):
+        if self.opened_at:                                # OPEN
+            if time.time() - self.opened_at &lt; self.cooldown:
+                return fallback()
+            self.opened_at = None                         # HALF-OPEN: try a probe
+        try:
+            result = fn()
+            self.failures = 0                             # success closes it
+            return result
+        except Exception:
+            self.failures += 1
+            if self.failures &gt;= self.threshold:
+                self.opened_at = time.time()              # trip
+            return fallback()</code></pre>
+<p>Bulkheads: give each dependency its own bounded thread pool / connection pool / semaphore. If B gets slow, only B's pool saturates; calls to C proceed. Always pair breakers with <i>timeouts</i> — a breaker can't count failures that never return.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>Resilience4j (Java)</td><td>Successor to Netflix Hystrix; breakers, bulkheads, rate limiters</td></tr><tr><td>Polly (.NET)</td><td>Policy composition: retry + breaker + timeout</td></tr><tr><td>Envoy outlier detection</td><td>Mesh-level ejection of bad hosts — breaker without code changes</td></tr><tr><td>Hystrix (Netflix)</td><td>The pattern's popularizer; now in maintenance mode</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Netflix built Hystrix after their 2008 database corruption outage era and years of cascading-failure pain, open-sourcing it in 2012 with dashboards showing live breaker states across the fleet. Their engineering blog documented the philosophy: wrap every network call, bound every resource, and make failure a first-class, <i>fast</i> outcome. Hystrix was retired in 2018 in favor of Resilience4j and adaptive concurrency limits — but the state machine it popularized is now table stakes in every resilience library.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is a slow dependency more dangerous to callers than one that's fully down?</li><li>Walk through the three breaker states and what causes each transition.</li><li>How do bulkheads and circuit breakers differ in what they protect, and why do you usually want both plus timeouts?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Service Mesh: Sidecar Armies</h2>
+<p><b>MOTTO:</b> Take the network logic out of the app and put a proxy in its pocket.</p>
+<h3>The Problem</h3>
+<p>You've adopted retries, mTLS, breakers, and tracing — implemented in a Java library. Now the Go team needs it. And the Python team. And the library needs a security patch, which means redeploying 200 services. Cross-cutting network behavior is trapped inside application binaries, duplicated per language, upgraded at the speed of your slowest team.</p>
+<h3>The Concept</h3>
+<p>A service mesh moves that logic into a <b>sidecar proxy</b> — a separate process deployed next to every service instance that intercepts all its inbound and outbound traffic. Like giving every employee an interpreter-bodyguard: the employee just talks; the bodyguard handles encryption, credentials, retries, and reports back to headquarters. Headquarters is the <b>control plane</b>, which pushes routing rules, certs, and policy to all sidecars (the <b>data plane</b>).</p>
+<pre><code>        CONTROL PLANE (istiod): config, certs, policy
+            |            |               |
+            v            v               v
+  +------------------+  +------------------+
+  | app A | sidecar  |--| sidecar | app B  |
+  +------------------+  +------------------+
+        all A&lt;-&gt;B traffic flows proxy-to-proxy
+        (mTLS, retries, metrics, traffic split)</code></pre>
+<h3>Build It</h3>
+<p>What the sidecar actually does per request:</p>
+<ol><li>Intercept: iptables/eBPF redirects the pod's traffic through the proxy (the app is unaware).</li><li>mTLS: sidecars hold workload certificates (e.g., SPIFFE identities) and mutually authenticate — encryption and service identity with zero app code.</li><li>Policy: "checkout may call payments; nothing else may."</li><li>Traffic shaping: route 1% of requests to v2 (canary), mirror traffic, inject faults for testing.</li><li>Resilience &amp; telemetry: timeouts, retries, outlier ejection, plus uniform metrics/traces for every hop.</li></ol>
+<p>The costs are real: an extra ~0.5–2 ms and extra memory <i>per hop per sidecar</i>, and a control plane you must now operate. Newer designs (Istio ambient mode, eBPF-based Cilium) move work out of per-pod sidecars to cut this overhead.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Mesh</th><th>Notes</th></tr></thead><tbody><tr><td>Istio</td><td>Envoy-based, most features, most complexity</td></tr><tr><td>Linkerd</td><td>Lightweight Rust micro-proxy; famously simpler</td></tr><tr><td>Cilium</td><td>eBPF; some mesh features without sidecars</td></tr><tr><td>Consul Connect</td><td>Mesh tied to Consul's registry</td></tr></tbody></table>
+<p>Rule of thumb: if you have &lt; ~20 services, a mesh is probably solving problems you don't have yet. A library or gateway may do.</p>
+<h3>Use-it corollary — When NOT to mesh</h3>
+<p>Small fleets, single-language shops (a shared library is fine), or teams without spare ops capacity: the mesh's control plane is itself a distributed system you must keep alive.</p>
+<h3>War Story</h3>
+<p>The mesh lineage runs straight through two companies: Lyft built Envoy (open-sourced 2016) to tame its polyglot microservice network, and Buoyant — founded by ex-Twitter engineers who ran Twitter's Finagle RPC stack — coined the term "service mesh" and shipped Linkerd. Istio (Google/IBM/Lyft, 2017) put Envoy sidecars under a unified control plane. The whole category is Finagle's library-based resilience ideas, re-platformed as infrastructure so every language gets them for free.</p>
+<h3>Checkpoint</h3>
+<ul><li>What problem does a sidecar solve that a shared resilience library cannot?</li><li>Distinguish the control plane from the data plane. Which one touches your request path?</li><li>Name two concrete costs of running a mesh and one situation where you'd decline to use one.</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Distributed Transactions in Practice</h2>
+<p><b>MOTTO:</b> In microservices, ACID becomes a story you tell in installments — with apologies.</p>
+<h3>The Problem</h3>
+<p>Checkout must: charge the card (payments service), reserve stock (inventory service), create a shipment (shipping service). Each service owns its own database, so there is no single <code>BEGIN ... COMMIT</code> that covers all three. If payment succeeds and inventory fails, you've charged someone for nothing. You need multi-service consistency without a shared database.</p>
+<h3>The Concept</h3>
+<p>Two-phase commit (2PC) — a coordinator asking everyone to "prepare" then "commit" — technically exists, but it holds locks across the network and blocks everyone if the coordinator dies mid-flight. Practitioners mostly avoid it across services. The workhorse is the <b>saga</b> (Garcia-Molina &amp; Salem, 1987): a sequence of <i>local</i> transactions, where each step that later needs undoing has a <b>compensating action</b>. Like booking a trip: reserve flight, then hotel, then car — if the car falls through, you don't "roll back," you <i>cancel</i> the hotel and flight, one apology at a time.</p>
+<pre><code>  SAGA (happy):   charge$ ──&gt; reserve stock ──&gt; create shipment ──&gt; done
+  SAGA (failure): charge$ ──&gt; reserve stock ──&gt; shipment FAILS
+                     ^              |
+                refund$ &lt;── release stock     (compensations, reverse order)</code></pre>
+<h3>Build It</h3>
+<ol><li>Choose coordination style: <b>choreography</b> (each service reacts to events — simple until nobody can tell you the flow) or <b>orchestration</b> (a saga orchestrator explicitly drives steps and compensations — visible, testable, one more component).</li><li>Make every step and compensation <b>idempotent</b> (steps will be retried; use idempotency keys).</li><li>Publish events atomically with local writes via the <b>transactional outbox</b>: write the state change AND the event to the same local DB transaction; a relay publishes from the outbox table. No "committed but never announced" ghosts.</li><li>Accept the semantics: sagas give eventual consistency; intermediate states are visible (the card is charged before the shipment exists). Design UX and invariants for it — "pending" is a real state, not a bug.</li></ol>
+<pre><code>SAGA = [(charge, refund), (reserve, release), (ship, cancel_ship)]
+done = []
+for step, undo in SAGA:
+    try:
+        step(order); done.append(undo)
+    except StepFailed:
+        for undo in reversed(done): undo(order)   # compensate backwards
+        break</code></pre>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>Temporal / Cadence</td><td>Durable workflow orchestration; retries, timers, and state survive crashes</td></tr><tr><td>AWS Step Functions</td><td>Managed orchestrator</td></tr><tr><td>Kafka + outbox + Debezium</td><td>Choreography backbone; CDC publishes the outbox</td></tr><tr><td>2PC / XA</td><td>Inside one org's databases maybe; across microservices, rarely</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The saga paper predates microservices by two decades — Hector Garcia-Molina and Kenneth Salem published "Sagas" in 1987 for long-lived database transactions. Pat Helland's 2007 paper "Life Beyond Distributed Transactions: An Apostate's Opinion" became the industry's confession: at scale, developers abandon distributed transactions and build workflows over independent, idempotent operations. Nearly every modern checkout flow is that paper wearing a Kafka T-shirt.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why do practitioners avoid 2PC across microservices even though it guarantees atomicity?</li><li>What is a compensating action, and why is it <i>not</i> the same as a rollback?</li><li>Explain the transactional outbox pattern. What failure mode does it eliminate?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> The Strangler Fig Migration</h2>
+<p><b>MOTTO:</b> Don't rewrite the monolith — surround it, starve it, and let it fall over quietly.</p>
+<h3>The Problem</h3>
+<p>The Big Rewrite is where codebases go to die twice: two years of feature freeze while the new system chases a moving target, followed by a big-bang cutover that fails on undocumented behavior nobody knew the old system had. Meanwhile the business needs the old system running <i>and changing</i> every single day. You need migration without a stop-the-world moment.</p>
+<h3>The Concept</h3>
+<p>The strangler fig is a rainforest plant that grows around a host tree, gradually taking over its light and roots until the host dies inside a living lattice. Martin Fowler turned it into an architecture pattern (2004): put a routing facade in front of the monolith, build replacement capabilities alongside it, and shift traffic route by route. At every moment, the system is 100% functional; the monolith just serves a little less each month.</p>
+<pre><code>          +--------- FACADE / router ---------+
+          |                                   |
+   /orders/* (migrated)              everything else
+          v                                   v
+   [ new orders service ]            [ legacy monolith ]
+          |                                   |
+     new orders DB   &lt;== sync/backfill ==  legacy DB</code></pre>
+<h3>Build It</h3>
+<ol><li>Interpose a facade (gateway/proxy) in front of the monolith. Day one: it routes 100% to legacy. Nothing changed; now you hold the steering wheel.</li><li>Pick the first capability — highest change-frequency or clearest boundary, not the hardest one.</li><li>Build the new service. Deal with data: backfill from legacy, then keep in sync (dual writes with reconciliation, or CDC from the legacy DB).</li><li><b>Dark launch</b>: route real traffic to both, serve from legacy, <i>diff the responses</i>. Fix mismatches until parity holds.</li><li>Shift reads, then writes: 1% → 10% → 100%, watching error rates, with instant rollback = a routing change.</li><li>Delete the legacy code path. (Actually delete it. Undeleted legacy paths are how you end up running both forever.)</li><li>Repeat until the monolith is an empty husk — or until remaining pieces aren't worth migrating, which is also a valid end state.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>NGINX / Envoy / API gateway</td><td>The facade and traffic splitter</td></tr><tr><td>Debezium (CDC)</td><td>Keep new DB in sync with legacy writes</td></tr><tr><td>GitHub's Scientist (and ports)</td><td>Run old + new code paths and compare results</td></tr><tr><td>Feature flags (LaunchDarkly etc.)</td><td>Percentage rollout and instant rollback</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>GitHub open-sourced Scientist in 2016 precisely for this: they rewrote critical code paths (like their merge and permissions logic) by running old and new implementations side by side in production, always returning the old result while recording mismatches. Shopify has likewise publicly documented multi-year incremental extractions from its Rails monolith. The common thread: production traffic is the only spec that's actually complete, so migrate under it, never beside it.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does the facade go in place <i>before</i> any new service is built?</li><li>What is a dark launch, and what question does response-diffing answer that testing cannot?</li><li>What are two ways to keep the new service's database in sync with the legacy database during migration?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Serverless Architectures</h2>
+<p><b>MOTTO:</b> No server is easier to manage than no server — until you meet the cold start.</p>
+<h3>The Problem</h3>
+<p>For spiky or low-traffic workloads, provisioned servers are money on fire: you pay for peak capacity 24/7 while it idles at 3%. And every server, container, or VM you run is patching, scaling, and 3 AM paging that isn't your product. What if the unit of deployment were just <i>the function</i>, running only while a request exists, billed by the millisecond?</p>
+<h3>The Concept</h3>
+<p>Functions-as-a-Service is a vending machine model of compute: no kitchen, no staff — insert request, receive execution. The platform keeps your code on ice; on an event (HTTP call, queue message, file upload), it thaws an instance, runs your handler, and scales from 0 to thousands of instances by simply thawing more. When traffic stops, so does your bill.</p>
+<pre><code>  event sources                 platform                  your code
+  HTTP ─┐                +---------------------+
+  queue ─┼── trigger ──&gt; | spin up | run | die | ──────&gt; handler(event)
+  cron ──┘               |  scale 0 &lt;-&gt; N      |          (stateless!)
+                         +---------------------+
+  cost = invocations x duration x memory   (idle = $0)</code></pre>
+<p>The catches: <b>cold starts</b> (first request after idle pays init latency — tens of ms to seconds, worst for JVM/large deps), <b>statelessness</b> (instances vanish; all state goes to external stores), execution time caps, and the fact that your architecture becomes a distributed event graph whose "code" is partly wiring in cloud config.</p>
+<h3>Build It</h3>
+<p>Designing a serverless system honestly:</p>
+<ol><li>Handlers are stateless and idempotent — most triggers deliver at-least-once, so you <i>will</i> see duplicates.</li><li>Push state out: DynamoDB/S3/Redis for data, queues between functions, Step-Functions-style orchestrators for multi-step flows.</li><li>Tame cold starts: small bundles, lightweight runtimes, provisioned concurrency for latency-critical paths (which, note, is paying for idle again).</li><li>Mind the pool math: 1,000 concurrent Lambdas can open 1,000 DB connections — use serverless-friendly databases or connection proxies (e.g., RDS Proxy).</li><li>Do the break-even math: pay-per-use wins for spiky/low traffic; at sustained high utilization, containers become cheaper. Run the numbers, not the hype.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Platform</th><th>Notes</th></tr></thead><tbody><tr><td>AWS Lambda</td><td>The category creator (2014); deepest event integrations</td></tr><tr><td>Cloudflare Workers</td><td>V8 isolates, ~ms cold starts, runs at edge; constrained runtime</td></tr><tr><td>Google Cloud Run / Functions</td><td>Container-based serverless; Cloud Run scales containers to zero</td></tr><tr><td>Knative / OpenFaaS</td><td>Self-hosted serverless — you're the platform team now</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>AWS Lambda's 2014 launch created the category, and the definitive practitioner data came from iRobot and similar all-in adopters at re:Invent talks: thousands of functions, near-zero idle cost, and hard-won lessons about testing event graphs. The counterpoint is the 2023 Amazon Prime Video post (see Lesson 01) where step-function-and-lambda orchestration costs led a team back to a monolithic service — serverless is a pricing model and an ops model, and both have regimes where they lose.</p>
+<h3>Checkpoint</h3>
+<ul><li>What causes a cold start, and name two mitigations with their costs.</li><li>Why must serverless handlers be idempotent even if your code "only sends each message once"?</li><li>Describe a workload where serverless is clearly cheaper than containers, and one where it's clearly more expensive.</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> The Modular Monolith</h2>
+<p><b>MOTTO:</b> All the boundaries, none of the network — discipline as architecture.</p>
+<h3>The Problem</h3>
+<p>You want what microservices promise — clear ownership, enforced boundaries, independent teams — but you don't want what they cost: network failure modes, distributed transactions, a fleet of deploy pipelines. Most teams' actual problem is that their monolith is a mud ball, not that it's a monolith. Can you get the boundaries without the distribution?</p>
+<h3>The Concept</h3>
+<p>A modular monolith is an apartment building, not a commune: one structure, one entrance (deploy), but real walls between units, and you can't wander into your neighbor's kitchen. Internally, the code is partitioned into modules that mirror bounded contexts (Lesson 02); each module has a small public API, private internals, and <i>its own tables</i>. The rules a network would force on you — no reaching into another service's DB, no calling private functions — are enforced by tooling instead.</p>
+<pre><code>  +----------- one deployable ---------------+
+  |  +--------+   +--------+   +---------+   |
+  |  | orders |   |billing |   |shipping |   |
+  |  | public |--&gt;| public |   | public  |   |   calls cross ONLY
+  |  |  api   |   |  api   |   |  api    |   |   via public APIs
+  |  |~~~~~~~~|   |~~~~~~~~|   |~~~~~~~~~|   |
+  |  |private |   |private |   |private  |   |
+  +--+--------+---+--------+---+---------+---+
+  |  orders_* | billing_*  | shipping_* |  &lt;- one DB, disjoint schemas
+  +------------------------------------------+</code></pre>
+<h3>Build It</h3>
+<ol><li>One module per bounded context: <code>orders/</code>, <code>billing/</code>, <code>shipping/</code>. Each exposes a narrow interface (a facade class or internal API); everything else is private.</li><li>Enforce with tools, not vibes: ArchUnit (Java), import-linter (Python), Nx/module boundaries (TS), Go internal packages. CI fails on illegal imports. This step is the whole pattern — unenforced modularity erodes in months.</li><li>Separate schemas per module in the shared DB; cross-module foreign keys are forbidden. Module A gets B's data by asking B's API.</li><li>Cross-module communication: synchronous calls through public interfaces, or an in-process event bus for decoupling — same shapes as microservices, minus serialization and packet loss.</li><li>The payoff: any module already shaped like this can be extracted into a real service later with mostly mechanical work. The modular monolith is both a destination and the best possible launchpad.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Ecosystem</th><th>Enforcement tooling</th></tr></thead><tbody><tr><td>Java/Spring</td><td>Spring Modulith, ArchUnit</td></tr><tr><td>Python</td><td>import-linter, package conventions</td></tr><tr><td>TypeScript</td><td>Nx enforced module boundaries</td></tr><tr><td>Elixir</td><td>Umbrella apps</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Shopify is the canonical public case: engineering posts from 2019–2020 described "componentizing" one of the world's largest Rails monoliths, using an internal tool (Packwerk, open-sourced 2020) to enforce package boundaries and privacy inside a single deployable serving flash-sale traffic at enormous scale. Their stated position: the monolith with enforced components gave them most microservice benefits while keeping one test suite, one deploy, and call stacks that fit in one debugger.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is boundary enforcement via CI tooling described as "the whole pattern"? What happens without it?</li><li>How does a modular monolith handle cross-module data access, and what's banned?</li><li>In what sense is a modular monolith a "launchpad" for microservices?</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> Microservices Antipatterns Hall of Shame</h2>
+<p><b>MOTTO:</b> Every microservices failure is a monolith wearing a trench coat made of YAML.</p>
+<h3>The Problem</h3>
+<p>Teams adopt microservices, keep monolith habits, and get a system with the worst properties of both: coupled <i>and</i> distributed. These failure shapes are so common they have names. Learning to recognize them in design review — before they ship — is cheaper than any refactor.</p>
+<h3>The Concept</h3>
+<p>Tour the hall. Each exhibit is a coupling that survived the split:</p>
+<pre><code>  DISTRIBUTED MONOLITH        SHARED DATABASE         CHATTY SERVICES
+  A ==deploy together== B     A ──┐    ┌── B          A -&gt;B -&gt;A -&gt;B -&gt;A
+  (versions in lockstep)         [ one DB ]           (12 hops per request;
+                              (schema = shared ABI)    latency &amp; failure x12)
+
+  NANOSERVICES                THE ESB REBORN          NO INDEPENDENT DEPLOY
+  1 function = 1 service      &quot;smart pipes&quot; bus       release train of 30
+  (ops cost &gt;&gt; logic)         with business logic     services, quarterly</code></pre>
+<ul><li><b>Distributed monolith</b>: services that must deploy together, share libraries with breaking changes, or call each other synchronously in deep chains. Test: "can I deploy this service alone on a Tuesday?" If no, it's an organ, not an organism.</li><li><b>Shared database</b>: two services on one schema means the schema is a public API with no version control. Every migration is a hostage negotiation.</li><li><b>Chatty I/O</b>: cross-service calls in a loop; N+1 across the network. Latencies add; availabilities <i>multiply</i> (five 99.9% hops ≈ 99.5%).</li><li><b>Nanoservices</b>: boundaries so fine the operational overhead (deploys, dashboards, on-call) dwarfs the logic. Related: <b>entity services</b> ("UserService", "OrderService" as bare CRUD) that force every behavior to orchestrate three anemic services.</li><li><b>Smart pipes</b>: business logic hiding in the message bus / ESB / gateway, owned by nobody, versioned never. The microservices credo is <i>smart endpoints, dumb pipes</i>.</li><li><b>Breaking the monolith along layers</b> (Lesson 02's bad cut) and <b>big-bang decomposition</b> (Lesson 09's forbidden move) round out the collection.</li></ul>
+<h3>Build It</h3>
+<p>A design-review checklist that catches most exhibits:</p>
+<ol><li>Can each service deploy independently, today, with zero coordination?</li><li>Does each service exclusively own its data store?</li><li>What's the max synchronous call depth for a user request? (&gt;2–3: redesign toward async/events or merge services.)</li><li>Multiply the availabilities along the critical path. Still meeting your SLO?</li><li>Who owns each pipe, and can you diff its logic in version control?</li><li>Count services per team. More services than engineers is a smell, not a flex.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Symptom</th><th>Likely exhibit</th><th>First aid</th></tr></thead><tbody><tr><td>"Release train" coordination meetings</td><td>Distributed monolith</td><td>Contract tests, backward-compatible APIs</td></tr><tr><td>Migration requires 3 teams' sign-off</td><td>Shared database</td><td>Split schema; API or events for access</td></tr><tr><td>p99 dominated by internal hops</td><td>Chatty services</td><td>Batch APIs, caching, merge boundaries</td></tr><tr><td>More dashboards than features</td><td>Nanoservices</td><td>Consolidate into coarser services</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The "distributed monolith" critique is as old as the field's founding documents: the microservices article by Lewis and Fowler (2014) codified "smart endpoints and dumb pipes" precisely because 2000s-era ESBs had accumulated unversioned business logic in the middleware. And the 2023 Prime Video cost-consolidation post plus years of "we went back to a monolith" engineering retrospectives (e.g., Segment's widely read 2018 account of reversing course from ~140 services) made the hall of shame respectable to talk about in public.</p>
+<h3>Checkpoint</h3>
+<ul><li>Give two concrete tests that reveal a distributed monolith.</li><li>Why does a shared database turn schema migrations into cross-team negotiations?</li><li>Five services in a synchronous chain each offer 99.9% availability. Roughly what availability does the chain offer, and what does that imply for deep call graphs?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="09-scalability-patterns.html">← 📈 Phase 09</a>
+    <span class="spacer"></span>
+    <a href="11-search-and-analytics.html">Phase 11 🔍 →</a>
+  </div>
+</div>
+</body>
+</html>

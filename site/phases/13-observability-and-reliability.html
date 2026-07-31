@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observability & Reliability — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 13</div>
+  <h1><span class="pnum">13</span> 🔭 Observability &amp; Reliability</h1>
+  <div class="tagline">Hope is not a strategy. Dashboards are.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>The three pillars: logs, metrics, traces</a>
+<a href="#lesson-02"><span class="lnum">02</span>Structured logging done right</a>
+<a href="#lesson-03"><span class="lnum">03</span>Metrics and Prometheus</a>
+<a href="#lesson-04"><span class="lnum">04</span>Distributed tracing</a>
+<a href="#lesson-05"><span class="lnum">05</span>SLIs, SLOs, and error budgets</a>
+<a href="#lesson-06"><span class="lnum">06</span>Alerting without fatigue</a>
+<a href="#lesson-07"><span class="lnum">07</span>Health checks and probes</a>
+<a href="#lesson-08"><span class="lnum">08</span>Graceful degradation and feature flags</a>
+<a href="#lesson-09"><span class="lnum">09</span>Chaos engineering</a>
+<a href="#lesson-10"><span class="lnum">10</span>Incident response</a>
+<a href="#lesson-11"><span class="lnum">11</span>Blameless postmortems</a>
+<a href="#lesson-12"><span class="lnum">12</span>Disaster recovery: RTO and RPO</a>
+  </div>
+  <article>
+<blockquote>Hope is not a strategy. Dashboards are.</blockquote>
+<p>You've built the system. Now comes the part that separates engineering from wishful thinking: knowing what it's doing at 3 AM, deciding how reliable it <i>needs</i> to be, and having a plan for the day the data center meets a backhoe. This phase covers the instrumentation trinity (logs, metrics, traces), the SRE math that turns "reliability" from a vibe into a budget, and the human systems — alerting, incident response, postmortems — that determine whether an outage is a 10-minute blip or a résumé-generating event. Reliability is a feature; here's how you ship it.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> The Three Pillars: Logs, Metrics, Traces</h2>
+<p><b>MOTTO:</b> Metrics tell you something is wrong, traces tell you where, logs tell you why.</p>
+<h3>The Problem</h3>
+<p>A user reports "checkout is slow." Your system is 40 services across 300 containers. SSH-ing into boxes and grepping files died as a strategy the day you passed two servers. You need telemetry designed for questions you <i>didn't anticipate</i> — because the defining property of production incidents is that they're the failure modes you didn't think to check for. That's the difference between monitoring (watching known unknowns) and observability (being able to interrogate unknown unknowns).</p>
+<h3>The Concept</h3>
+<p>Three complementary data shapes, distinguished by what they trade:</p>
+<pre><code>  PILLAR    SHAPE                          COST SCALING        BEST QUESTION
+  ------    -----                          ------------        -------------
+  Metrics   numbers over time,             per-SERIES (cheap,  &quot;is p99 latency up?
+            pre-aggregated                 fixed, aggregated)   how much? since when?&quot;
+  Traces    tree of timed spans,           per-REQUEST         &quot;where did THIS request
+            one per request                (sampled)            spend its 3 seconds?&quot;
+  Logs      timestamped event records,     per-EVENT           &quot;what exactly happened
+            arbitrary detail               (expensive, rich)    at that moment?&quot;</code></pre>
+<p>Think of a hospital: metrics are the vital-signs monitor (continuous, cheap, alarm-ready), a trace is one patient's chart through admission → tests → surgery (per-case timeline across departments), and logs are the doctors' detailed notes (rich, searchable, voluminous). No single pillar substitutes for another: metrics aggregate away the individual case; logs lack cross-service structure; traces sample away completeness.</p>
+<h3>Build It</h3>
+<p>The debugging loop that connects them:</p>
+<ol><li>Instrument everything with shared identifiers: every log line and span carries <code>trace_id</code>; metrics carry service/endpoint labels. Correlation is the whole game.</li><li>Alert on metrics (Lesson 06): p99 checkout latency breaches its SLO.</li><li>Pivot to traces: filter traces for the slow endpoint; the span waterfall shows 2.7 of 3 seconds inside <code>payments → fraud-check</code>.</li><li>Pivot to logs: query logs where <code>trace_id = abc123</code> and <code>service = fraud-check</code>; find the retry loop against a timing-out vendor API.</li><li>Close the loop: add a metric/alert for vendor latency so next time step 2 fires earlier.</li></ol>
+<p>If your telemetry can't do steps 3–4's pivots — if logs and traces don't share IDs — you have three data silos, not three pillars.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Pillar</th><th>Open source</th><th>Managed</th></tr></thead><tbody><tr><td>Metrics</td><td>Prometheus + Grafana</td><td>Datadog, CloudWatch, Grafana Cloud</td></tr><tr><td>Traces</td><td>Jaeger, Tempo, Zipkin</td><td>Datadog APM, Honeycomb, X-Ray</td></tr><tr><td>Logs</td><td>Loki, Elasticsearch/OpenSearch</td><td>Datadog Logs, Splunk</td></tr><tr><td>All three, one standard</td><td>OpenTelemetry (instrument once, export anywhere)</td><td>—</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The vocabulary is borrowed from control theory (a system is "observable" if internal state can be inferred from outputs), popularized for software by Twitter's early-2010s observability team blog posts and the Google SRE book (2016). The ecosystem's peace treaty came in 2019 when the competing OpenTracing and OpenCensus projects merged into OpenTelemetry — now one of the CNCF's most active projects, ending a decade of instrument-once-per-vendor lock-in.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can't high-cardinality questions ("which user saw errors?") be answered by metrics, and which pillar takes over?</li><li>What single practice makes the metrics → traces → logs pivot possible?</li><li>Your logging bill is exploding but dashboards feel fine. Which pillar's cost model explains this, and what are two levers?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Structured Logging Done Right</h2>
+<p><b>MOTTO:</b> Log for the machine that will query it, not the human who wrote it.</p>
+<h3>The Problem</h3>
+<p><code>log.info(f"User {user} did {thing} maybe {count} times")</code> — beautiful prose, unqueryable data. When logs are free-form strings, every investigation starts with writing a regex against whatever sentence a developer improvised two years ago, and "find all failed payments over $100 for user X" is an archaeology project. At scale, logs are a <i>dataset</i>. Datasets need schemas.</p>
+<h3>The Concept</h3>
+<p>Structured logging emits events as key-value records (JSON, typically) instead of sentences. The log line stops being a diary entry and becomes a row in a queryable table — the difference between a shoebox of receipts and a spreadsheet.</p>
+<pre><code>  UNSTRUCTURED (grep and pray):
+    &quot;Payment failed for user 42 after 3 retries: timeout&quot;
+
+  STRUCTURED (query like a database):
+    {&quot;ts&quot;:&quot;2026-07-31T03:12:09Z&quot;, &quot;level&quot;:&quot;error&quot;, &quot;event&quot;:&quot;payment_failed&quot;,
+     &quot;user_id&quot;:42, &quot;amount_cents&quot;:15000, &quot;retries&quot;:3, &quot;reason&quot;:&quot;gateway_timeout&quot;,
+     &quot;trace_id&quot;:&quot;abc123&quot;, &quot;service&quot;:&quot;payments&quot;, &quot;version&quot;:&quot;2.31.0&quot;}
+
+  Now trivial: rate of payment_failed by reason; all events for trace abc123;
+  p95 of amount_cents where reason=&quot;gateway_timeout&quot;.</code></pre>
+<h3>Build It</h3>
+<p>The rules that make it work:</p>
+<ol><li>One event, one line, machine-first: JSON to stdout; the platform (container runtime → collector) handles shipping. Apps don't manage log files.</li><li>Standard envelope on every record: timestamp (UTC, ISO 8601), level, <code>event</code> name (stable, snake_case — it's an API), service, version, and <b>trace_id</b> (Lesson 01's glue).</li><li>Context propagation beats repetition: bind request-scoped fields once; every log in that request inherits them.</li></ol>
+<pre><code>import structlog
+log = structlog.get_logger()
+
+def handle_request(req):
+    slog = log.bind(trace_id=req.trace_id, user_id=req.user_id)  # bind once
+    slog.info(&quot;payment_attempt&quot;, amount_cents=req.amount)
+    try:
+        charge(req)
+    except GatewayTimeout as e:
+        slog.error(&quot;payment_failed&quot;, reason=&quot;gateway_timeout&quot;, retries=e.retries)</code></pre>
+<ol><li>Levels mean something: <code>error</code> = a human may need to act; <code>warn</code> = degraded but handled; <code>info</code> = business events; <code>debug</code> = off in prod, toggleable. An error level that fires routinely trains everyone to ignore it.</li><li>Discipline: never log secrets/PII (tokens, passwords, card numbers — enforce with scrubbing middleware); keep <code>event</code> names stable so saved queries don't rot; sample or drop high-volume debug noise <i>at the edge</i> — per-GB ingestion pricing is how logging becomes your second-biggest cloud bill.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>structlog (Python), zerolog/zap (Go), Serilog (.NET)</td><td>In-process structured emitters</td></tr><tr><td>Fluent Bit / Vector / OpenTelemetry Collector</td><td>Collect, transform, scrub, route</td></tr><tr><td>Loki</td><td>Indexes labels only — cheap, grep-like queries</td></tr><tr><td>Elasticsearch/OpenSearch</td><td>Full-text index on everything — powerful, pricier</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The 12-Factor App manifesto (Heroku, 2011) codified "logs as event streams" — apps write to stdout, the platform does the rest — which quietly killed the in-app log-rotation ceremony. The cost lesson arrived a decade later: practitioner postmortems of six-and-seven-figure observability bills (a staple of engineering blogs and conference talks by the early 2020s) mostly trace to unbounded debug logging and high-cardinality labels nobody queried. Structure isn't just for querying; it's how you <i>meter</i> what you keep.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is a stable <code>event</code> name field described as "an API"? Who are its consumers?</li><li>What does context binding (attaching trace_id/user_id once per request) buy over passing fields at each call site?</li><li>Name two practices that keep log costs sane without losing incident-debugging power.</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Metrics and Prometheus</h2>
+<p><b>MOTTO:</b> Aggregate at the edge, scrape from the center, and never put a user ID in a label.</p>
+<h3>The Problem</h3>
+<p>You need "requests per second, error rate, p99 latency, per service, per endpoint, right now and for the last month" — continuously, cheaply, for thousands of instances. Shipping a log line per request to compute these is a firehose solving a garden-hose problem. Metrics pre-aggregate at the source: each process keeps a handful of counters in RAM, and the monitoring system collects compact snapshots.</p>
+<h3>The Concept</h3>
+<p>Prometheus's model: a metric is a named time series with key-value <b>labels</b> — <code>http_requests_total{service="checkout", path="/pay", status="500"}</code>. Three core instrument types:</p>
+<pre><code>  COUNTER    only goes up (requests, errors, bytes)
+             -&gt; query with rate(): rate(http_requests_total[5m])
+  GAUGE      goes up and down (queue depth, memory, in-flight requests)
+  HISTOGRAM  observations in buckets (latency) -&gt;
+             http_request_seconds_bucket{le=&quot;0.1&quot;} 9432   &lt;- cumulative
+             http_request_seconds_bucket{le=&quot;0.5&quot;} 9921      counts per
+             http_request_seconds_bucket{le=&quot;+Inf&quot;} 9967     bound
+             -&gt; p99 estimated via histogram_quantile()</code></pre>
+<p>And the contrarian architecture choice — <b>pull</b>: your process exposes <code>/metrics</code> as plain text; Prometheus <i>scrapes</i> it every 15s. Like a building inspector on rounds versus every apartment mailing letters: the inspector controls the schedule, notices silent apartments immediately (<code>up == 0</code> — a dead target is itself a signal, versus push where silence is ambiguous), and any human can <code>curl /metrics</code> to see exactly what a process reports. Push still has its place (short-lived batch jobs → Pushgateway).</p>
+<h3>Build It</h3>
+<ol><li>Instrument the RED trio per endpoint — Rate, Errors, Duration:</li></ol>
+<pre><code>from prometheus_client import Counter, Histogram, start_http_server
+
+REQS = Counter(&quot;http_requests_total&quot;, &quot;requests&quot;, [&quot;path&quot;, &quot;status&quot;])
+LAT  = Histogram(&quot;http_request_seconds&quot;, &quot;latency&quot;, [&quot;path&quot;],
+                 buckets=[.01, .05, .1, .25, .5, 1, 2.5, 5])
+
+def handle(req):
+    with LAT.labels(req.path).time():
+        resp = route(req)
+    REQS.labels(req.path, str(resp.status)).inc()</code></pre>
+<ol><li>Why histograms, not averages: latency is long-tailed; the mean hides the suffering. Bucketed histograms also <b>aggregate across instances</b> (sum the buckets, then take the quantile) — you cannot average per-instance p99s and get anything meaningful.</li><li>Respect cardinality physics: cost = number of <i>distinct label combinations</i>. <code>path × status</code> = dozens of series; add <code>user_id</code> and you've minted millions of series and killed the TSDB. Labels are for dimensions you'd GROUP BY, never for identifiers (that's what logs/traces are for).</li><li>For infra, the USE method (Utilization, Saturation, Errors) per resource complements RED per service.</li><li>Long-term/global storage: Prometheus is per-cluster and local-disk by design; Thanos/Mimir/Cortex federate and retain.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>Prometheus + Grafana</td><td>The default stack; PromQL is the lingua franca</td></tr><tr><td>Thanos / Mimir / VictoriaMetrics</td><td>Scale-out, long retention</td></tr><tr><td>OpenTelemetry metrics</td><td>Vendor-neutral instrumentation, Prometheus-compatible</td></tr><tr><td>StatsD/Datadog agent</td><td>The push lineage — still common</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Prometheus was built at SoundCloud starting in 2012 by ex-Google engineers (Matt Proud, Julius Volz) explicitly modeled on Google's internal Borgmon — bringing the "white-box metrics + label-based query language + pull" religion outside. Open-sourced, it became the second project ever accepted into the CNCF (2016, right after Kubernetes) and the de facto metrics standard of the cloud-native era; the Google SRE book's Borgmon chapter reads as its origin story.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must a counter only ever increase, and what does <code>rate()</code> compute from it that raw values can't give?</li><li>Why can't you average per-instance p99 latencies, and how do histogram buckets solve cross-instance quantiles?</li><li>Explain the cardinality explosion: what happens to Prometheus if you add a <code>user_id</code> label, and where should that data live instead?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Distributed Tracing</h2>
+<p><b>MOTTO:</b> One request, forty services, one ID to bind them all.</p>
+<h3>The Problem</h3>
+<p>A request enters the front door and fans out through a dozen services before returning. It takes 3 seconds. <i>Where</i> did the time go? Each service's own logs and metrics see only their fragment; nobody sees the request's whole journey. Worse, without a shared identifier you can't even collect the fragments. Debugging latency in microservices without tracing is assembling a crime timeline from forty witnesses who don't know they saw the same crime.</p>
+<h3>The Concept</h3>
+<p>A <b>trace</b> is the tree of work done for one request. Each unit of work is a <b>span</b>: name, start time, duration, attributes, plus three IDs — <code>trace_id</code> (shared by the whole journey), <code>span_id</code> (this hop), <code>parent_span_id</code> (who called me). Services propagate the context in request headers (the W3C <code>traceparent</code> standard), so every hop knows which story it's part of. Render spans on a timeline and you get the waterfall:</p>
+<pre><code>  trace abc123 (3.01s total)
+  gateway        |=============================================| 3.01s
+   checkout        |=========================================|  2.90s
+    inventory        |====|                                     0.31s
+    payments              |==================================|  2.51s
+     fraud-check            |================================|  2.43s  &lt;-- there.
+    (inventory and payments in parallel; fraud-check is the long pole)</code></pre>
+<p>The waterfall answers by inspection what no dashboard can: serial vs parallel calls, the long pole, gaps (time between spans = queueing or missing instrumentation).</p>
+<h3>Build It</h3>
+<ol><li>Propagate: on inbound requests, extract <code>traceparent</code>; on outbound, inject it. Instrumentation libraries hook HTTP/gRPC clients so this is mostly automatic — the discipline is ensuring <i>every</i> hop (including queues: stash context in message headers) participates. One non-propagating service cuts the tree.</li><li>Emit: each service records spans with timing and attributes (<code>http.status_code</code>, <code>db.statement</code>), exporting asynchronously to a collector — never block the request path on telemetry.</li></ol>
+<pre><code>from opentelemetry import trace
+tracer = trace.get_tracer(&quot;checkout&quot;)
+
+def handle_order(order, ctx):                       # ctx from traceparent header
+    with tracer.start_as_current_span(&quot;checkout&quot;, context=ctx) as span:
+        span.set_attribute(&quot;order.id&quot;, order.id)
+        reserve_inventory(order)   # instrumented client auto-creates child
+        charge_payment(order)      # spans and injects headers downstream</code></pre>
+<ol><li>Sample: tracing every request at volume is unaffordable. <b>Head sampling</b> decides at the trace's birth (e.g., 1%) — cheap, but blind to outcomes; <b>tail sampling</b> buffers and decides at the end ("keep all errors and everything &gt; 1s") — keeps exactly the interesting traces, costs buffering infrastructure.</li><li>Connect the pillars: stamp <code>trace_id</code> on logs (Lesson 02) and exemplars on metrics, completing Lesson 01's pivot loop.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>OpenTelemetry</td><td>The instrumentation standard — SDKs, auto-instrumentation, collector</td></tr><tr><td>Jaeger / Tempo / Zipkin</td><td>Open-source backends</td></tr><tr><td>Honeycomb / Lightstep / Datadog APM</td><td>Managed; strong high-cardinality analysis</td></tr><tr><td>W3C Trace Context</td><td>The <code>traceparent</code> header spec making vendors interoperate</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Google's Dapper paper (2010, Sigelman et al.) described tracing production at Google scale with two findings that shaped everything since: propagation must live in shared infrastructure libraries (so application developers get it for free — where instrumentation is optional, coverage is partial), and aggressive sampling (they cite rates as low as 1 in 1024) still catches systemic patterns. Twitter's Zipkin (open-sourced 2012) was Dapper's public reimplementation; Dapper's authors later founded Lightstep and helped drive OpenTelemetry.</p>
+<h3>Checkpoint</h3>
+<ul><li>What do the three IDs on a span each identify, and how does a backend reconstruct the tree from a bag of spans?</li><li>In the waterfall above, what tells you inventory and payments ran in parallel, and why does that matter for optimization?</li><li>Contrast head and tail sampling: which can guarantee "keep every trace containing an error," and what does that guarantee cost?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> SLIs, SLOs, and Error Budgets</h2>
+<p><b>MOTTO:</b> 100% is the wrong reliability target for everything; the right question is how much failure you can afford.</p>
+<h3>The Problem</h3>
+<p>"The site should be reliable" is not an engineering requirement — it's a mood. Without a number, every debate between shipping features and hardening infrastructure is decided by whoever argues loudest, ops teams block releases out of generalized fear, and nobody can say whether last month was actually <i>bad</i>. Meanwhile, each extra nine costs roughly 10x more, and past a point users can't tell the difference — their WiFi is less reliable than your service.</p>
+<h3>The Concept</h3>
+<p>Three definitions, one lever:</p>
+<ul><li><b>SLI</b> (indicator): a measured ratio of good events to total events. <i>"Proportion of requests served successfully in &lt; 300ms."</i></li><li><b>SLO</b> (objective): the target for that SLI over a window. <i>"99.9% over 30 days."</i></li><li><b>Error budget</b>: 1 − SLO — the failure you're <i>allowed</i>. At 99.9% of ~43,200 minutes/month, that's <b>43 minutes of badness you may spend</b>.</li></ul>
+<pre><code>  SLO 99.9%/30d  -&gt;  budget = 0.1% ≈ 43 min
+
+  budget healthy               budget exhausted
+  ┌────────────────┐          ┌────────────────┐
+  │ ship fast,     │          │ freeze risky   │
+  │ take risks,    │   ...    │ launches; work │
+  │ run chaos exps │          │ on reliability │
+  └────────────────┘          └────────────────┘</code></pre>
+<p>The genius is what the budget <i>is</i>: a pre-negotiated peace treaty between velocity and reliability. Budget left? Ship aggressively — reliability work beyond the SLO is over-engineering by agreement. Budget spent? Feature launches pause, reliability work takes priority — by agreement, not by argument. (SLAs are the external, contractual cousins with refunds attached; set them looser than your SLOs.)</p>
+<h3>Build It</h3>
+<ol><li>Choose SLIs from the user's chair: availability (<code>good requests / total</code>), latency (<code>requests under threshold / total</code>), freshness/correctness for pipelines. Measure as close to the user as possible (load balancer, not the app's opinion of itself).</li><li>Express as PromQL-able ratios: <code>sum(rate(requests{code!~"5..", le="0.3"}[w])) / sum(rate(requests[w]))</code>.</li><li>Set the SLO from reality, not aspiration: look at achieved performance, pick a defensible target, tighten later. Different endpoints deserve different SLOs (checkout ≠ avatar upload).</li><li>Alert on <b>burn rate</b> — how fast you're eating budget: burn 14x (budget gone in ~2 days) sustained 1h → page; burn 2x sustained 6h → ticket. Multi-window burn alerts (Lesson 06) beat threshold alerts on both speed and noise.</li><li>Enforce the policy: budget exhaustion triggers the agreed consequence. An error budget nobody acts on is a dashboard, not a contract.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>Prometheus + recording rules</td><td>Hand-rolled SLOs; Sloth/Pyrra generate the rules</td></tr><tr><td>Datadog/Grafana SLO products</td><td>SLO tracking as a feature</td></tr><tr><td>OpenSLO</td><td>Spec for declaring SLOs as code</td></tr><tr><td>Spreadsheet + honesty</td><td>Genuinely fine at small scale</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Error budgets are Google SRE's signature export, canonized in the 2016 SRE book: the founding insight (per Ben Treynor Sloss, who named SRE) was making product and reliability teams <i>share one currency</i>, ending the classic dev-wants-to-ship vs ops-wants-to-freeze standoff by pre-agreeing what happens when the budget runs dry. The book's blunt framing — users can't distinguish 99.999% from 99.9999%, but the cost difference is enormous — gave engineers permission to stop worshiping nines.</p>
+<h3>Checkpoint</h3>
+<ul><li>Define SLI, SLO, and error budget, and compute the monthly budget in minutes for a 99.95% SLO.</li><li>Why does the error-budget mechanism reduce <i>organizational</i> conflict, not just measure reliability?</li><li>What is burn rate, and why does alerting on it beat alerting on "SLI dipped below target right now"?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Alerting Without Fatigue</h2>
+<p><b>MOTTO:</b> Every page must be urgent, actionable, and real — or it's training your team to ignore the one that matters.</p>
+<h3>The Problem</h3>
+<p>The on-call phone buzzes 40 times a night: CPU crossed 80%, a pod restarted, disk hit a threshold on a box nobody remembers. All self-resolved. Three weeks of this and humans do what humans do — swipe away alerts on reflex. Then the real outage pages, gets swiped, and burns for four hours. Alert fatigue isn't an annoyance; it's the mechanism by which monitoring systems cause outages to last longer.</p>
+<h3>The Concept</h3>
+<p>The core distinction: <b>symptom-based</b> alerts fire on what users experience (error rate up, latency up, SLO burning); <b>cause-based</b> alerts fire on internal conditions that <i>might</i> matter (CPU high, replica down). Page on symptoms; record causes as context. A high-CPU box serving every request within SLO is not an emergency — and a fleet at 30% CPU failing every request is. The fire alarm should ring for smoke, not for the oven being warm.</p>
+<pre><code>  severity ladder:
+  PAGE    users hurting NOW or budget burning fast -&gt; wake a human
+  TICKET  needs a human this week, not this minute  -&gt; queue it
+  RECORD  context for debugging                     -&gt; dashboard/log only
+
+  and the fatigue equation:
+  every non-actionable page ──&gt; +cynicism ──&gt; slower response to real pages</code></pre>
+<p>The refinement that makes SLO alerting practical is <b>multi-window, multi-burn-rate</b> (from the SRE Workbook): page only when budget burns fast over both a long and short window (fast burn <i>still happening</i>); ticket on slow sustained burn. Two alerts total per SLO, high precision <i>and</i> high recall.</p>
+<h3>Build It</h3>
+<p>The alert design review, applied to every rule:</p>
+<ol><li>Ask the five questions: Does it indicate user pain (or imminent, certain pain)? Is it urgent — does responding at 3 AM beat responding at 9 AM? Is it actionable — is there something a human <i>does</i>? Is it novel — or a duplicate of another alert that fires with it? Does it need intelligence — or could automation handle it (restart, failover) and log instead?  Fail any → demote below page.</li><li>Implement burn-rate pairs per SLO: e.g., page when <code>burn(1h) &gt; 14 AND burn(5m) &gt; 14</code>; ticket when <code>burn(6h) &gt; 2 AND burn(30m) &gt; 2</code> (fast-window clause stops paging for already-recovered blips).</li><li>Reduce blast: group related alerts (Alertmanager grouping), inhibit downstream alerts when an upstream cause fires ("datacenter down" silences 500 per-service alerts), and silence during known maintenance.</li><li>Attach a runbook link to every page: symptom, dashboards, first diagnostic steps, escalation path. A page without a runbook outsources design work to a sleepy brain.</li><li>Run the feedback loop: review pages weekly — count them, mark each actionable/not, delete or demote repeat offenders. Track pages-per-shift; more than a handful per week means the system is broken, whatever the uptime says.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>Prometheus Alertmanager</td><td>Grouping, inhibition, silencing, routing</td></tr><tr><td>PagerDuty / Opsgenie</td><td>Escalation policies, schedules, ack tracking</td></tr><tr><td>Grafana OnCall / IRM</td><td>Open-source-friendly paging</td></tr><tr><td>SRE Workbook ch. 5</td><td>The multi-window burn-rate recipes, worked out</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Rob Ewaschuk's "My Philosophy on Alerting" — written from his Google SRE experience and absorbed into the SRE book (2016) — is the field's founding text: pages must be urgent, actionable, and user-visible, and "every page should require intelligence to deal with; if it has an algorithmic response, that response should be automated." The SRE Workbook (2018) then published the multi-window burn-rate design as the practical endpoint of a chapter-length journey through five inferior alerting schemes — a rare case of a vendor-neutral, fully worked answer.</p>
+<h3>Checkpoint</h3>
+<ul><li>Distinguish symptom-based from cause-based alerts and give an example where a cause-based page would be wrong both ways (false positive and false negative).</li><li>In a multi-window burn alert, what is the short window's job?</li><li>A page fires weekly and the fix is always "restart the worker." What do the five questions say to do?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Health Checks and Probes</h2>
+<p><b>MOTTO:</b> "Are you alive?" and "can you take traffic?" are different questions with different wrong answers.</p>
+<h3>The Problem</h3>
+<p>The orchestrator needs to know two things about your process: should I <i>restart</i> it, and should I <i>route requests</i> to it? Conflate them and you get the classic self-inflicted outage: the database blips, every instance's health check fails because it checks the DB, the orchestrator restarts <i>all of them simultaneously</i>, and a 10-second dependency blip becomes a 10-minute full outage with cold caches. The check meant to protect the system killed it.</p>
+<h3>The Concept</h3>
+<p>Split the questions:</p>
+<ul><li><b>Liveness</b>: "is this process irrecoverably broken (deadlocked, wedged)?" Failure ⇒ <b>restart me</b>. Must test only <i>internal</i> state.</li><li><b>Readiness</b>: "can I usefully serve right now?" Failure ⇒ <b>stop sending me traffic</b> (stay in the pool's penalty box; no restart). May consider dependencies and warm-up.</li><li><b>Startup</b> (Kubernetes's third probe): "still booting?" — holds off liveness checks so slow starters aren't killed mid-initialization.</li></ul>
+<pre><code>  event                liveness   readiness   orchestrator action
+  -----                --------   ---------   -------------------
+  process deadlocked   FAIL       (moot)      restart container
+  cache warming up     OK         FAIL        no traffic yet; no restart
+  DB dependency down   OK         FAIL(maybe) drain traffic; DON&#x27;T restart
+  healthy              OK         OK          route traffic
+
+  THE CARDINAL SIN: dependency check inside liveness
+  DB blip -&gt; all liveness fail -&gt; mass restart -&gt; cold caches -&gt; real outage</code></pre>
+<p>Doctor's-office version: liveness is "does the patient have a pulse?"; readiness is "is the doctor ready for the next patient?" You don't declare a doctor dead because the lab downstairs is backed up.</p>
+<h3>Build It</h3>
+<ol><li>Liveness: trivially cheap, internal-only — "event loop responsive, not deadlocked." Return 200 unless the process itself is wedged. When in doubt, <i>less</i> in liveness.</li><li>Readiness: server warmed up, config loaded, and (judiciously) hard dependencies reachable — but think it through: if <i>every</i> instance fails readiness on a shared-dependency blip, the whole pool drains and you've built the outage anyway. For shared dependencies, often better to stay ready and fail requests fast (circuit breakers, Phase 10) than to vanish from the pool.</li><li>Wire graceful shutdown through readiness: on SIGTERM, fail readiness first, keep serving in-flight requests, wait for the LB to stop sending (<code>preStop</code> sleep covers propagation delay), then exit. This is the difference between zero-downtime deploys and a 502 spike on every rollout.</li><li>Tune probe math: <code>period × failureThreshold</code> = detection delay; too twitchy restarts healthy-but-busy pods (GC pause ≠ death), too lax leaves zombies serving errors.</li><li>Deep health (full dependency battery) belongs on a <i>diagnostic</i> endpoint for humans and dashboards — not wired to any automated trigger.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Context</th><th>Mechanism</th></tr></thead><tbody><tr><td>Kubernetes</td><td>liveness/readiness/startup probes (HTTP, TCP, exec, gRPC)</td></tr><tr><td>Load balancers (ALB, NGINX, Envoy)</td><td>HTTP health checks gate the pool; Envoy adds outlier ejection</td></tr><tr><td>Service registries (Consul)</td><td>TTL/heartbeat checks (Phase 10, Lesson 03)</td></tr><tr><td>systemd</td><td>watchdog timers — same idea, one machine</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>"Liveness probes can be dangerous" is practically a genre of Kubernetes postmortem: the pattern — dependency checks in liveness probes turning partial failures into mass-restart cascades — is warned against in Kubernetes documentation and countless SRE writeups, and echoes the older LB lesson that health checks with shared failure modes cause correlated ejection (the whole pool "fails" at once, and some LBs sensibly enter a fail-open panic mode rather than eject everyone — Envoy ships this behavior). The recurring moral: a health check is an automated trigger, and automated triggers deserve failure-mode analysis like any other code.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must liveness checks never include dependency checks? Walk the cascade.</li><li>Describe the graceful-shutdown sequence and readiness's role in a zero-downtime deploy.</li><li>Every instance's readiness fails when a shared cache blips, draining the pool. What design alternatives keep partial capacity?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Graceful Degradation and Feature Flags</h2>
+<p><b>MOTTO:</b> A system that can only be perfectly up or completely down has chosen its own worst failure mode.</p>
+<h3>The Problem</h3>
+<p>Binary thinking — the site is "up" or "down" — leaves enormous value on the table. When the recommendation engine dies, should the store stop selling? When load exceeds capacity, should everyone get errors, or should search get slower while checkout stays crisp? And separately: why does turning <i>anything</i> off require a deploy — the slowest, riskiest lever you own — in the middle of an incident?</p>
+<h3>The Concept</h3>
+<p><b>Graceful degradation</b> means designing explicit <i>reduced</i> service levels: a restaurant that 86's the specials when the kitchen is slammed, rather than locking the front door. Rank your features by criticality; when resources tighten or dependencies fail, shed from the bottom.</p>
+<p><b>Feature flags</b> are the control surface: runtime switches, changeable in seconds without deploying. Born for decoupling deploy from release (dark launches, canary percentages, A/B tests), they double as operational kill switches — the incident commander's panel of circuit breakers for <i>features</i>.</p>
+<pre><code>  DEGRADATION LADDER (e-commerce under duress):
+  L0 full service:  recs, reviews, search, checkout, live inventory
+  L1 shed frills :  recs -&gt; cached bestsellers; reviews hidden
+  L2 shed weight :  search -&gt; simpler ranking; inventory counts cached
+  L3 core only   :  browse (CDN-cached) + checkout. Nothing else.
+                    checkout dies last. always.
+
+  flags: {recs: on, reviews: on, rich_search: on, ...}  &lt;- flip in seconds</code></pre>
+<p>Related machinery: <b>load shedding</b> (reject excess/low-priority work early, at the edge, before it eats resources — a fast 503 to some beats slow failure for all) and <b>brownout</b> (auto-disable optional content under latency pressure).</p>
+<h3>Build It</h3>
+<ol><li>Rank features by criticality with the business — during an incident is the wrong time to debate whether reviews outrank recommendations. Write the ladder down.</li><li>Give every non-core dependency a fallback: cached last-known-good, static default, or clean absence (a missing recs panel, not a spinner, not a 500). Timeouts + circuit breakers (Phase 10) trigger fallbacks <i>automatically</i>; flags let humans force them.</li><li>Implement flags with fast local evaluation (in-process cache of rules, background sync) — flag evaluation on the request path must never be a network call that can itself fail. Decide fail-open vs fail-closed per flag for when the flag service is unreachable.</li><li>Load-shed by priority at admission: classify requests (checkout &gt; browse &gt; bot), shed lowest first when queues/latency breach limits.</li><li>Pay the hygiene tax: stale flags are technical debt with a blast radius — name owners, set expiry dates, test both branches in CI, and <i>delete</i> launched flags. Flag count only grows unless someone's job is making it shrink.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>LaunchDarkly / Unleash / Flagsmith / OpenFeature</td><td>Flag platforms; OpenFeature is the vendor-neutral API</td></tr><tr><td>Envoy admission control / adaptive concurrency</td><td>Load shedding at the proxy</td></tr><tr><td>Netflix Hystrix lineage</td><td>Fallbacks as first-class code paths</td></tr><tr><td>CDN stale-while-revalidate / stale-if-error</td><td>Degradation for content, free with HTTP</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The cautionary tale is Knight Capital (August 1, 2012): a deploy left old code reachable on one server via a <i>repurposed feature flag</i>, and 45 minutes of runaway orders cost ~$440 million and the company's independence — the canonical citation for "flags are code with a blast radius; manage their lifecycle." On the success side, Netflix's resilience engineering popularized fallbacks-by-default: their public architecture talks describe personalized rows degrading to non-personalized popular titles rather than an error — most users never notice the difference, which is the entire point.</p>
+<h3>Checkpoint</h3>
+<ul><li>What's the difference between automatic degradation (circuit breaker + fallback) and operator-driven degradation (kill switch), and why do you want both?</li><li>Why must feature-flag evaluation be a local, in-process operation, and what decision must you still make for flag-service outages?</li><li>What made Knight Capital a <i>flag lifecycle</i> failure rather than just a bad deploy?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Chaos Engineering</h2>
+<p><b>MOTTO:</b> Break it on purpose on Tuesday afternoon, or it breaks by surprise on Saturday night.</p>
+<h3>The Problem</h3>
+<p>Your architecture diagram says "if a replica dies, traffic fails over." Does it? The failover path runs approximately never, which means it rots: a config drift here, an expired credential there, a timeout that was always too long. Untested recovery code is Schrödinger's reliability — assumed alive, probably dead. The only way to know a system survives failure is to <i>have the failure</i>, and you'd rather schedule it than await it.</p>
+<h3>The Concept</h3>
+<p>Chaos engineering is the experimental method applied to resilience: form a hypothesis about steady state, inject a real fault in a controlled way, and compare. It's a vaccine — a small, controlled dose of the pathogen to build systemic immunity — or a fire drill where the fire is real but the building is instrumented and the extinguishers are pre-positioned.</p>
+<pre><code>  THE EXPERIMENT LOOP
+  1. steady state:  &quot;checkout success rate = 99.95%&quot;
+  2. hypothesis:    &quot;killing 1 of 6 payment pods won&#x27;t move it&quot;
+  3. minimize blast: 1% of traffic, business hours, all hands on
+  4. inject:        kill the pod (or add 300ms latency, or block a dep)
+  5. observe:       SLIs hold?  -&gt; confidence, next larger experiment
+                    SLIs dip?   -&gt; ABORT (auto), you found a real bug
+                                   at 2 PM with everyone watching
+                                   instead of 2 AM with no one</code></pre>
+<p>Fault menu, in rough order of ambition: kill a process → add latency/packet loss to a dependency (often more revealing than death — Phase 10's slow-is-worse-than-down) → exhaust a resource → block a whole dependency → drop an AZ → fail a region.</p>
+<h3>Build It</h3>
+<ol><li>Prerequisites, non-negotiable: observability good enough to see the blast (Lessons 01–04), an abort switch, and an SLO to define "acceptable" (Lesson 05). Chaos without observability is just vandalism.</li><li>Start in staging; graduate to production deliberately — production is the point (staging never has real traffic patterns, data volumes, or config drift), but you earn it with small blast radii.</li><li>Automate the guardrails: experiments auto-halt on SLO breach; scope by tenant/percentage/region.</li><li>Run game days: announced, cross-team exercises injecting a scenario ("payments DB primary is gone") that test the <i>humans</i> — detection time, runbooks, escalation — not just the software. Half of what game days find is wrong dashboards and missing permissions.</li><li>Treat findings as incidents-that-didn't-happen: file them, fix them, re-run the experiment to verify. An experiment that always passes gets promoted to a bigger one; that's the ratchet.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>Chaos Monkey / Simian Army</td><td>Netflix's originals — random instance termination</td></tr><tr><td>Gremlin</td><td>Managed chaos platform, safety-first design</td></tr><tr><td>Chaos Mesh / LitmusChaos</td><td>Kubernetes-native, CNCF projects</td></tr><tr><td>AWS Fault Injection Service</td><td>Faults as a managed cloud primitive</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Chaos Monkey was born from Netflix's 2008–2010 migration to AWS: they reasoned that since instances <i>would</i> die randomly, the only winning move was to kill them constantly during business hours so every team built for it — then open-sourced the tool (2012) and the discipline ("Principles of Chaos Engineering," 2015). The graduation exercise: Netflix's regional evacuation drills, in which they shift live traffic out of an entire AWS region — documented in their engineering blog — turning "can we survive a region failure?" from a prayer into a rehearsed procedure with a measured completion time.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is injecting <i>latency</i> into a dependency often more revealing than killing it outright?</li><li>What three prerequisites must exist before running chaos experiments in production?</li><li>What do game days test that automated chaos tooling cannot?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Incident Response</h2>
+<p><b>MOTTO:</b> An incident is a project with a deadline of now — so it needs a manager, not a mob.</p>
+<h3>The Problem</h3>
+<p>The outage starts. Fifteen engineers pile into a channel; three try conflicting fixes simultaneously; someone restarts a service mid-diagnosis and destroys the evidence; nobody tells support; an executive demands updates from the one person actually debugging. The technical problem was 20 minutes of work — the coordination failure made it three hours. Severe incidents fail on <i>organization</i> more often than on engineering.</p>
+<h3>The Concept</h3>
+<p>Incident response imports the fire department's playbook (literally — it descends from FEMA's Incident Command System): explicit roles, one commander, structured communication.</p>
+<pre><code>  ROLES (severe incident):
+  INCIDENT COMMANDER (IC)  owns coordination &amp; decisions.
+                           DOES NOT TOUCH KEYBOARDS. Delegates everything.
+  OPS/SUBJECT EXPERTS      hands on the system; investigate &amp; execute
+  COMMS LEAD               updates stakeholders/status page on a cadence
+  SCRIBE                   timeline: observations, actions, times
+
+  LIFECYCLE:
+  detect -&gt; declare (page, sev level, channel, roles)
+         -&gt; MITIGATE FIRST (rollback? failover? flag off? shed load?)
+         -&gt; then diagnose root cause
+         -&gt; resolve -&gt; handoff or stand down -&gt; postmortem (Lesson 11)</code></pre>
+<p>Two doctrinal points. <b>Mitigation before diagnosis</b>: the top deploy-shaped suspect gets rolled back <i>before</i> you understand the mechanism — stop the bleeding, autopsy later. And <b>the IC paradox</b>: the best debugger makes the worst IC, because command is a full-time job; an IC who dives into a shell has left the incident leaderless.</p>
+<h3>Build It</h3>
+<ol><li>Define severity levels before you need them (SEV1: users down, all hands; SEV3: degraded, business hours) — with <i>pre-agreed</i> response for each. Declaring "too early" is free; declaring late is expensive. When in doubt, declare.</li><li>Build the declare button: one command/workflow that opens the channel, pages the roles, starts the doc, posts the status page holding message. Friction at declaration time is paid in outage minutes.</li><li>Train the mitigation reflex — maintain a short menu of generic mitigations (rollback last deploy, fail out of a region, flip kill switches from Lesson 08, shed load) that responders reach for <i>before</i> understanding root cause.</li><li>Communicate on a cadence: comms lead posts updates every N minutes even if the update is "still investigating" — silence generates executive drive-bys into the ops channel.</li><li>Manage the humans: hand off IC and ops roles every few hours in long incidents (tired responders make the second incident), and log everything — the scribe's timeline is Lesson 11's raw material.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>PagerDuty / Opsgenie / Grafana IRM</td><td>Paging, escalation, on-call schedules</td></tr><tr><td>incident.io / FireHydrant / Rootly</td><td>Declare-button automation, roles, timelines</td></tr><tr><td>Statuspage etc.</td><td>External comms</td></tr><tr><td>PagerDuty's open-source Incident Response docs</td><td>A complete, battle-tested process to steal</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The role structure descends from the Incident Command System developed after devastating 1970s California wildfires exposed multi-agency coordination chaos — Google (SRE book, "Managing Incidents") and PagerDuty (whose open-sourced incident response documentation became an industry reference) explicitly adapted it for software. The SRE book's framing survives every retelling: the unmanaged incident's failure modes are exactly a mob's — no one in charge, freelancing responders, and communication by osmosis.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must the incident commander stay hands-off-keyboard, and what happens to the incident when they don't?</li><li>Justify "mitigate before diagnose" — what's the argument, and name three generic mitigations that work without root-cause knowledge?</li><li>Why should declaring an incident be nearly frictionless, and what does hesitation to declare actually cost?</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> Blameless Postmortems</h2>
+<p><b>MOTTO:</b> If your postmortem's conclusion is "someone screwed up," you stopped digging one layer too early.</p>
+<h3>The Problem</h3>
+<p>An incident ends. If the review's output is "Dave ran the wrong command; Dave will be more careful," three things follow: the system that <i>let</i> one command destroy production remains armed and waiting for the next Dave; everyone learns to hide near-misses and shade timelines to avoid being next; and the organization's most expensive lessons — bought with real outage minutes — evaporate. Blame doesn't just feel bad. It destroys the information supply chain that reliability runs on.</p>
+<h3>The Concept</h3>
+<p>The blameless postmortem borrows from aviation safety: assume everyone acted reasonably given what they knew, saw, and were incentivized to do at the time — then interrogate the <i>system</i> that made a reasonable action catastrophic. The pilot isn't the root cause; the confusable switches are.</p>
+<pre><code>  BLAMEFUL (stops at the human)      BLAMELESS (keeps asking why)
+  &quot;Dave ran cleanup on prod&quot;        Why did prod &amp; staging creds both
+   -&gt; &quot;be careful, Dave&quot;             work in the same terminal?
+                                    Why did the script have no dry-run,
+                                     no confirmation, no environment guard?
+                                    Why did nothing alert for 40 minutes?
+                                    Why did restore take 3 hours?
+                                     -&gt; four systemic fixes; &quot;next Dave&quot;
+                                        is now harmless</code></pre>
+<p>Watch for <b>hindsight bias</b> — after the outcome, the path looks obvious; the honest question is "why did it make sense <i>at the time</i>?" — and treat counterfactuals ("they should have checked X") as clues about missing affordances, not verdicts. Blameless ≠ consequence-free: recklessness and malice remain accountability matters; honest error inside a fragile system is the system's bug report.</p>
+<h3>Build It</h3>
+<p>The document and the process:</p>
+<ol><li>Trigger criteria decided in advance (any SEV1/2, any data loss, any SLO-budget-blowing event) — not a per-incident debate.</li><li>The scribe's timeline (Lesson 10) becomes the factual backbone: what was observed, decided, and done, with timestamps. Facts first, interpretation second.</li><li>Analyze contributing causes — plural. Real incidents are conjunctions ("the bug AND the alert gap AND the slow rollback"); techniques like "five whys" help but resist collapsing to one tidy root cause.</li><li>Extract action items that would each have prevented, shortened, or shrunk the incident — each with an owner and a due date, tracked like real work. A postmortem whose action items die in backlog is theater; unclosed items from <i>previous</i> postmortems appearing in <i>new</i> postmortems is the metric of theater.</li><li>Publish wide. The Sev-1 you paid for is only amortized if every team can read it. Mature orgs review postmortems in a recurring forum and celebrate the best ones.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Resource</th><th>Notes</th></tr></thead><tbody><tr><td>Google SRE book ch. 15 + published template</td><td>The canonical starting kit</td></tr><tr><td>Etsy's Debriefing Facilitation Guide</td><td>The deep end: how to <i>run</i> the meeting</td></tr><tr><td>incident.io / FireHydrant / Jeli</td><td>Timeline capture and tracking tooling</td></tr><tr><td>Public postmortems (Cloudflare, GitLab, AWS...)</td><td>Free masterclasses in the genre</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The style's public exemplar is GitLab's 2017 database incident: an engineer, fatigued and fighting replication lag, removed a data directory on the <i>primary</i>; five separate backup mechanisms then turned out to be broken or misconfigured. GitLab live-streamed the recovery, published a full blameless postmortem, and explicitly declined to fire anyone — the analysis targeted the unverified backups and the confusable environments. The intellectual lineage runs through aviation's confidential reporting systems and Etsy's "blameless postmortem" writing (John Allspaw, 2012), which argued that punishing honest error simply buys you silence plus the same error later.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does blame reduce the <i>information</i> available to an organization, not just morale?</li><li>What is hindsight bias, and how should a facilitator handle "they obviously should have checked X"?</li><li>What distinguishes a postmortem process that works from postmortem theater? Name two observable signals.</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> Disaster Recovery: RTO and RPO</h2>
+<p><b>MOTTO:</b> A backup you haven't restored is a rumor, and a DR plan you haven't rehearsed is a bedtime story.</p>
+<h3>The Problem</h3>
+<p>Region-scale events happen: floods, fires, fat-fingered infrastructure automation, ransomware, the fabled backhoe. When they do, two questions decide your company's fate: how long until we're serving again, and how much data did we lose forever? If your first attempt to answer them is <i>during</i> the disaster — restoring a backup you've never tested onto infrastructure you've never rebuilt — the answers will be "much longer than the business survives" and "more than the press release admits."</p>
+<h3>The Concept</h3>
+<p>Two numbers govern everything:</p>
+<ul><li><b>RPO</b> (Recovery Point Objective): maximum acceptable <i>data loss</i>, measured backward in time. Set by how you copy data (backup cadence, replication lag).</li><li><b>RTO</b> (Recovery Time Objective): maximum acceptable <i>downtime</i>. Set by how much standby infrastructure you keep warm.</li></ul>
+<pre><code>                 last good copy   DISASTER      service restored
+  ────────────────────●──────────────X──────────────●─────────────&gt; time
+                      |&lt;--- RPO ----&gt;|&lt;---- RTO ---&gt;|
+                        (data lost)     (downtime)
+
+  DR TIER          RPO        RTO         COST
+  backup+restore   hours-day  hours-days  $        (backups + a plan)
+  pilot light      minutes    ~1 hour     $$       (data replicated; infra cold)
+  warm standby     seconds+   minutes     $$$      (scaled-down copy running)
+  hot / multi-site ~zero      ~zero       $$$$$    (active-active, both live)</code></pre>
+<p>Both dials cost money on a steep curve — the business, not the engineers, should choose the price point per system: payments may warrant warm standby while the internal wiki rides backups. Beware correlated failure: backups in the same region (or same account/credentials — think ransomware) as the primary aren't disaster recovery, they're disaster <i>participation</i>. Hence 3-2-1: three copies, two media, one off-site — modernized with immutable/offline copies.</p>
+<h3>Build It</h3>
+<ol><li>Classify systems and negotiate RPO/RTO per tier with the business, in writing.</li><li>Build the data leg (RPO): automated backups + WAL/log shipping for point-in-time recovery, replicated cross-region, at least one copy immutable (object-lock) against ransomware and credential compromise.</li><li>Build the infra leg (RTO): everything as code (Terraform + images + config), because RTO is dominated by "rebuild the environment" unless the environment is a <code>git clone</code> away. DNS/traffic failover procedure written and rehearsed.</li><li>Mind the dependency graph: restoring services in the wrong order (app before database before secrets manager) burns RTO; know what bootstraps what — including "where do we log in if SSO is down?"</li><li><b>Test restores routinely</b> — an untested backup is a rumor. Automate a periodic restore-and-verify job; run DR game days (Lesson 09) that fail over a real (scoped) workload; measure <i>achieved</i> RTO/RPO against the objectives, because the gap is the truth.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th></tr></thead><tbody><tr><td>pgBackRest / WAL-G, Velero</td><td>Database PITR; Kubernetes backup</td></tr><tr><td>Cross-region replication (S3 CRR, Aurora Global, Spanner)</td><td>The RPO workhorses</td></tr><tr><td>Object lock / immutable vaults</td><td>The ransomware answer</td></tr><tr><td>Terraform + image pipelines</td><td>Infrastructure as restorable code</td></tr><tr><td>AWS Elastic Disaster Recovery / Azure Site Recovery</td><td>Managed replication and failover</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Two bookends. GitLab 2017 (Lesson 11's incident): five backup mechanisms, effectively none restorable when needed — the outage cost ~6 hours of production data and made "test your restores" a punchline with a body count. And OVHcloud's March 2021 Strasbourg datacenter fire destroyed SBG2 entirely; customers whose "backups" lived in the same facility as their servers lost both at once — the industry's starkest recent lesson that RPO is defined by your <i>most distant</i> copy, not your most convenient one.</p>
+<h3>Checkpoint</h3>
+<ul><li>Define RPO and RTO, and identify which engineering mechanisms move each dial.</li><li>Why do same-region (or same-credential) backups fail the definition of disaster recovery? Give two threat scenarios.</li><li>Your last DR test restored the database in 40 minutes — but the <i>service</i> took 9 hours to return. What consumed the difference, and which practices attack it?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="12-big-data-and-streams.html">← 🌊 Phase 12</a>
+    <span class="spacer"></span>
+    <a href="14-security.html">Phase 14 🔐 →</a>
+  </div>
+</div>
+</body>
+</html>

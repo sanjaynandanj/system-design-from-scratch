@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup & Mental Models — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 00</div>
+  <h1><span class="pnum">00</span> 🧠 Setup &amp; Mental Models</h1>
+  <div class="tagline">Learn to think in boxes, arrows, and orders of magnitude.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>What is system design (and why intuition beats memorization)</a>
+<a href="#lesson-02"><span class="lnum">02</span>Thinking in boxes and arrows</a>
+<a href="#lesson-03"><span class="lnum">03</span>Latency numbers every engineer should know</a>
+<a href="#lesson-04"><span class="lnum">04</span>Back-of-the-envelope math</a>
+<a href="#lesson-05"><span class="lnum">05</span>Powers of two, units, and napkin conversions</a>
+<a href="#lesson-06"><span class="lnum">06</span>Functional vs non-functional requirements</a>
+<a href="#lesson-07"><span class="lnum">07</span>How to read (and draw) architecture diagrams</a>
+<a href="#lesson-08"><span class="lnum">08</span>Your lab setup: Docker, tooling, and the playground</a>
+  </div>
+  <article>
+<blockquote>Learn to think in boxes, arrows, and orders of magnitude.</blockquote>
+<p>Before you touch a load balancer, you need a way of <i>seeing</i>. System design is not a pile of AWS product names — it's a small set of mental models applied ruthlessly: everything is a box or an arrow, every arrow has a latency and a failure mode, and every number is either negligible or the whole story. This phase installs those models in your head and a lab on your laptop. By the end, you'll estimate a Twitter clone's storage on a napkin and be roughly right — which is the only kind of right that matters at design time.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> What is system design (and why intuition beats memorization)</h2>
+<p><b>MOTTO:</b> System design is the art of choosing which problems you're willing to have.</p>
+<h3>The Problem</h3>
+<p>You can memorize fifty "design Instagram" videos and still freeze when someone changes one requirement — "actually, reads must be strongly consistent" — because memorized architectures are brittle. The real world never asks the question you rehearsed. Interviewers (and production) probe <i>why</i>, and "because the video said so" doesn't survive contact.</p>
+<h3>The Concept</h3>
+<p>Think of system design like structural engineering, not interior decorating. A decorator memorizes what looks good; an engineer knows <i>why</i> the beam holds — so when the load changes, they can re-derive the answer. Every system is a set of components (boxes) exchanging data (arrows) under constraints (latency, cost, failure, consistency). Design is navigating tradeoffs between those constraints, because you can never have all of them at once.</p>
+<pre><code>        Requirements
+             |
+             v
+   +------------------+       You never &quot;solve&quot; a design.
+   |  TRADEOFF SPACE  |  &lt;--- You pick a point in this space
+   |  cost &lt;-&gt; speed  |       and defend it.
+   |  consistency &lt;-&gt; |
+   |    availability  |
+   +------------------+</code></pre>
+<h3>Build It</h3>
+<p>Your reasoning loop, from scratch:</p>
+<ol><li><b>Clarify</b> — what does the system actually do? For whom? How many of them?</li><li><b>Quantify</b> — QPS, data size, read/write ratio. Numbers before boxes.</li><li><b>Sketch</b> — simplest thing that could work. One box, one database.</li><li><b>Break it</b> — where does it fall over first? At 10x load? On one machine dying?</li><li><b>Fix the bottleneck</b> — add exactly one component. Repeat step 4.</li></ol>
+<p>Every "advanced" architecture is just this loop run many times. Caches, queues, and shards are answers to <i>specific</i> breakages, not decoration.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Approach</th><th>Strength</th><th>Failure mode</th></tr></thead><tbody><tr><td>Memorize reference designs</td><td>Fast recall</td><td>Collapses when requirements shift</td></tr><tr><td>First-principles reasoning</td><td>Handles novel problems</td><td>Slower without practiced building blocks</td></tr><tr><td>Both (this course)</td><td>Intuition + vocabulary</td><td>Requires actual work. Sorry.</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Google's early infrastructure papers — MapReduce (2004), GFS (2003), Bigtable (2006) — weren't invented by pattern-matching to existing designs, because none existed at that scale. Jeff Dean and Sanjay Ghemawat reasoned from hardware costs and failure rates on cheap commodity machines, and those from-scratch derivations became the patterns everyone else now memorizes.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does changing a single requirement (e.g., consistency) potentially invalidate an entire memorized architecture?</li><li>What are the five steps of the design reasoning loop, and which one must come before drawing any boxes?</li><li>Give an example of a tradeoff pair you can't maximize simultaneously.</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Thinking in boxes and arrows</h2>
+<p><b>MOTTO:</b> Every system is boxes that hold state and arrows that can fail.</p>
+<h3>The Problem</h3>
+<p>Engineers drown in detail: which framework, which cloud, which config flag. Meanwhile the design question is usually much simpler — who talks to whom, who remembers what, and what happens when a conversation fails mid-sentence. Without an abstraction that hides the noise, you can't reason about the signal.</p>
+<h3>The Concept</h3>
+<p>Model everything as <b>boxes</b> (things that compute or store) and <b>arrows</b> (data moving between them). The magic is what you annotate: every box has <i>state or no state</i>; every arrow has <i>latency, bandwidth, and a failure mode</i>. A stateless box can be cloned freely; a stateful box is where all your design pain lives. An arrow across a datacenter is ~a million times slower than an arrow inside a process — same drawing, wildly different physics.</p>
+<pre><code> [Client] --HTTP, ~50ms, can timeout--&gt; [API server]  (stateless: clone at will)
+                                           |
+                                    SQL, ~1ms, can fail
+                                           v
+                                       [Database]     (stateful: HERE BE DRAGONS)</code></pre>
+<h3>Build It</h3>
+<p>To box-and-arrow any system:</p>
+<ol><li>List the nouns (users, posts, orders) — they live in stateful boxes.</li><li>List the verbs (upload, search, pay) — they live in stateless boxes.</li><li>Draw arrows for every verb's data path, client to storage and back.</li><li>Annotate each arrow: rough latency, rough volume, what-if-it-fails.</li><li>Circle every stateful box. Those are your hard problems; everything else is horizontal scaling.</li></ol>
+<p>If your diagram has ten stateful boxes, you didn't design a system, you designed an incident.</p>
+<h3>Use It</h3>
+<p>This abstraction <i>is</i> the industry-standard toolkit: C4 diagrams formalize the box hierarchy (context → container → component), sequence diagrams formalize the arrows over time, and "stateless service + managed database" is the default posture of every modern platform (Kubernetes pods are disposable precisely because state is pushed to the arrows' far end).</p>
+<h3>War Story</h3>
+<p>During the 2017 AWS S3 outage, an engineer debugging the billing subsystem mistyped one command and removed far more capacity than intended — and because so many arrows across the internet pointed at that one stateful box (including AWS's own status dashboard, which couldn't display the red icon), a single region's object store took down thousands of sites. Know where your arrows converge.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can stateless boxes be cloned freely while stateful boxes cannot?</li><li>What three annotations should every arrow carry?</li><li>In the S3 2017 outage, what property of the global "diagram" turned one box's failure into an internet-wide event?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Latency numbers every engineer should know</h2>
+<p><b>MOTTO:</b> A nanosecond and a millisecond differ by a factor of a million — design like you believe it.</p>
+<h3>The Problem</h3>
+<p>Engineers write a loop that makes a network call per item and wonder why 1,000 items take 100 seconds. Without internalized latency numbers you can't smell this bug in review; you find it in production, at 3 a.m., with a customer on the phone.</p>
+<h3>The Concept</h3>
+<p>Here is the canonical table, popularized by Jeff Dean (Google, ~2009 LADIS talk) — "Numbers Everyone Should Know":</p>
+<pre><code>L1 cache reference ......................... 0.5 ns
+Branch mispredict ............................ 5 ns
+L2 cache reference ........................... 7 ns
+Mutex lock/unlock ........................... 25 ns
+Main memory reference ...................... 100 ns
+Compress 1K bytes with Snappy ............ 3,000 ns =   3 µs
+Send 1K bytes over 1 Gbps network ....... 10,000 ns =  10 µs
+Read 4K randomly from SSD .............. 150,000 ns = 150 µs
+Read 1 MB sequentially from memory ..... 250,000 ns = 250 µs
+Round trip within same datacenter ...... 500,000 ns = 500 µs
+Read 1 MB sequentially from SSD ...... 1,000,000 ns =   1 ms
+Disk seek ........................... 10,000,000 ns =  10 ms
+Read 1 MB sequentially from disk .... 20,000,000 ns =  20 ms
+Send packet CA → Netherlands → CA .. 150,000,000 ns = 150 ms</code></pre>
+<p>Human-scale analogy: if an L1 hit is 1 second, main memory is ~3 minutes, an SSD random read is ~3.5 days, a disk seek is ~7 months, and the transatlantic round trip is ~10 years.</p>
+<h3>Build It</h3>
+<p>Don't memorize fourteen numbers; derive from five anchors:</p>
+<ol><li>Memory reference: <b>100 ns</b>. 2. Datacenter round trip: <b>0.5 ms</b>. 3. SSD random read: <b>~100 µs</b>. 4. Disk seek: <b>10 ms</b>. 5. Cross-continent round trip: <b>150 ms</b>.</li></ol>
+<p>Everything else is "a bit more" or "a bit less" than an anchor. Then practice the killer question: <i>how many of X fit in one Y?</i> E.g., ~5,000 memory references fit in one datacenter round trip — so batching beats chattiness, always.</p>
+<h3>Use It</h3>
+<p>These numbers explain entire product categories: caches exist because memory beats disk by 10³–10⁵; CDNs exist because 150 ms cross-planet beats nothing but 10 ms nearby beats it; batching APIs exist because per-call overhead dwarfs per-byte cost. When someone proposes "just call the service per row," you now have the reflex to say "that's 500 µs × N, so no."</p>
+<h3>War Story</h3>
+<p>Jeff Dean presented these numbers in his 2009 LADIS keynote on building large distributed systems at Google, and they became folklore — ported into interactive "latency numbers every programmer should know" charts that update yearly. The durable insight isn't the digits (SSDs got faster); it's the <i>ratios</i>, which have stayed brutal for decades.</p>
+<h3>Checkpoint</h3>
+<ul><li>Roughly how many main-memory references fit inside one same-datacenter round trip?</li><li>Why is reading 1 MB sequentially from disk (20 ms) only 2x a single disk seek (10 ms), and what does that imply about I/O patterns?</li><li>Your API calls a downstream service once per item for 200 items. Using the table, estimate the added latency in the same datacenter.</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Back-of-the-envelope math</h2>
+<p><b>MOTTO:</b> Being wrong by 2x is fine; being wrong by 1000x is a career event.</p>
+<h3>The Problem</h3>
+<p>"Will this fit in one Postgres instance?" "Do we need a CDN?" You cannot answer with vibes, and you don't have time for a prototype. Estimation is the cheapest design tool ever invented, and most engineers never practice it.</p>
+<h3>The Concept</h3>
+<p>The trick (Fermi estimation) is decomposition: break a scary unknown into small knowables, multiply, and keep only orders of magnitude. Round aggressively — 86,400 seconds/day is 10⁵, a month is ~2.5 million seconds, a year is ~30 million. Errors partially cancel; your answer lands within 2–3x, which is enough to pick an architecture.</p>
+<h3>Build It</h3>
+<p>Worked example — a Twitter-like app:</p>
+<pre><code>Assumptions (state them out loud, always):
+  300M monthly users, 50% daily     -&gt; 150M DAU
+  Each reads 100 tweets/day, writes 0.5
+
+Write QPS:  150M × 0.5 / 10^5 s  ≈ 750 writes/s   (peak ~2x: 1,500)
+Read QPS:   150M × 100 / 10^5 s  ≈ 150K reads/s   (peak ~300K)
+Read:write ratio ≈ 200:1  -&gt;  this is a CACHING problem, not a DB problem
+
+Storage: 75M tweets/day × ~300 bytes (text+metadata) ≈ 22 GB/day text
+  10% have media @ ~1 MB  -&gt;  7.5M × 1 MB ≈ 7.5 TB/day media
+  5 years: text ≈ 40 TB (fine), media ≈ 14 PB (object store + CDN, obviously)</code></pre>
+<p>Three design decisions fell out of arithmetic: cache-heavy read path, ordinary DB for text, blob storage + CDN for media. That's the whole point.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Estimate</th><th>Rule of thumb</th></tr></thead><tbody><tr><td>Seconds per day</td><td>~10⁵ (86,400)</td></tr><tr><td>QPS from DAU</td><td>DAU × actions/day ÷ 10⁵; peak = 2–5x average</td></tr><tr><td>One commodity server</td><td>~10K–100K simple QPS, ~10⁴ connections</td></tr><tr><td>One modern disk</td><td>~10s of TB; one DB node comfortable at low TBs</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Enrico Fermi, watching the 1945 Trinity nuclear test, dropped scraps of paper as the blast wave passed and estimated the yield at ~10 kilotons from how far they blew — remarkably close to the measured ~20 kt, computed from torn paper and arithmetic. Same skill, lower stakes, every design review.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is a 200:1 read/write ratio an argument for caching rather than for a bigger database?</li><li>Estimate storage per year for 1M users each uploading one 2 MB photo per week.</li><li>What's the peak-QPS multiplier you should assume over average, and why state assumptions explicitly?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Powers of two, units, and napkin conversions</h2>
+<p><b>MOTTO:</b> 2¹⁰ ≈ 10³ is the exchange rate between computer money and human money.</p>
+<h3>The Problem</h3>
+<p>Storage vendors sell TB (10¹²), your OS reports TiB (2⁴⁰), networks measure bits per second, disks measure bytes, and a "million ops" could mean anything. Unit confusion silently corrupts every estimate you make — an 8x error (bits vs bytes) hides comfortably inside sloppy notation.</p>
+<h3>The Concept</h3>
+<p>One conversion rules them all: <b>2¹⁰ = 1,024 ≈ 10³</b>. So 2²⁰ ≈ a million (Mi), 2³⁰ ≈ a billion (Gi), 2⁴⁰ ≈ a trillion (Ti) — each off by only 2.4% per step. And burn this in: <b>network speeds are bits, storage is bytes</b> — divide link speeds by 8 (call it 10 for napkin math) to get bytes.</p>
+<pre><code>2^10 = 1,024        ≈ 10^3  (Ki ~ thousand)
+2^20 = 1,048,576    ≈ 10^6  (Mi ~ million)
+2^30 ≈ 1.07 × 10^9  ≈ 10^9  (Gi ~ billion)
+2^32 = 4,294,967,296  &lt;- the wall every 32-bit counter hits
+1 Gbps ≈ 125 MB/s   (÷8; use ~100 MB/s on a napkin)</code></pre>
+<h3>Build It</h3>
+<p>Napkin toolkit:</p>
+<ol><li><b>Sizes:</b> char 1 B, int64/pointer 8 B, UUID 16 B, typical DB row 100 B–1 KB, typical JSON API response 1–10 KB, image ~100 KB–5 MB.</li><li><b>Bandwidth sanity:</b> moving 1 TB over 1 Gbps ≈ 10¹² B ÷ 10⁸ B/s ≈ 10⁴ s ≈ 3 hours. Over the public internet, longer. Hence: shipping disks is sometimes a legitimate protocol.</li><li><b>Counter limits:</b> int32 overflows at ~2.1 billion (signed) / ~4.3 billion (unsigned); if any counter in your design can plausibly reach billions, use 64 bits <i>now</i>.</li></ol>
+<h3>Use It</h3>
+<p>These conversions decide real things: whether replication traffic saturates a NIC, whether a dataset fits in a 256 GiB RAM machine, whether your ID space survives a decade. AWS Snowball — literally trucking disks — exists because the bandwidth arithmetic above is often unflattering.</p>
+<h3>War Story</h3>
+<p>In 2014, "Gangnam Style" exceeded 2,147,483,647 views and maxed out YouTube's signed 32-bit view counter, forcing an upgrade to 64-bit. The same year, the internet's BGP routing table crossed 512K routes and overflowed the TCAM memory defaults in older routers ("512K day"), causing outages worldwide. Powers of two are not trivia; they're walls.</p>
+<h3>Checkpoint</h3>
+<ul><li>Roughly how long does 10 TB take to transfer over a 1 Gbps link, and what does that suggest about large migrations?</li><li>Why is confusing Gb with GB an 8x error, and where does it typically sneak into designs?</li><li>At what value does a signed 32-bit counter overflow, and name two real systems that hit such a limit.</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Functional vs non-functional requirements</h2>
+<p><b>MOTTO:</b> Functional requirements say what the system does; non-functional requirements decide what it costs and how it dies.</p>
+<h3>The Problem</h3>
+<p>Two teams build "a checkout service." One serves a boutique with 100 orders/day; the other serves a flash sale with 100K orders/minute. Identical functional spec, unrecognizably different architectures. Skip the non-functional conversation and you'll build the wrong system with perfect fidelity.</p>
+<h3>The Concept</h3>
+<p>Functional requirements are the verbs users can name: post, search, pay. Non-functional requirements (NFRs) are the adverbs: how <i>fast</i>, how <i>many</i>, how <i>available</i>, how <i>consistent</i>, how <i>durable</i>, how <i>secure</i>. Think of a restaurant: the menu is functional; "serves 400 covers on Valentine's Day without the kitchen collapsing" is non-functional — and it, not the menu, dictates the kitchen's design.</p>
+<pre><code>Functional:      &quot;Users can upload photos&quot;        -&gt; features
+Non-functional:  &quot;p99 upload &lt; 2s at 10K conc.&quot;   -&gt; architecture
+                 &quot;99.99% available&quot;                -&gt; redundancy, $$$
+                 &quot;photos never lost&quot;               -&gt; replication, backups
+                 &quot;GDPR delete within 30 days&quot;      -&gt; data layout</code></pre>
+<h3>Build It</h3>
+<p>Turn vague NFRs into numbers, or they're decoration:</p>
+<ol><li><b>Availability:</b> count the nines. 99.9% = ~8.8 h down/year; 99.99% = ~53 min; 99.999% = ~5 min. Each nine roughly multiplies cost and complexity.</li><li><b>Latency:</b> specify percentiles, not averages — "p50 &lt; 100 ms, p99 &lt; 500 ms." Averages hide the users who are having a terrible time.</li><li><b>Scale:</b> current QPS, expected growth, peak multiplier.</li><li><b>Durability/consistency:</b> can we lose acknowledged writes (no)? Can reads be a few seconds stale (often yes — say so explicitly).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>NFR</th><th>Typical mechanism</th><th>The bill</th></tr></thead><tbody><tr><td>High availability</td><td>Replication, failover, multi-AZ</td><td>2–3x infra, ops complexity</td></tr><tr><td>Low latency</td><td>Caching, CDNs, denormalization</td><td>Staleness, cache invalidation pain</td></tr><tr><td>Durability</td><td>Multi-copy writes, backups</td><td>Write latency, storage cost</td></tr><tr><td>Strong consistency</td><td>Consensus, transactions</td><td>Latency, reduced availability in partitions</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Healthcare.gov launched in October 2013 functionally complete and non-functionally doomed: designed and tested for a fraction of its launch traffic, it collapsed on day one — reportedly only a handful of users enrolled successfully that first day — and required a months-long rescue effort. The features worked; the system didn't.</p>
+<h3>Checkpoint</h3>
+<ul><li>Convert 99.95% availability into approximate allowed downtime per year.</li><li>Why must latency requirements be stated as percentiles rather than averages?</li><li>Give one functional and three non-functional requirements for a ride-hailing app's "request a ride" flow.</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> How to read (and draw) architecture diagrams</h2>
+<p><b>MOTTO:</b> A diagram is a claim about reality — make claims precise enough to be wrong.</p>
+<h3>The Problem</h3>
+<p>Most architecture diagrams are wallpaper: forty boxes, undirected lines, three inconsistent meanings for the same arrow, no indication of what happens when anything fails. They impress in slide decks and answer no engineering questions. You need diagrams that can be <i>interrogated</i>.</p>
+<h3>The Concept</h3>
+<p>A good diagram fixes three things: <b>level of zoom</b>, <b>arrow semantics</b>, and <b>the story of one request</b>. The C4 model (Simon Brown) formalizes zoom: Context (system + external actors) → Container (deployable units) → Component (modules inside one container). Never mix levels in one drawing — that's how you get a Kubernetes pod next to "The Internet."</p>
+<pre><code> Level 1 (Context):   [User] -&gt; [Our System] -&gt; [Stripe]
+ Level 2 (Container):
+   [Browser] -&gt; [CDN] -&gt; [API GW] -&gt; [App service] -&gt; [Postgres]
+                                          |
+                                          +--&gt; [Redis cache]
+                                          +--&gt; [Queue] -&gt; [Worker]
+ Arrows: solid = sync request/response, dashed = async, label = protocol</code></pre>
+<h3>Build It</h3>
+<ol><li>Pick one zoom level and one primary user journey.</li><li>Draw the happy path left-to-right (or top-to-bottom), numbered: 1 request in, 2 cache check, 3 DB read...</li><li>Give arrows direction (who initiates) and labels (protocol + sync/async).</li><li>Mark state: cylinders or a tag on anything that stores data.</li><li>Read-test it: can a stranger answer "what happens when the cache dies?" from the drawing alone? If not, annotate.</li></ol>
+<p>Reading someone else's diagram, run the same test in reverse: find the entry point, trace one request, find the stateful boxes, ask what each arrow does on failure.</p>
+<h3>Use It</h3>
+<p>Tools: whiteboards and paper (best for thinking), Excalidraw/draw.io (best for sharing), Mermaid/PlantUML (diagrams-as-code, live in the repo, survive refactors). Sequence diagrams complement box diagrams whenever ordering matters — auth flows, payment flows, anything with a race.</p>
+<h3>War Story</h3>
+<p>When Facebook acquired WhatsApp in 2014, WhatsApp served roughly 450 million users with about 32 engineers — an architecture famously simple enough (Erlang, few components, aggressively boring choices) that it <i>fit on a whiteboard</i>. Diagram simplicity wasn't a documentation nicety; it was the operational strategy.</p>
+<h3>Checkpoint</h3>
+<ul><li>What are the three C4 zoom levels mentioned, and why shouldn't one diagram mix them?</li><li>What two properties should every arrow in a serious diagram carry?</li><li>What's the "read-test" that tells you a diagram is complete enough?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Your lab setup: Docker, tooling, and the playground</h2>
+<p><b>MOTTO:</b> You don't understand a system until you've broken your own copy of it.</p>
+<h3>The Problem</h3>
+<p>System design rots into trivia unless you can <i>run</i> the systems — start a real Postgres, watch a real cache hit ratio, kill a real container mid-request. Installing databases natively turns your laptop into a graveyard of conflicting versions. We need disposable infrastructure.</p>
+<h3>The Concept</h3>
+<p>Docker gives every experiment its own sealed box: an image is a frozen filesystem-plus-config, a container is a running instance, and Compose orchestrates several as one throwaway "datacenter on your laptop." Analogy: containers are shipping containers — standard shape outside, anything inside, trivially loaded, stacked, and discarded.</p>
+<pre><code> your laptop
+ +---------------------------------------------+
+ |  docker compose up                          |
+ |  [postgres:16]  [redis:7]  [nginx]  [app]   |
+ |      5432         6379       8080           |
+ |  docker compose down  -&gt;  all gone, no mess |
+ +---------------------------------------------+</code></pre>
+<h3>Build It</h3>
+<ol><li>Install Docker Desktop (macOS/Windows) or Docker Engine (Linux). Verify: <code>docker run hello-world</code>.</li><li>Create the playground:</li></ol>
+<pre><code># playground/docker-compose.yml
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: lab }
+    ports: [&quot;5432:5432&quot;]
+  cache:
+    image: redis:7
+    ports: [&quot;6379:6379&quot;]</code></pre>
+<ol><li><code>docker compose up -d</code>, then poke both: <code>docker exec -it playground-db-1 psql -U postgres</code>, <code>docker exec -it playground-cache-1 redis-cli ping</code>.</li><li>Install the observation kit: <code>curl</code>, <code>dig</code>, <code>python3</code>, and a load generator (<code>hey</code> or <code>wrk</code>). Later phases assume these.</li><li>Practice destruction: <code>docker kill</code> a container mid-<code>psql</code> and observe the failure from the client side. That reflex — <i>induce the failure, watch the symptom</i> — is the whole lab methodology.</li></ol>
+<h3>Use It</h3>
+<p>Everything in this course runs here: sockets labs (Phase 2) against containerized servers, cache experiments against that Redis, replication labs with two Postgres containers. Same workflow the industry uses — Compose for local, Kubernetes for production — so the muscle memory transfers.</p>
+<h3>War Story</h3>
+<p>Docker was unveiled in a five-minute lightning talk by Solomon Hykes at PyCon 2013, as a side project of a struggling PaaS company called dotCloud. Within a few years it had reshaped how the entire industry ships software — a useful reminder that packaging and reproducibility are not "ops details"; they're leverage.</p>
+<h3>Checkpoint</h3>
+<ul><li>What's the difference between a Docker image and a container?</li><li>Why do we prefer containers over native installs for lab databases?</li><li>What does <code>docker compose down</code> guarantee about your machine's state, and why does that matter for experiments?</li></ul>
+  </article>
+  <div class="pager">
+    
+    <span class="spacer"></span>
+    <a href="01-hardware-and-os.html">Phase 01 ⚙️ →</a>
+  </div>
+</div>
+</body>
+</html>

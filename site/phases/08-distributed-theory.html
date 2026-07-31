@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distributed Systems Theory — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 08</div>
+  <h1><span class="pnum">08</span> 🎲 Distributed Systems Theory</h1>
+  <div class="tagline">Where clocks lie, networks fail, and consensus is expensive.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>The eight fallacies of distributed computing</a>
+<a href="#lesson-02"><span class="lnum">02</span>Time, clocks, and the ordering of events</a>
+<a href="#lesson-03"><span class="lnum">03</span>Lamport clocks and vector clocks</a>
+<a href="#lesson-04"><span class="lnum">04</span>The CAP theorem (what it actually says)</a>
+<a href="#lesson-05"><span class="lnum">05</span>PACELC: CAP&#x27;s more useful cousin</a>
+<a href="#lesson-06"><span class="lnum">06</span>Consistency models: linearizability to eventual</a>
+<a href="#lesson-07"><span class="lnum">07</span>Quorums: majority rules</a>
+<a href="#lesson-08"><span class="lnum">08</span>Leader election</a>
+<a href="#lesson-09"><span class="lnum">09</span>Paxos (gently)</a>
+<a href="#lesson-10"><span class="lnum">10</span>Raft: consensus you can understand</a>
+<a href="#lesson-11"><span class="lnum">11</span>Two-phase and three-phase commit</a>
+<a href="#lesson-12"><span class="lnum">12</span>Sagas: transactions without transactions</a>
+<a href="#lesson-13"><span class="lnum">13</span>CRDTs: merge without conflict</a>
+<a href="#lesson-14"><span class="lnum">14</span>Gossip protocols</a>
+  </div>
+  <article>
+<blockquote>Where clocks lie, networks fail, and consensus is expensive.</blockquote>
+<p>A distributed system is what you get when your program's parts can fail independently, can't share a clock, and talk over a network that drops, delays, and duplicates whatever it feels like. Everything in this phase exists because those three facts are non-negotiable. The good news: fifty years of brilliant people have mapped this minefield, and the maps — Lamport clocks, CAP, quorums, Raft, CRDTs — are learnable in an afternoon each. The bad news: after this phase you'll never trust a timestamp again.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> The Eight Fallacies of Distributed Computing</h2>
+<p><b>MOTTO:</b> Every distributed systems outage is one of these eight assumptions collecting its debt.</p>
+<h3>The Problem</h3>
+<p>Code that works flawlessly on localhost dies in production, because localhost quietly granted you eight miracles: instant, free, reliable, secure delivery on a network that never changes. The moment two machines are involved, all eight miracles are revoked — but your code still assumes them.</p>
+<h3>The Concept</h3>
+<p>The fallacies, compiled at Sun Microsystems (attributed to Peter Deutsch and colleagues, with James Gosling adding to the list):</p>
+<pre><code>1. The network is reliable        5. Topology doesn&#x27;t change
+2. Latency is zero                6. There is one administrator
+3. Bandwidth is infinite          7. Transport cost is zero
+4. The network is secure          8. The network is homogeneous</code></pre>
+<p>Think of the network as postal mail, not a phone call: letters get lost, arrive late, arrive out of order, arrive twice — and you can't tell "lost" from "still in transit."</p>
+<h3>Build It</h3>
+<p>For each fallacy, an antidote — this is your production checklist:</p>
+<ol><li><i>Reliable</i> → timeouts on every call, retries with jitter, idempotency.</li><li><i>Zero latency</i> → budget latency per hop; batch; avoid chatty N+1 call patterns.</li><li><i>Infinite bandwidth</i> → paginate, compress, don't ship the whole object graph.</li><li><i>Secure</i> → TLS everywhere, authenticate service-to-service (mTLS), zero trust.</li><li><i>Static topology</i> → service discovery, not hardcoded IPs; handle re-resolution.</li><li><i>One admin</i> → observability others can use; versioned APIs; graceful deprecation.</li><li><i>Free transport</i> → measure serialization cost; egress bills are real.</li><li><i>Homogeneous</i> → wire-level contracts (JSON/proto), never in-memory assumptions.</li></ol>
+<h3>Use It</h3>
+<p>These map directly to tooling: retries/timeouts → resilience libraries and service meshes (Envoy, Istio); discovery → DNS, Consul, Kubernetes services; contracts → protobuf/OpenAPI. Interview tip: when asked "what could go wrong here?", the eight fallacies <i>are</i> the answer key.</p>
+<h3>War Story</h3>
+<p>The list crystallized at Sun Microsystems in the 1990s — fitting, since Sun's slogan was "The Network is the Computer." The people selling the networked future were the same ones documenting exactly how it would betray you.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can't a sender distinguish a lost request from a lost reply, and which fallacy does that break?</li><li>Which two fallacies do retries-without-idempotency violate simultaneously?</li><li>Your service calls another service 40 times to render one page. Which fallacies is that betting on?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Time, Clocks, and the Ordering of Events</h2>
+<p><b>MOTTO:</b> In a distributed system, "what time is it?" is an opinion, not a fact.</p>
+<h3>The Problem</h3>
+<p>Server A logs a write at 10:00:00.100; server B logs one at 10:00:00.050. Did B's happen first? Unknowable from timestamps alone: physical clocks drift, NTP corrects them in jumps (sometimes <i>backwards</i>), and typical NTP sync leaves machines milliseconds to tens of milliseconds apart — an eternity when requests take microseconds. Last-write-wins based on wall clocks silently drops data.</p>
+<h3>The Concept</h3>
+<p>Abandon "at the same time" and keep only what's knowable: <b>causality</b>. Event A <i>happened-before</i> B (written A → B) if: same process and A came first; or A is a send and B is the matching receive; or transitivity. Events with no path between them are <b>concurrent</b> — neither happened first, and no clock can tell you otherwise.</p>
+<pre><code> P1: ──a──────b───────────▶      a → b (same process)
+              │ msg              b → c (send → receive)
+ P2: ─────────▼──c───d───▶      a → d (transitivity)
+ P3: ────e───────────────▶      e ∥ everything (concurrent)</code></pre>
+<p>It's mail between pen pals: you can't know what "now" is at your friend's house, but if their letter <i>replies to yours</i>, yours definitely came first.</p>
+<h3>Build It</h3>
+<ol><li>Monotonic vs wall clocks: use <code>time.monotonic()</code> for durations (it never jumps back), wall clocks only for humans.</li><li>To order events, don't compare timestamps — track causality with logical clocks (next lesson).</li><li>If you must use physical time, bound the uncertainty: Google's Spanner uses TrueTime (GPS + atomic clocks) to get an error interval ε, and <i>waits out</i> the uncertainty before committing — buying external consistency with hardware and latency.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Approach</th><th>Gives you</th><th>Cost</th></tr></thead><tbody><tr><td>Wall clock (NTP)</td><td>Human-readable, roughly ordered</td><td>Drift, jumps, false ordering</td></tr><tr><td>Monotonic clock</td><td>Correct durations locally</td><td>Meaningless across machines</td></tr><tr><td>Logical clocks</td><td>Causal order</td><td>No relation to real time</td></tr><tr><td>TrueTime/HLC</td><td>Bounded real-time order</td><td>Special hardware / hybrid schemes</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Leslie Lamport's 1978 paper "Time, Clocks, and the Ordering of Events in a Distributed System" is arguably the founding document of the field — it defined happened-before, introduced logical clocks, and showed how to build a total order without synchronized clocks. It's one of the most cited papers in computer science, and Lamport received the 2013 Turing Award with this work front and center.</p>
+<h3>Checkpoint</h3>
+<ul><li>Define happened-before using its three rules.</li><li>Why is "concurrent" a statement about information flow rather than about wall-clock simultaneity?</li><li>Why must durations be measured with a monotonic clock rather than a wall clock?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Lamport Clocks and Vector Clocks</h2>
+<p><b>MOTTO:</b> Lamport clocks respect causality; vector clocks detect it.</p>
+<h3>The Problem</h3>
+<p>You've accepted that wall clocks can't order events. You still need <i>some</i> numbering such that if A caused B, A's number is smaller — and ideally, a way to <i>detect</i> when two updates were concurrent so you can flag the conflict instead of silently losing one.</p>
+<h3>The Concept</h3>
+<p><b>Lamport clock</b>: every process keeps one counter. Increment on each local event; stamp messages; on receive, set <code>counter = max(local, received) + 1</code>. Guarantee: <code>A → B ⇒ L(A) &lt; L(B)</code>. But the converse fails — smaller number does NOT imply causality. Lamport clocks can't spot concurrency.</p>
+<p><b>Vector clock</b>: keep a counter <i>per process</i>, as a vector. Now comparison is component-wise:</p>
+<pre><code> P1: [1,0,0] ──▶ [2,0,0] ──send──┐
+ P2: [0,1,0] ────────────receive─▶ [2,2,0]
+ P3: ────────── [0,0,1]
+
+ [2,0,0] &lt; [2,2,0]              → causally before
+ [2,2,0] vs [0,0,1]: neither ≤  → CONCURRENT (conflict!)</code></pre>
+<p><code>A → B</code> iff <code>V(A) ≤ V(B)</code> element-wise (and not equal). Incomparable vectors = concurrent events. That's the superpower Lamport clocks lack.</p>
+<h3>Build It</h3>
+<pre><code>class VectorClock:
+    def __init__(self, node, n):
+        self.node, self.v = node, [0] * n
+    def tick(self):                       # local event or before send
+        self.v[self.node] += 1
+    def merge(self, other):               # on receive
+        self.v = [max(a, b) for a, b in zip(self.v, other)]
+        self.tick()
+
+def compare(a, b):
+    le, ge = all(x &lt;= y for x, y in zip(a, b)), all(x &gt;= y for x, y in zip(a, b))
+    if le and not ge: return &quot;a -&gt; b&quot;
+    if ge and not le: return &quot;b -&gt; a&quot;
+    return &quot;equal&quot; if le else &quot;concurrent&quot;</code></pre>
+<p>Cost: O(processes) per timestamp — painful with many clients. Mitigations: dotted version vectors, pruning, or per-key server-side vectors.</p>
+<h3>Use It</h3>
+<p>Amazon's Dynamo (2007 paper) used vector clocks to detect conflicting shopping-cart writes and hand <i>both</i> versions back to the application to merge. Riak followed. DynamoDB (the product) went simpler — last-write-wins — trading correctness for operational simplicity. Lamport timestamps live on inside consensus protocols and as tiebreakers (timestamp, node-id) for total ordering.</p>
+<h3>War Story</h3>
+<p>The Dynamo paper (DeCandia et al., SOSP 2007) reported that in production, 99.94% of reads saw a single version — vector clocks were resolving almost everything automatically, with divergence rare but real. The famous shopping-cart merge rule ("union the items") meant the worst case was a deleted item reappearing — an annoyance deliberately chosen over losing an added item.</p>
+<h3>Checkpoint</h3>
+<ul><li>Lamport: <code>L(A) &lt; L(B)</code>. What exactly can you conclude, and what can't you?</li><li>Show two vector clocks that are incomparable and state what that means physically.</li><li>Why do vector clocks scale poorly with client count, and name one mitigation.</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> The CAP Theorem</h2>
+<p><b>MOTTO:</b> When the network splits, you choose: refuse to answer, or risk being wrong — there is no door number three.</p>
+<h3>The Problem</h3>
+<p>Marketing says the database is "highly available AND strongly consistent." Then a switch dies, your cluster splits into two halves that can't talk, and a client writes to one side while another reads from the other. Something has to give — and CAP says precisely what.</p>
+<h3>The Concept</h3>
+<p>CAP (Brewer's conjecture 2000; proved by Gilbert &amp; Lynch 2002): a distributed system cannot simultaneously provide all three of —</p>
+<ul><li><b>C</b>onsistency: every read sees the latest write (linearizability),</li><li><b>A</b>vailability: every request to a non-failed node gets a non-error response,</li><li><b>P</b>artition tolerance: the system keeps functioning when messages between nodes are lost.</li></ul>
+<pre><code>   [N1] ──────╳────── [N2]      client → N2: read(x)
+    x=5    partition    x=5     meanwhile N1 accepted write x=7
+                                N2 must either:
+                                  answer x=5  → gave up C  (AP)
+                                  refuse/wait → gave up A  (CP)</code></pre>
+<p>Common misreadings, debunked:</p>
+<ol><li><b>"Pick 2 of 3."</b> Wrong framing — partitions aren't optional in a distributed system. The real choice is: <i>when</i> a partition happens, C or A?</li><li><b>"CA systems exist."</b> Only by not being partition-tolerant, i.e., single-node (or pretending).</li><li><b>C ≠ ACID consistency</b> (that's about integrity constraints), and CAP-A ≠ "five nines" (it's a formal liveness property, not uptime math).</li><li>CAP says nothing about behavior when the network is healthy — that's PACELC's job (next lesson).</li></ol>
+<h3>Build It</h3>
+<ol><li>Decide per <i>operation</i>, not per system: your product catalog read can be AP; your payment authorization is CP.</li><li>CP mechanics: majority quorums — the minority side of a split refuses writes (unavailable, correct).</li><li>AP mechanics: all sides accept writes, versions diverge, reconcile after healing (vector clocks, CRDTs, LWW).</li><li>Write down the reconciliation story <i>before</i> choosing AP. "We'll figure out conflicts later" is how data disappears.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>During partition</th><th>Flavor</th></tr></thead><tbody><tr><td>ZooKeeper, etcd</td><td>Minority side stops serving</td><td>CP</td></tr><tr><td>Dynamo-style (Cassandra, Riak)</td><td>Everyone keeps answering</td><td>AP (tunable)</td></tr><tr><td>Single-leader RDBMS + async replica</td><td>Failover gamble</td><td>Configurable pain</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Eric Brewer posed the conjecture in his PODC 2000 keynote; Seth Gilbert and Nancy Lynch proved it formally in 2002. Twelve years later Brewer himself wrote "CAP Twelve Years Later: How the 'Rules' Have Changed" (IEEE Computer, 2012), pushing back on the "2 of 3" meme he'd accidentally spawned: partitions are rare, the C/A choice is per-operation, and recovery after partition is where the real engineering lives.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is "choosing P" not actually a choice for a multi-node system?</li><li>During a partition, describe exactly what a CP system and an AP system each do with a write to the minority side.</li><li>Name two things CAP does <i>not</i> tell you about a system's behavior.</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> PACELC: CAP's More Useful Cousin</h2>
+<p><b>MOTTO:</b> Partitions are rare; the latency-vs-consistency tax is charged on every single request.</p>
+<h3>The Problem</h3>
+<p>CAP only speaks during partitions — which might be minutes per year. It says nothing about the tradeoff you pay 24/7: to make a write "consistent," replicas must coordinate <i>before</i> acknowledging, and coordination is latency. Your daily design decisions live in the case CAP ignores.</p>
+<h3>The Concept</h3>
+<p>Abadi's PACELC (2010/2012): <b>if Partition, choose Availability or Consistency; Else (normal operation), choose Latency or Consistency.</b></p>
+<pre><code>                 ┌── Partition? ──┐
+              yes│                │no
+                 ▼                ▼
+            A  or  C         L  or  C
+       (CAP&#x27;s question)   (the everyday question:
+                           wait for replicas = C
+                           ack immediately   = L)</code></pre>
+<p>Analogy: a group chat decision. Wait for everyone to reply before acting (consistent, slow) or act after the first thumbs-up (fast, maybe someone objects later). You make that call on every message, not just when someone's phone dies.</p>
+<h3>Build It</h3>
+<ol><li>Classify your system: PA/EL, PA/EC, PC/EL, or PC/EC.</li><li>The EL/EC knob is usually literal config: Cassandra consistency level (<code>ONE</code> = EL, <code>QUORUM</code> = leaning EC), Postgres <code>synchronous_commit</code> / synchronous replicas, DynamoDB eventually-consistent vs strongly-consistent reads (the latter costs double and has higher latency).</li><li>Estimate the cost of EC: synchronous replication adds ≥ one round trip to your furthest required replica. Cross-region, that's 50–150ms <i>per write</i>. Decide if the read-your-writes guarantee is worth it per use case.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>PACELC</th><th>Meaning</th></tr></thead><tbody><tr><td>Dynamo/Cassandra (default)</td><td>PA/EL</td><td>Available in splits; fast normally</td></tr><tr><td>Fully replicated 2PC-style</td><td>PC/EC</td><td>Correct always, slow always</td></tr><tr><td>MongoDB (majority writes)</td><td>PC/EC-leaning</td><td>Consistency prioritized</td></tr><tr><td>Spanner</td><td>PC/EC</td><td>Pays TrueTime wait for external consistency</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Daniel Abadi introduced PACELC in a 2010 blog post and formalized it in "Consistency Tradeoffs in Modern Distributed Database System Design" (IEEE Computer, 2012), largely out of frustration that CAP was being used to explain design decisions it logically couldn't — Dynamo's <i>normal-case</i> eventual consistency is a latency choice, not a partition choice.</p>
+<h3>Checkpoint</h3>
+<ul><li>What question does PACELC answer that CAP structurally cannot?</li><li>Classify a single-leader DB with asynchronous replicas that fails over on partition.</li><li>Why does the EC choice get more expensive as replicas spread across regions?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Consistency Models: Linearizability to Eventual</h2>
+<p><b>MOTTO:</b> A consistency model is a contract about which lies the system is allowed to tell you.</p>
+<h3>The Problem</h3>
+<p>"Is it consistent?" is not a yes/no question. Between "every read worldwide sees the latest write instantly" and "reads return whatever, eventually it converges" lies a spectrum — and each step down the spectrum buys latency and availability by permitting specific, well-defined anomalies. You need to know exactly which anomalies you just signed up for.</p>
+<h3>The Concept</h3>
+<p>The ladder, strongest to weakest:</p>
+<pre><code> linearizable   &quot;one copy, real-time&quot;— once a write completes, ALL later
+      │          reads (by wall clock) see it. The system behaves as if
+      │          there&#x27;s a single copy and ops happen atomically.
+ sequential     everyone agrees on ONE order of all ops, consistent with
+      │          each process&#x27;s own program order — but that order may
+      │          lag real time. (All spectators see the same replay.)
+ causal         only causally-related ops must be seen in order;
+      │          concurrent ops may appear in different orders to
+      │          different observers. (Reply never appears before post.)
+ eventual       stop writing, wait long enough, replicas converge.
+                 No promises about the meantime.</code></pre>
+<p>Analogy: linearizable = everyone watching the match live; sequential = everyone watching the <i>same</i> replay, possibly delayed; causal = different edits of the highlights, but the goal always precedes the celebration; eventual = everyone's feed eventually shows the final score.</p>
+<h3>Build It</h3>
+<ol><li>Linearizable read of a register: route through a single leader (and confirm leadership!) or read from a quorum and repair — you pay coordination on the critical path.</li><li>Causal: tag operations with vector clocks / dependency sets; a replica delays applying an op until its causal dependencies are applied.</li><li>Eventual: apply everything on arrival; use anti-entropy (gossip, read repair, Merkle trees) to converge; resolve conflicts with LWW or CRDTs.</li><li>Also meet the <i>client-centric</i> session guarantees: read-your-writes, monotonic reads — often achieved by pinning a session to a replica or tracking "read at least version X" tokens.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Model</th><th>Anomaly you accepted</th><th>Typical home</th></tr></thead><tbody><tr><td>Linearizable</td><td>None (pay latency)</td><td>etcd, ZooKeeper, Spanner</td></tr><tr><td>Sequential</td><td>Global lag vs real time</td><td>Some replicated state machines</td></tr><tr><td>Causal</td><td>Concurrent ops reorder</td><td>COPS-style stores, some CRDT systems</td></tr><tr><td>Eventual</td><td>Stale reads, transient disagreement</td><td>Dynamo-style, DNS, caches</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Herlihy and Wing defined linearizability in 1990 ("Linearizability: A Correctness Condition for Concurrent Objects"); Lamport had defined sequential consistency back in 1979. In modern practice, Kyle Kingsbury's Jepsen project made the ladder famous by testing real databases against their claimed models — and repeatedly catching marketed "strong consistency" that folded under partition tests.</p>
+<h3>Checkpoint</h3>
+<ul><li>What real-time guarantee separates linearizability from sequential consistency?</li><li>Give a user-visible anomaly permitted by eventual consistency but forbidden by causal.</li><li>Why does "read your own writes" not require linearizability, and how can a system provide it cheaply?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Quorums: Majority Rules (W + R &gt; N)</h2>
+<p><b>MOTTO:</b> If writers and readers must overlap, someone in the room always knows the truth.</p>
+<h3>The Problem</h3>
+<p>You replicate data to N nodes for durability. Wait for all N to ack every write? One slow node stalls everything. Wait for just one? A read hitting a different node returns stale data. You need a middle path with a dial.</p>
+<h3>The Concept</h3>
+<p>Pigeonhole principle as a database feature. With N replicas, require W acks per write and R responses per read. If <b>W + R &gt; N</b>, every read set <i>intersects</i> every write set — at least one node in your read responses has the latest write. Pick the value with the highest version.</p>
+<pre><code> N=5, W=3, R=3:
+ write x=7 → {n1, n2, n3}          read → {n3, n4, n5}
+                     └── n3 is in both: read sees x=7 ✓
+ (any 3 + any 3 out of 5 MUST share a node: 3+3 &gt; 5)</code></pre>
+<ul><li>W+R &gt; N: read-sees-latest-write overlap (still not full linearizability without care — see caveats).</li><li>W &gt; N/2: two concurrent writes can't both get quorums — prevents split-brain acceptance.</li></ul>
+<h3>Build It</h3>
+<ol><li>Version every value (timestamp or vector clock).</li><li>Write: send to all N, return success after W acks.</li><li>Read: query R (or all, take first R), return the highest-versioned value.</li><li><b>Read repair</b>: push that freshest value back to the stale replicas you just heard from.</li><li><b>Hinted handoff</b> (sloppy quorum): if a home replica is down, a stand-in holds the write and delivers it later — availability up, strict overlap guarantee gone.</li><li>Caveats that bite: a failed write that reached &lt; W nodes still <i>exists</i> on some replicas; clock-based LWW versions can drop concurrent writes; overlap without ordering discipline isn't linearizability (Cassandra adds no read repair fix for this — lightweight transactions use Paxos instead).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Config (N=3)</th><th>Behavior</th></tr></thead><tbody><tr><td>W=3, R=1</td><td>Slow writes, fast reads</td></tr><tr><td>W=1, R=3</td><td>Fast writes, slow reads</td></tr><tr><td>W=2, R=2</td><td>Balanced, the common default</td></tr><tr><td>W=1, R=1</td><td>Fast everything, stale reads possible (W+R ≤ N)</td></tr></tbody></table>
+<p>Cassandra, Riak, and Dynamo-style stores expose these as per-request consistency levels. Majority quorums (W = R = ⌊N/2⌋+1) are also the beating heart of Raft and Paxos.</p>
+<h3>War Story</h3>
+<p>The Dynamo paper (2007) popularized tunable N/W/R along with sloppy quorums and hinted handoff — explicitly trading the strict intersection guarantee for write availability during failures, because for Amazon's cart, rejecting a write was deemed worse than reconciling one later.</p>
+<h3>Checkpoint</h3>
+<ul><li>Prove (one sentence) why W+R &gt; N guarantees read/write set intersection.</li><li>What does W &gt; N/2 prevent that W+R &gt; N alone doesn't?</li><li>What guarantee do you lose with sloppy quorums + hinted handoff?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Leader Election</h2>
+<p><b>MOTTO:</b> Any node can be the leader — as long as everyone agrees it's the same node.</p>
+<h3>The Problem</h3>
+<p>Many tasks need exactly one node in charge: accepting writes, assigning partitions, running the cron. Hardcode it and its crash bricks the system. Let nodes self-appoint and you get two leaders — split brain — which is worse than none: both accept conflicting writes and you get to reconcile the wreckage.</p>
+<h3>The Concept</h3>
+<p>Election with terms, like presidencies: candidates ask for votes; a <b>majority</b> wins (two disjoint majorities can't exist, so two leaders in the same term can't either); each election has a monotonically increasing <b>term/epoch number</b>, and everyone ignores messages from stale terms — that's how a deposed leader who was merely partitioned gets politely ignored on return.</p>
+<pre><code> [n1]───heartbeat───▶[n2]      n1 dies → n2&#x27;s heartbeat timer expires
+   │                            n2: &quot;vote for me, term 5&quot;
+   └──heartbeat──▶[n3]          n3: &quot;yes&quot; → 2/3 majority → n2 leads term 5
+                                n1 revives, says &quot;I lead term 4&quot; → ignored (4 &lt; 5)</code></pre>
+<h3>Build It</h3>
+<ol><li>Followers expect heartbeats from the leader; a <i>randomized</i> timeout (e.g., 150–300ms) expires → become candidate. (Randomization breaks simultaneous-candidacy ties.)</li><li>Candidate: increment term, vote for self, request votes. Nodes grant one vote per term, first-come (Raft adds: only to candidates with a sufficiently up-to-date log).</li><li>Majority of votes → leader; start heartbeating. See a higher term from anyone → step down instantly.</li><li><b>Fencing tokens</b>: the term number rides along on every leader action, so downstream systems (storage, locks) can reject a zombie ex-leader's writes. Election without fencing is a false sense of safety.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Approach</th><th>How</th><th>Notes</th></tr></thead><tbody><tr><td>Built-in (Raft)</td><td>etcd, Consul, Kafka KRaft</td><td>Election is part of consensus</td></tr><tr><td>Lease via coordination service</td><td>ZooKeeper ephemeral nodes, etcd leases</td><td>The classic "smallest znode leads" recipe</td></tr><tr><td>DB row + lease expiry</td><td><code>UPDATE leader SET holder=? WHERE expires &lt; now()</code></td><td>Fine for cron-style single-runner</td></tr></tbody></table>
+<p>The bully algorithm (highest ID wins) is the textbook classic — simple, but assumes reliable failure detection, which real networks don't provide.</p>
+<h3>War Story</h3>
+<p>Martin Kleppmann's 2016 analysis "How to do distributed locking" dismantled a popular Redis-based lock/leader scheme (Redlock) by showing a paused-then-resumed client (GC pause, VM migration) can act on an expired lease — and argued the fix is fencing tokens checked by the resource, not cleverer timing. The debate with Redis's author is required reading; the moral stands: leases expire, processes pause, the <i>resource</i> must enforce the term.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does requiring a majority vote make two leaders in the same term impossible?</li><li>What is a fencing token and which failure mode does it neutralize?</li><li>Why are election timeouts randomized?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Paxos (Gently)</h2>
+<p><b>MOTTO:</b> Paxos is just two rounds of majority politeness: ask permission, then propose — and never contradict a promise.</p>
+<h3>The Problem</h3>
+<p>Get N unreliable nodes to agree on ONE value (say, "who is leader" or "what is log entry #7") such that once <i>any</i> node learns a decision, no different decision can ever emerge — even with crashes, message loss, and reordering. FLP (1985) proved no deterministic protocol can guarantee this <i>terminates</i> in a fully asynchronous system; Paxos guarantees safety always, and liveness whenever the network behaves for a while.</p>
+<h3>The Concept</h3>
+<p>A committee that votes by mail. To pass a motion you first poll a majority ("will you consider proposal #n?"). Members promise not to accept anything numbered lower — and crucially, tell you if they already accepted something. If any did, **you must propose <i>that</i> value**, abandoning your own. This is Paxos's soul: proposers are forced to become couriers for possibly-decided values.</p>
+<pre><code> Phase 1 (prepare/promise)          Phase 2 (accept/accepted)
+ P ──prepare(n)──▶ acceptors        P ──accept(n, v)──▶ acceptors
+ P ◀─promise(n, prior accepted?)    P ◀─accepted(n)── majority? → CHOSEN
+   (majority promised)                (v = highest-numbered prior value seen,
+                                       or P&#x27;s own value if none)</code></pre>
+<p>Chosen = a majority accepted the same (n, v). Any later proposer's Phase 1 majority must overlap that majority, will hear about v, and is forced to re-propose v. Decisions are permanent by arithmetic, not by memory.</p>
+<h3>Build It</h3>
+<ol><li>Acceptor state (persist to disk!): highest promise <code>np</code>, highest accepted <code>(na, va)</code>.</li><li>On <code>prepare(n)</code>: if n &gt; np → np = n, reply promise with <code>(na, va)</code>; else reject.</li><li>Proposer with majority promises: v = va of the highest na seen, else own value; send <code>accept(n, v)</code>.</li><li>On <code>accept(n, v)</code>: if n ≥ np → accept, persist, reply.</li><li>Learn: majority accepted → chosen. In practice add a distinguished proposer (leader) to avoid duel-of-proposers livelock, and run one instance per log slot = <b>Multi-Paxos</b>, where Phase 1 is amortized across many slots.</li></ol>
+<h3>Use It</h3>
+<p>Google Chubby (lock service) runs Paxos and underpins Bigtable/GFS coordination; Spanner uses Paxos groups per data shard; ZooKeeper's ZAB and Raft are siblings in the same family. Nobody hand-rolls Paxos for fun — you use a library or a coordination service — but reading it is how you <i>understand</i> every consensus system.</p>
+<h3>War Story</h3>
+<p>Lamport wrote "The Part-Time Parliament" in 1990, framing consensus as archaeology of a Greek island's legislature; reviewers were so baffled it sat unpublished until 1998. He capitulated with "Paxos Made Simple" (2001), whose abstract is a single, slightly wounded sentence: "The Paxos algorithm, when presented in plain English, is very simple." Google's follow-up "Paxos Made Live" (2007) documented how brutal the remaining engineering was anyway — disk corruption, membership changes, and testing ate years.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must a proposer adopt the highest-numbered previously-accepted value it hears in Phase 1?</li><li>Which two overlapping majorities make it impossible to choose two different values?</li><li>What does FLP impossibility say, and how does Paxos live with it?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Raft: Consensus You Can Understand</h2>
+<p><b>MOTTO:</b> One leader, numbered terms, and a log that flows strictly downhill from leader to followers.</p>
+<h3>The Problem</h3>
+<p>Paxos is correct but famously hard to internalize and harder to implement completely (Multi-Paxos details are folklore). Ongaro and Ousterhout designed Raft (2014) explicitly for <i>understandability</i>: same guarantees, but decomposed into three separable pieces — leader election, log replication, safety.</p>
+<h3>The Concept</h3>
+<p>Raft is a newsroom with one editor-in-chief per <b>term</b>. All writes go through the editor, who appends to their log and replicates to followers; an entry is <b>committed</b> once a majority stores it. If the editor dies, an election picks a new one — but only a candidate whose copy of the paper is at least as up-to-date can win, so nothing committed is ever lost.</p>
+<pre><code> term 3   leader log:  [1|a][1|b][3|c][3|d]     ← (term|entry)
+                          │ AppendEntries(prevIdx, prevTerm, entries, leaderCommit)
+          follower F1: [1|a][1|b][3|c][3|d]  ✓ match
+          follower F2: [1|a][2|x]            ✗ conflict → leader decrements
+                                               nextIndex, overwrites [2|x]
+ commitIndex = 4 once a majority has index 4 → apply to state machines</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Election</b>: follower's randomized timeout fires → candidate, term++, RequestVote. Voters refuse candidates whose (lastLogTerm, lastLogIndex) is behind their own — this single check is the safety keystone.</li><li><b>Replication</b>: leader sends AppendEntries with <code>(prevLogIndex, prevLogTerm)</code>; follower rejects on mismatch; leader backs up <code>nextIndex</code> until logs agree, then follower truncates conflicts and appends. Result: follower logs become prefixes of the leader's.</li><li><b>Commit</b>: leader advances commitIndex when a majority holds an entry <i>from its current term</i> (committing prior-term entries directly is the famous Figure 8 trap). Committed entries are applied, in order, to the state machine.</li><li><b>Safety property</b>: Leader Completeness — a leader for term T holds all entries committed in terms &lt; T. Follows from vote restriction + majority overlap.</li></ol>
+<h3>Use It</h3>
+<p>etcd (Kubernetes' brain), Consul, CockroachDB (Raft per range), TiKV, Kafka's KRaft mode (retiring ZooKeeper), RabbitMQ quorum queues. If you touched cloud infrastructure today, Raft was involved. Tradeoffs: all writes funnel through one leader (scale by sharding into many Raft groups); majority latency on every commit; typically 3 or 5 voters.</p>
+<h3>War Story</h3>
+<p>The Raft paper — "In Search of an Understandable Consensus Algorithm" (Ongaro &amp; Ousterhout, USENIX ATC 2014) — reported a user study: Stanford/Berkeley students quizzed after learning both algorithms scored significantly higher on Raft than Paxos. It won a best paper award, and within a few years Raft implementations outnumbered production Paxos implementations outside Google — understandability turned out to be a feature with compounding returns.</p>
+<h3>Checkpoint</h3>
+<ul><li>What does a voter check before granting its vote, and which disaster does that check prevent?</li><li>Walk through how AppendEntries' (prevLogIndex, prevLogTerm) consistency check repairs a divergent follower.</li><li>Why does a Raft leader only directly commit entries from its own term?</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> Two-Phase and Three-Phase Commit</h2>
+<p><b>MOTTO:</b> 2PC gets everyone to say "I do" — and if the officiant faints mid-ceremony, everybody stands frozen at the altar.</p>
+<h3>The Problem</h3>
+<p>One logical transaction spans two databases: debit in ledger-DB, credit in wallet-DB. Commit locally in one and crash before the other, and money vanishes. You need <i>atomicity across systems</i>: both commit or neither.</p>
+<h3>The Concept</h3>
+<p>A wedding. Phase 1 — the officiant asks each party "do you?"; saying "I do" (voting YES) is a binding promise: you <i>can and will</i> commit if told to, surviving even your own crash (you've written it to your journal). Phase 2 — if all said yes, the officiant pronounces COMMIT to everyone; any NO (or timeout) → ABORT to everyone.</p>
+<pre><code> coordinator          participant A        participant B
+     ├── PREPARE ────────▶│                    │
+     ├── PREPARE ─────────┼───────────────────▶│
+     │◀──── YES (locked, ─┤                    │
+     │◀──── YES   logged)─┼────────────────────┤
+     ├── log COMMIT (the decision point)
+     ├── COMMIT ─────────▶│                    │
+     └── COMMIT ──────────┼───────────────────▶│</code></pre>
+<p>The fatal flaw: between voting YES and hearing the verdict, a participant is <b>in doubt</b> — holding locks, unable to commit or abort unilaterally. If the coordinator dies there, participants <i>block</i> until it returns. 2PC is a blocking protocol.</p>
+<h3>Build It</h3>
+<ol><li>Participant on PREPARE: acquire/hold locks, write redo+undo to WAL, force to disk, vote YES. From here you've forfeited the right to unilaterally abort.</li><li>Coordinator: collect votes, force-write the global decision (this log record IS the commit point), then broadcast.</li><li>Recovery: rebooted participant finds a prepared-but-undecided transaction → must ask the coordinator (or peers) for the verdict; until answered, locks stay held.</li><li><b>3PC</b> inserts a pre-commit round so participants can infer the decision without the coordinator and time out safely — non-blocking under crash failures, but <i>unsafe under network partitions</i> (two sides can decide differently), which is why essentially nobody runs it. The principled fix is replicating the decision itself with consensus (Paxos/Raft commit), which is what Spanner does.</li></ol>
+<h3>Use It</h3>
+<p>Alive in XA transactions, some JMS/JTA setups, and <i>inside</i> distributed SQL (Spanner: 2PC across shard groups, each group Raft/Paxos-replicated so the coordinator can't be "lost"). For cross-<i>service</i> workflows, the industry verdict is in: don't hold locks across the network — use sagas (next lesson).</p>
+<h3>War Story</h3>
+<p>Jim Gray formalized the transaction concepts underlying 2PC in the 1970s–80s (Turing Award 1998); Gray and Lamport later co-wrote "Consensus on Transaction Commit" (2006), showing 2PC is a degenerate consensus protocol — one that tolerates zero coordinator faults — and proposing Paxos Commit as the fault-tolerant generalization. The two traditions (transactions and consensus) literally merged into one paper.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can't a participant that voted YES unilaterally abort after a coordinator timeout?</li><li>Where exactly is the atomic commit point in 2PC?</li><li>Why did 3PC fail to displace 2PC despite being "non-blocking"?</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> Sagas: Transactions Without Transactions</h2>
+<p><b>MOTTO:</b> Can't lock the world? Then break the journey into steps — and know how to walk each one backwards.</p>
+<h3>The Problem</h3>
+<p>"Book trip" = charge card + reserve flight + reserve hotel, across three services with three databases. 2PC would hold locks across the internet at the mercy of the slowest participant — and most services won't offer you a PREPARE hook anyway. But partial completion (charged, no hotel) is unacceptable.</p>
+<h3>The Concept</h3>
+<p>A saga (Garcia-Molina &amp; Salem, 1987) replaces one big transaction with a sequence of <i>local</i> transactions T1..Tn, each with a <b>compensating action</b> C1..Cn. If Ti fails, run C(i-1)..C1 in reverse — not undo (history happened; the charge exists) but <i>counteraction</i> (refund).</p>
+<pre><code>  T1 charge ──▶ T2 flight ──▶ T3 hotel ✗ FAILS
+                                  │
+  C1 refund ◀── C2 cancel flight ◀┘        (compensate in reverse)
+
+ orchestration: [saga orchestrator] ──commands──▶ services (explicit state machine)
+ choreography:  each service reacts to the previous one&#x27;s event (no central brain)</code></pre>
+<p>Key mind-shift: between T1 and C1, the world <i>sees</i> the intermediate state (money charged, then refunded). Sagas trade isolation for availability — you're guaranteed "all done or all compensated," not "nobody saw the middle."</p>
+<h3>Build It</h3>
+<ol><li>Decompose into steps; for each, design its compensation. If a step is truly irreversible (email sent), order it last or make it semantically retractable.</li><li>Choose orchestration (a saga state machine persists progress and issues commands — debuggable, central) or choreography (event chains — decoupled, harder to trace).</li><li>Every step and compensation must be <b>idempotent and retryable</b> — the saga engine will redeliver.</li><li>Persist saga state transitions (often via the outbox pattern) so a crashed orchestrator resumes, never restarts blindly.</li><li>Handle dirty reads between steps with countermeasures: <i>semantic locks</i> (mark record PENDING), reordering, or commutative updates.</li><li>Classify failures: business rejection (compensate) vs transient fault (retry forward).</li></ol>
+<h3>Use It</h3>
+<p>Temporal and AWS Step Functions are essentially saga orchestrators with durable state; Axon and Eventuate bake sagas into frameworks; airline/hotel booking flows have run compensation-based flows since before microservices had a name. Rule: use a saga when the workflow spans ownership boundaries; use a plain DB transaction whenever you possibly can — sagas are the fallback, not the goal.</p>
+<h3>War Story</h3>
+<p>Hector Garcia-Molina and Kenneth Salem published "Sagas" at SIGMOD 1987 — aimed at <i>long-lived transactions</i> on a single database, where holding locks for hours strangled throughput. The paper predates microservices by ~25 years; the industry rediscovered it wholesale when service boundaries made cross-system locks impossible, and the 1987 mechanics needed almost no modification.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is a compensation not the same thing as a rollback?</li><li>Which ACID property do sagas sacrifice, and name one countermeasure for the resulting anomaly.</li><li>When would you pick orchestration over choreography for a 6-step saga?</li></ul>
+<h2 id="lesson-13"><span class="lnum">13</span> CRDTs: Merge Without Conflict</h2>
+<p><b>MOTTO:</b> Choose data structures where merging is math, and conflicts become impossible rather than resolved.</p>
+<h3>The Problem</h3>
+<p>Offline-capable apps and multi-leader replication mean concurrent writes to the same data with no coordinator to serialize them. Last-write-wins throws away someone's work; asking users to resolve conflicts is misery. What if the data type itself guaranteed that any two divergent replicas merge into the same result?</p>
+<h3>The Concept</h3>
+<p>Conflict-free Replicated Data Types: types whose merge is a <b>join</b> in a semilattice — commutative, associative, idempotent. Like two shopping lists merged by union: merge order doesn't matter, merging twice doesn't matter, everyone converges. That's Strong Eventual Consistency: same set of updates ⇒ same state, no consensus required.</p>
+<pre><code>G-COUNTER (grow-only), 3 nodes — each node owns a slot, increments only its own:
+  A: [3,1,0]   B: [2,4,0]   merge = element-wise max = [3,4,2]
+  C: [2,1,2]                value = 3+4+2 = 9   (any merge order → same result)</code></pre>
+<h3>Build It</h3>
+<ol><li><b>G-Counter</b>: vector of per-node counts; <code>inc()</code> bumps own slot; <code>value()</code> = sum; <code>merge</code> = element-wise max. (Max is idempotent — re-delivered states are harmless.)</li><li><b>PN-Counter</b>: two G-Counters, P and N; value = sum(P) − sum(N). Decrements are just growth in N.</li><li><b>OR-Set</b> (observed-remove): <code>add(x)</code> stores x with a unique tag; <code>remove(x)</code> tombstones only the <i>tags you have observed</i>. Concurrent add wins over remove — because the remove never saw the new tag. This fixes the naive 2P-set's "can never re-add" flaw.</li></ol>
+<pre><code>class ORSet:
+    def __init__(self): self.adds, self.removes = set(), set()   # {(elem, tag)}
+    def add(self, e): self.adds.add((e, uuid4()))
+    def remove(self, e): self.removes |= {(x, t) for x, t in self.adds if x == e}
+    def contains(self, e): return any((e, t) not in self.removes for x, t in self.adds if x == e)
+    def merge(self, o): self.adds |= o.adds; self.removes |= o.removes</code></pre>
+<ol><li>Two delivery styles: <b>state-based</b> (ship full state, merge with join — tolerates any message loss/duplication) vs <b>operation-based</b> (ship ops — smaller, but needs reliable causal delivery). Deltas split the difference.</li></ol>
+<h3>War Story</h3>
+<p>Shapiro, Preguiça, Baquero, and Zawirski formalized CRDTs in 2011 ("Conflict-free Replicated Data Types" / the comprehensive INRIA study). Production followed fast: Riak shipped CRDT data types, Redis Enterprise built CRDT-based active-active geo-replication, and collaborative editors (e.g., Yjs, Automerge) made CRDTs the mainstream alternative to operational transformation for real-time text editing.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>CRDT</th><th>Models</th><th>Watch out</th></tr></thead><tbody><tr><td>G/PN-Counter</td><td>Likes, metrics</td><td>Vector grows with node count</td></tr><tr><td>OR-Set</td><td>Carts, tags, presence</td><td>Tombstone growth (needs GC)</td></tr><tr><td>LWW-Register</td><td>"Latest value" fields</td><td>Back to trusting clocks</td></tr><tr><td>RGA/sequence CRDTs</td><td>Collaborative text</td><td>Metadata overhead</td></tr></tbody></table>
+<p>The catch: CRDTs converge, but only to what the math says — not necessarily what the <i>user</i> meant. And global invariants ("balance ≥ 0") still need coordination; no data type abolishes that.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must a CRDT merge be idempotent, not just commutative and associative — which delivery fault does idempotence absorb?</li><li>In an OR-Set, why does a concurrent add survive a concurrent remove of the same element?</li><li>Name an application invariant CRDTs cannot enforce, and say why.</li></ul>
+<h2 id="lesson-14"><span class="lnum">14</span> Gossip Protocols</h2>
+<p><b>MOTTO:</b> Tell two friends, who tell two friends — and in O(log N) rounds the whole cluster knows.</p>
+<h3>The Problem</h3>
+<p>A 1,000-node cluster needs every node to know membership, liveness, and light metadata. A central registry is a bottleneck and a single point of failure; naive broadcast is O(N) messages from one node and collapses at scale. You need dissemination that's cheap per node, tolerant of loss, and has no boss.</p>
+<h3>The Concept</h3>
+<p>Epidemics, weaponized for good. Each node periodically picks a few <i>random</i> peers and exchanges what it knows; rumors spread exponentially, reaching all N nodes in ~O(log N) rounds with high probability, with each node doing constant work per round. Randomness delivers robustness: no structure to break, no coordinator to lose.</p>
+<pre><code> round 0:  ●○○○○○○○         (1 knows)
+ round 1:  ●●○○●○○○         each infected node infects ~fanout others
+ round 2:  ●●●●●●○○
+ round 3:  ●●●●●●●●         ~log₂(N) rounds to full infection
+
+ push: &quot;here&#x27;s my news&quot;   pull: &quot;what&#x27;s new?&quot;   push-pull: both (fastest finish)</code></pre>
+<h3>Build It</h3>
+<ol><li>Every T ms, pick k random peers (fanout, typically 2–3); exchange digests; sync differences. Version every item (per-node heartbeat counters / versions) so newer always overwrites older.</li><li><b>Failure detection</b>: each node gossips its own heartbeat counter; if node X's counter hasn't advanced past a timeout (or by phi-accrual suspicion), mark X suspect/dead — and gossip <i>that</i>.</li><li>SWIM-style refinement: ping a random node; on silence, ask j others to ping it indirectly (dodges one bad link); spread alive/suspect/dead verdicts piggybacked on normal gossip. Add <i>incarnation numbers</i> so a falsely-accused node can publicly refute its own death.</li><li>Anti-entropy vs rumor-mongering: periodically full-sync digests (slow, thorough) plus hot new updates pushed eagerly for a few rounds (fast, cheap).</li></ol>
+<h3>Use It</h3>
+<p>Cassandra nodes gossip cluster state every second; Consul and HashiCorp's memberlist/Serf implement SWIM (their "Lifeguard" extensions reduce false positives); DynamoDB's ancestors, Redis Cluster, and Akka Cluster all gossip membership. Tradeoffs: eventual (not instant) convergence, probabilistic guarantees, and the classic operational hazard — a partition heals and two halves gossip <i>stale rumors</i> about each other's deaths.</p>
+<h3>War Story</h3>
+<p>The founding paper is Demers et al., "Epidemic Algorithms for Replicated Database Maintenance" (PODC 1987) — done at Xerox PARC to keep the Clearinghouse directory service in sync, explicitly borrowing mathematics from epidemiology. The SWIM paper (Das, Gupta, Motivala, 2002) then separated failure detection from dissemination, and its descendants quietly run inside most modern clustering software.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does gossip reach all nodes in roughly O(log N) rounds, and what per-node cost does that require?</li><li>How do incarnation numbers let a live node refute a false death rumor?</li><li>What advantage does SWIM's indirect ping give over direct heartbeating?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="07-messaging-and-async.html">← 📬 Phase 07</a>
+    <span class="spacer"></span>
+    <a href="09-scalability-patterns.html">Phase 09 📈 →</a>
+  </div>
+</div>
+</body>
+</html>

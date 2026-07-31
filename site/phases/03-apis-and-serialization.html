@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APIs & Serialization — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 03</div>
+  <h1><span class="pnum">03</span> 🔌 APIs &amp; Serialization</h1>
+  <div class="tagline">Contracts between machines — and the humans who break them.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>REST API design that doesn&#x27;t hurt</a>
+<a href="#lesson-02"><span class="lnum">02</span>gRPC and Protocol Buffers</a>
+<a href="#lesson-03"><span class="lnum">03</span>GraphQL: queries, mutations, and the N+1 trap</a>
+<a href="#lesson-04"><span class="lnum">04</span>JSON vs binary formats: the serialization showdown</a>
+<a href="#lesson-05"><span class="lnum">05</span>API versioning without tears</a>
+<a href="#lesson-06"><span class="lnum">06</span>Idempotency: the art of safe retries</a>
+<a href="#lesson-07"><span class="lnum">07</span>Pagination, filtering, and sorting at scale</a>
+<a href="#lesson-08"><span class="lnum">08</span>Errors, retries, timeouts, and deadlines</a>
+<a href="#lesson-09"><span class="lnum">09</span>Webhooks: APIs in reverse</a>
+<a href="#lesson-10"><span class="lnum">10</span>The API gateway pattern</a>
+  </div>
+  <article>
+<blockquote>Contracts between machines — and the humans who break them.</blockquote>
+<p>An API is a promise made in public: other people's code will depend on your exact field names, your exact error codes, and your exact behavior at 2 a.m. under retry storms. This phase is about making promises you can keep — designing interfaces, encoding data efficiently, evolving contracts without breaking strangers, and surviving the network's failure modes with idempotency, timeouts, and backoff. It's the least glamorous phase and the one that most decides whether people enjoy building on your systems.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> REST API design that doesn't hurt</h2>
+<p><b>MOTTO:</b> Good REST is boring on purpose — surprise is the only real API design crime.</p>
+<h3>The Problem</h3>
+<p>Every team invents its own API dialect: <code>/getUserData?uid=5</code>, <code>POST /deleteUser</code>, errors as <code>200 OK {"error": true}</code>. Each snowflake API forces every consumer to learn, wrap, and work around it. The cost isn't aesthetics — it's every integration bug caused by a violated expectation.</p>
+<h3>The Concept</h3>
+<p>REST's usable core: model your domain as <b>nouns (resources)</b> addressed by URLs, manipulated with HTTP's standard <b>verbs</b>, returning HTTP's standard <b>status codes</b>. The payoff is predictability — a developer who's seen one good REST API can guess yours. (Purist REST — Roy Fielding's architectural style — includes hypermedia; the industry mostly ships this pragmatic subset.)</p>
+<pre><code> GET    /users            list      (safe: no side effects)
+ POST   /users            create    (returns 201 + Location: /users/42)
+ GET    /users/42         read
+ PATCH  /users/42         partial update   (PUT = full replace)
+ DELETE /users/42         delete
+ GET    /users/42/orders  nested resource
+
+ statuses: 200 ok · 201 created · 204 no content · 400 your fault ·
+ 401 who are you · 403 not allowed · 404 no such thing · 409 conflict ·
+ 422 understood-but-invalid · 429 slow down · 500 our fault · 503 try later</code></pre>
+<h3>Build It</h3>
+<p>Design checklist, in order of how often it's violated:</p>
+<ol><li>Nouns, not verbs, in paths (<code>POST /orders</code>, never <code>/createOrder</code>). Actions that resist nouning become sub-resources: <code>POST /orders/42/cancellation</code>.</li><li>Status codes carry the truth. Never tunnel errors inside <code>200</code>.</li><li><code>GET</code> must be safe and cacheable; anything state-changing goes in POST/PUT/PATCH/DELETE — intermediaries and browsers <i>will</i> assume this.</li><li>Plural nouns, consistent casing, consistent envelope (pick <code>{"data": ..., "error": ...}</code> or bare — once).</li><li>Design the <i>error body</i> as carefully as the success body: machine-readable code, human message, correlation ID.</li><li>Write the OpenAPI spec first; generated docs, clients, and mock servers all fall out of it.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Style</th><th>Sweet spot</th><th>Weakness</th></tr></thead><tbody><tr><td>REST/JSON</td><td>public APIs, CRUD-ish domains</td><td>verbs-that-aren't-CRUD get awkward</td></tr><tr><td>gRPC (Lesson 02)</td><td>internal service-to-service</td><td>browser/human hostility</td></tr><tr><td>GraphQL (Lesson 03)</td><td>many heterogeneous clients</td><td>server complexity, caching</td></tr></tbody></table>
+<p>Stripe's and GitHub's public APIs are the de facto style guides — read them like literature.</p>
+<h3>War Story</h3>
+<p>REST comes from Roy Fielding's 2000 PhD dissertation, which <i>reverse-engineered</i> why the web had scaled — statelessness, uniform interface, cacheability — rather than proposing something new. Fielding co-authored HTTP/1.1 itself, and has spent years since politely noting that most "REST" APIs ignore half his constraints; the pragmatic subset won anyway, because predictability was the part everyone actually needed.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must <code>GET</code> never mutate state — name two pieces of infrastructure that assume this.</li><li>Design the routes and status codes for "user 42 cancels order 7, but it already shipped."</li><li>What belongs in a well-designed error response body, and why an error <i>code</i> separate from the HTTP status?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> gRPC and Protocol Buffers</h2>
+<p><b>MOTTO:</b> Write the contract once; generate the client, the server, and the arguments about types.</p>
+<h3>The Problem</h3>
+<p>Internal microservices calling each other over REST/JSON pay a triple tax: JSON bytes are bloated and slow to parse, every service hand-writes client wrappers, and nothing machine-checks that caller and callee agree on the shape of anything. At hundreds of services, "we'll keep the docs updated" is comedy.</p>
+<h3>The Concept</h3>
+<p>Flip the workflow: define the API in a <code>.proto</code> <b>schema file</b>, and generate everything from it. <b>Protocol Buffers</b> encode messages as compact binary — field <i>numbers</i> (not names) tagged with wire types, varint-encoded integers, missing fields omitted — typically several times smaller and much faster to parse than JSON. <b>gRPC</b> carries those messages as RPC calls over HTTP/2 (Phase 2, Lesson 07), inheriting multiplexing and gaining four call shapes: unary, server-streaming, client-streaming, bidirectional.</p>
+<pre><code> // orders.proto
+ service Orders {
+   rpc GetOrder (GetOrderRequest) returns (Order);
+   rpc WatchOrders (WatchRequest) returns (stream Order);  // server push
+ }
+ message Order {
+   int64 id = 1;              // &lt;- field numbers are the wire contract,
+   string status = 2;         //    names are just for humans
+   repeated LineItem items = 3;
+ }
+
+ protoc ──&gt; generated client (10+ languages) + server stubs + types</code></pre>
+<h3>Build It</h3>
+<ol><li>Write the <code>.proto</code>; run <code>protoc</code> (or <code>buf</code>) to generate Python/Go/Java stubs.</li><li>Server: implement the generated service interface — the only code you write is the logic.</li><li>Client: <code>stub.GetOrder(GetOrderRequest(id=42))</code> — a typed function call; serialization, HTTP/2, deadlines all hidden beneath.</li><li>Evolution rules that make protobuf famous: <b>never reuse or renumber a field</b>; add new fields with new numbers (old readers skip unknown fields; new readers treat missing as default); <code>reserved 4;</code> retired numbers so no one reuses them. Follow these and decade-old binaries still parse today's messages.</li><li>Note what you lose: <code>curl</code>ability. Debugging binary needs tooling (<code>grpcurl</code>, reflection).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Dimension</th><th>gRPC/protobuf</th><th>REST/JSON</th></tr></thead><tbody><tr><td>Payload size / parse cost</td><td>small, fast</td><td>3–10x larger, slower</td></tr><tr><td>Type safety</td><td>generated, compile-time</td><td>discipline + validators</td></tr><tr><td>Browser support</td><td>poor (needs grpc-web proxy)</td><td>native</td></tr><tr><td>Human debuggability</td><td>tooling required</td><td>curl and eyeballs</td></tr><tr><td>Streaming</td><td>first-class, 4 shapes</td><td>bolt-on (SSE/WS)</td></tr></tbody></table>
+<p>Standard posture: gRPC inside the datacenter, REST/JSON at the public edge.</p>
+<h3>War Story</h3>
+<p>Protocol Buffers date to the early 2000s inside Google, and gRPC (open-sourced 2015) is the public descendant of <b>Stubby</b>, the internal RPC framework carrying on the order of 10¹⁰ RPCs per second across Google's services. The design wasn't speculative: the schema-evolution rules exist because Google learned, at scale, exactly how contracts rot when thousands of binaries upgrade at different times.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why are protobuf field <i>numbers</i> sacred while field <i>names</i> are freely renameable?</li><li>A new required-in-spirit field must be added to a message consumed by 40 services. What's the safe sequence?</li><li>Why does gRPC specifically require HTTP/2 — which two features does it lean on?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> GraphQL: queries, mutations, and the N+1 trap</h2>
+<p><b>MOTTO:</b> GraphQL lets clients order à la carte — and makes the kitchen's life correspondingly interesting.</p>
+<h3>The Problem</h3>
+<p>A REST backend serving mobile, web, and TV clients faces death by round trips: the mobile app needs a user, their last 5 orders, and each order's first item's thumbnail — that's 1 + 5 + 5 REST calls (underfetching), or one bloated bespoke endpoint per screen (overfetching, endpoint sprawl). Multiply by every screen on every platform.</p>
+<h3>The Concept</h3>
+<p>GraphQL exposes one endpoint and a typed <b>schema graph</b>; the <i>client</i> sends a query describing exactly the shape it wants, and gets exactly that shape back. <b>Queries</b> read, <b>mutations</b> write, <b>subscriptions</b> stream. The server implements a <b>resolver</b> per field — and therein hides the famous trap.</p>
+<pre><code> query {                          # one round trip
+   user(id: 42) {
+     name
+     orders(last: 5) {
+       total
+       items(first: 1) { thumbnailUrl }
+     }
+   }
+ }
+
+ N+1 trap:  resolve user (1 query)
+            -&gt; resolve orders (1 query)
+            -&gt; resolve items for order#1 (1 query)  ┐
+               ... order#2 ... order#3 ...          ├ N more queries
+               naive resolvers = death by a thousand SELECTs ┘</code></pre>
+<h3>Build It</h3>
+<ol><li>Define schema types (<code>type User { name: String!, orders(last: Int): [Order!]! }</code>).</li><li>Write resolvers: functions receiving <code>(parent, args, context)</code> returning each field.</li><li><b>Slay N+1 with DataLoader:</b> within one request tick, collect all pending <code>Order.items</code> lookups, issue <i>one</i> batched <code>WHERE order_id IN (...)</code> query, fan results back out. Batching + per-request caching is the pattern; every serious GraphQL server uses it.</li><li>Defend the kitchen — clients can now compose pathological orders: enforce query depth limits, complexity budgets (cost points per field), pagination limits, and timeouts. A public GraphQL API without these is a DoS invitation with documentation.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Reality check</th><th>Verdict</th></tr></thead><tbody><tr><td>Many client types, fast-moving UIs</td><td>GraphQL's home turf</td></tr><tr><td>Simple CRUD, one client</td><td>REST is less machinery</td></tr><tr><td>HTTP caching (CDNs)</td><td>harder — POSTed queries bypass URL caching</td></tr><tr><td>File uploads, webhooks</td><td>awkward; usually stays REST</td></tr></tbody></table>
+<p>Ecosystem: Apollo, GraphQL Yoga, Relay; schema federation for splitting the graph across teams.</p>
+<h3>War Story</h3>
+<p>GraphQL was built at Facebook starting in 2012, when rebuilding its mobile apps as native clients collided with REST endpoint sprawl and mobile networks' round-trip costs; it was open-sourced in 2015 and later spun into the GraphQL Foundation. GitHub's public API v4 adopted it — citing exactly the flexibility-vs-many-clients math — while keeping v3 REST alongside, which is itself a lesson: GraphQL tends to <i>join</i> REST, not replace it.</p>
+<h3>Checkpoint</h3>
+<ul><li>Explain over- and underfetching, and how one GraphQL query addresses both.</li><li>Walk through how DataLoader converts an N+1 resolver cascade into two queries.</li><li>Name three guardrails a public GraphQL endpoint needs that a fixed REST endpoint gets implicitly.</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> JSON vs binary formats: the serialization showdown</h2>
+<p><b>MOTTO:</b> Every message pays a tax in bytes and CPU — choose your tax bracket deliberately.</p>
+<h3>The Problem</h3>
+<p>Serialization is invisible until it isn't: at 10K messages/sec, JSON's repeated field names, quoted numbers, and parse cost become real machines and real milliseconds. But the tempting fix — binary everything — costs you <code>curl</code>, greppable logs, and effortless interop. This is a genuine tradeoff, not a performance morality play.</p>
+<h3>The Concept</h3>
+<p>Formats differ on three axes: <b>text vs binary</b>, <b>schema-on-read vs schema-required</b>, and <b>self-describing vs positional</b>. JSON ships field names in every message (self-describing, human-readable, redundant); protobuf ships field numbers and relies on the schema to interpret them (compact, opaque); Avro goes further — barely any per-message metadata, with the schema stored <i>alongside the data</i> (superb for millions of records per file).</p>
+<pre><code> {&quot;id&quot;: 123456, &quot;active&quot;: true, &quot;name&quot;: &quot;ada&quot;}      JSON: 46 bytes
+ protobuf: 08 c0 c4 07 10 01 1a 03 61 64 61          11 bytes
+           └field 1 varint┘ └f2┘ └f3: len 3 &quot;ada&quot;┘
+ same information, ~4x smaller, no names on the wire</code></pre>
+<h3>Build It</h3>
+<p>Run the showdown yourself:</p>
+<pre><code>import json, pickle, timeit
+record = {&quot;id&quot;: 123456, &quot;active&quot;: True, &quot;name&quot;: &quot;ada&quot;, &quot;scores&quot;: list(range(50))}
+for name, enc, dec in [
+    (&quot;json&quot;,   lambda o: json.dumps(o).encode(), lambda b: json.loads(b)),
+    (&quot;pickle&quot;, pickle.dumps,                     pickle.loads),
+]:
+    blob = enc(record)
+    t = timeit.timeit(lambda: dec(enc(record)), number=20_000)
+    print(f&quot;{name:7} {len(blob):4} bytes  {t:.2f}s / 20k round trips&quot;)
+# then: pip install protobuf / msgpack and extend the table</code></pre>
+<p>Also measure <i>with compression</i> — gzipped JSON closes much of the size gap (those repeated names compress well), so the remaining argument is parse CPU and type fidelity (JSON has no integers-vs-floats distinction, no binary type, no 64-bit-int safety in JavaScript).</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Format</th><th>Schema</th><th>Superpower</th><th>Watch out</th></tr></thead><tbody><tr><td>JSON</td><td>none</td><td>universal, debuggable</td><td>size, parse cost, number types</td></tr><tr><td>Protobuf</td><td>required</td><td>compact, evolvable, codegen</td><td>tooling needed to inspect</td></tr><tr><td>Avro</td><td>required (stored with data)</td><td>big-data files, schema registry</td><td>JVM-centric ecosystem</td></tr><tr><td>MessagePack/CBOR</td><td>none</td><td>"binary JSON," drop-in</td><td>still ships field names</td></tr><tr><td>Parquet</td><td>required</td><td>columnar analytics scans</td><td>not a message format</td></tr></tbody></table>
+<p>Default: JSON at the edge, protobuf between services, Avro/Parquet at rest in the data platform.</p>
+<h3>War Story</h3>
+<p>The simdjson project (Daniel Lemire et al., paper 2019) showed JSON parsing could hit gigabytes per second using SIMD instructions — an implicit indictment of how much CPU the world was burning on naive parsers. It's a rare double lesson: text formats cost more than people think, <i>and</i> clever engineering can claw back an order of magnitude before you abandon readability.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does protobuf's schema-required design make messages smaller than self-describing formats?</li><li>Why does gzip narrow the JSON-vs-binary <i>size</i> gap but not the <i>CPU</i> gap?</li><li>Your analytics team scans billions of rows but reads 3 of 40 columns. Which format family and why?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> API versioning without tears</h2>
+<p><b>MOTTO:</b> You can change an API or you can have users — with versioning discipline, both.</p>
+<h3>The Problem</h3>
+<p>Your API has a thousand integrations you've never met. Rename a field and somewhere a warehouse stops shipping. But never changing anything means the API fossilizes around every early mistake. Versioning is how you buy the right to improve without breaking strangers.</p>
+<h3>The Concept</h3>
+<p>First, know the line. <b>Non-breaking</b> (just ship it): adding response fields, adding optional parameters, adding endpoints. <b>Breaking</b> (needs a version): removing/renaming anything, changing types or semantics, tightening validation, restructuring errors. The golden default that makes most versioning unnecessary is the <i>robustness expectation on clients</i>: consumers must ignore unknown fields — then additive change is free forever.</p>
+<pre><code> URL path:    GET /v2/users/42          loud, cacheable, simple
+ Header:      GET /users/42
+              Accept: application/vnd.api+json; version=2
+ Date-pinned: GET /users/42
+              Stripe-Version: 2024-06-20   &lt;- account pinned to a date;
+                                             upgrade when YOU choose</code></pre>
+<h3>Build It</h3>
+<p>A survivable versioning policy, end to end:</p>
+<ol><li>Publish the compatibility contract: "we add fields without notice; clients MUST tolerate unknown fields." Enforce with contract tests.</li><li>Breaking changes ride a new version; old versions get a <b>deprecation window</b> with dates, not vibes.</li><li>Instrument per-version, per-consumer usage — you cannot retire what you cannot measure; emails to "whoever still calls v1" require knowing who that is.</li><li>Warn in-band: <code>Deprecation</code>/<code>Sunset</code> headers, changelog, and direct outreach to the top-N callers.</li><li>Internally, translate: implement the <i>latest</i> logic once, with thin adapters mapping old request/response shapes onto it (Stripe has described this "version-change modules" architecture) — never maintain N parallel codebases.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Scheme</th><th>Pro</th><th>Con</th></tr></thead><tbody><tr><td>Path (<code>/v2/</code>)</td><td>obvious, easy routing/caching</td><td>"big bang" migrations; v1 lingers a decade</td></tr><tr><td>Header</td><td>clean URLs</td><td>invisible in logs/browsers; easy to forget</td></tr><tr><td>Date-pinned per account</td><td>continuous evolution, per-consumer pace</td><td>serious internal machinery</td></tr><tr><td>Additive-only + no versions</td><td>zero migration cost</td><td>mistakes become permanent residents</td></tr></tbody></table>
+<p>For gRPC, the field-number rules (Lesson 02) <i>are</i> the versioning story; for GraphQL, <code>@deprecated</code> fields plus usage metrics play the same role.</p>
+<h3>War Story</h3>
+<p>Stripe's date-based versioning — each account pinned to the API behavior as of a chosen date (e.g., <code>2024-06-20</code>), with old versions supported for years and upgrades opt-in — became the industry's most admired scheme after their engineering write-ups explained the adapter-chain implementation. The moral is the sticker price: world-class compatibility isn't a URL convention, it's an architecture you commit to maintaining.</p>
+<h3>Checkpoint</h3>
+<ul><li>Classify: adding a response field; renaming <code>user_name</code> to <code>username</code>; rejecting a formerly accepted malformed date. Which need a version bump?</li><li>Why does "clients must ignore unknown fields" eliminate most versioning needs?</li><li>What operational capability must exist before you can ever <i>retire</i> an old version?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Idempotency: the art of safe retries</h2>
+<p><b>MOTTO:</b> The network will make you ask twice; idempotency makes asking twice safe.</p>
+<h3>The Problem</h3>
+<p>You POST a $500 payment. The connection times out. Did it go through? You literally cannot know — the timeout may have hit before the request arrived, or <i>after the server succeeded</i> but before the response returned. Retry and you risk double-charging; don't retry and you risk the order silently not existing. This ambiguity is fundamental to networks — it cannot be eliminated, only defused.</p>
+<h3>The Concept</h3>
+<p>An operation is <b>idempotent</b> if doing it N times equals doing it once — an elevator button, not a "one coffee please" shout. Then retries become free. Some operations are naturally idempotent (<code>SET x = 5</code>, <code>DELETE /users/42</code>, full PUTs); the dangerous ones are the <i>increments and creates</i> (<code>x += 5</code>, <code>POST /payments</code>). The universal fix: the client names the operation with a unique <b>idempotency key</b>, and the server remembers keys it has already processed.</p>
+<pre><code> client:  POST /payments  Idempotency-Key: 7f3a-...-91  {amount: 500}
+ server:  seen 7f3a before?
+            no  -&gt; process, store {key -&gt; response}, reply
+            yes -&gt; return the STORED response; do not re-execute
+ timeout? client retries with the SAME key -&gt; at-most-once execution
+                                            + retries = effectively-once</code></pre>
+<h3>Build It</h3>
+<p>The server-side mechanism, honestly:</p>
+<ol><li>On request: <code>INSERT INTO idempotency_keys (key, status='running')</code> — the <b>unique constraint</b> is the actual concurrency guard (two racing retries: one insert wins, the loser waits or gets 409).</li><li>Execute the operation; store the response (status + body) against the key; mark <code>done</code>.</li><li>On replay: return the stored response verbatim.</li><li>Sharp edges you must decide: keys scoped per endpoint+consumer; TTL (Stripe: ~24 h); a replay with the same key but <i>different body</i> is a client bug — reject it (422/409); and the operation+key-write should share a transaction, or a crash between them resurrects the ambiguity you were killing.</li></ol>
+<p>Client side: generate a UUID <i>when the user intends the action</i> (button press), reuse it across all retries of that intent.</p>
+<h3>Use It</h3>
+<p>HTTP semantics already promise idempotency for GET/PUT/DELETE (which is why infrastructure auto-retries them but never bare POSTs). Stripe's <code>Idempotency-Key</code> header popularized the pattern for payments; message consumers reinvent it as deduplication (exactly-once processing = at-least-once delivery + idempotent handling); SQL speaks it as <code>INSERT ... ON CONFLICT DO NOTHING</code> and Terraform/Kubernetes as "declare desired state, apply repeatedly."</p>
+<h3>War Story</h3>
+<p>The pattern's fame owes much to Stripe's engineering posts on idempotency keys, which walked through exactly the timeout-ambiguity scenario above for real money. And the cost of the <i>general</i> class of unsafe repetition has a grim benchmark: Knight Capital (2012) lost ~$440 million in 45 minutes when re-activated legacy code re-processed orders it should never have repeated — repetition without safety, at market speed.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can a client that times out on a POST <i>never</i> determine the operation's outcome without help?</li><li>What database feature makes concurrent retries with one idempotency key safe, and what should the second request receive?</li><li>Same key, different request body — what should the server do and why?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Pagination, filtering, and sorting at scale</h2>
+<p><b>MOTTO:</b> Nobody gets the whole table — the only question is how gracefully you slice it.</p>
+<h3>The Problem</h3>
+<p><code>GET /orders</code> against ten million rows will OOM your server, saturate the network, and time out the client — so every list API must slice. But the obvious slice, <code>OFFSET 100000 LIMIT 20</code>, makes the database <i>walk and discard</i> 100,000 rows to serve page 5,001, and shifts items between pages whenever a row is inserted mid-browse. Deep pagination is where naive APIs go to die.</p>
+<h3>The Concept</h3>
+<p><b>Offset pagination</b> is "skip N rows" — simple, jumpable-to-page-7, and O(offset) per request with anomalies under writes. <b>Cursor (keyset) pagination</b> is "give me rows <i>after this bookmark</i>": the cursor encodes the last-seen sort key, and the database seeks straight to it via index — O(page) forever, stable under inserts.</p>
+<pre><code> offset:  SELECT ... ORDER BY created_at DESC OFFSET 100000 LIMIT 20
+          └ reads 100,020 rows, returns 20; page drift under inserts
+
+ cursor:  SELECT ... WHERE (created_at, id) &lt; ($cur_ts, $cur_id)
+          ORDER BY created_at DESC, id DESC LIMIT 20
+          └ index seek; response carries next_cursor = last row&#x27;s (ts, id)</code></pre>
+<p>Note the <code>(created_at, id)</code> pair: sort keys must be <b>unique and stable</b>, so you break timestamp ties with the primary key — otherwise rows sharing a timestamp straddle page boundaries and get skipped or duplicated.</p>
+<h3>Build It</h3>
+<ol><li>Response contract: <code>{"data": [...], "next_cursor": "eyJ0cyI6...", "has_more": true}</code> — cursor is opaque (base64 of the key tuple); clients must not parse it, which frees you to change its contents.</li><li>Match the composite index to the sort: <code>(created_at DESC, id DESC)</code>. Every offered sort order needs index support, which is precisely why mature APIs offer <i>few</i> sort orders.</li><li>Filtering: whitelist filterable fields (each is an index commitment), reject unknown params loudly, and cap <code>limit</code> (e.g., max 100) server-side — never trust <code>?limit=1000000</code>.</li><li>Know the cursor's limits: no "jump to page 47" (offer search/date-range instead), and totals (<code>COUNT(*)</code> over millions) deserve an estimate or a separate endpoint, not a tax on every page.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Scheme</th><th>Use when</th><th>Cost</th></tr></thead><tbody><tr><td>Offset</td><td>admin UIs, small/static data, page numbers required</td><td>deep pages, drift</td></tr><tr><td>Cursor</td><td>feeds, infinite scroll, APIs at scale</td><td>no random access</td></tr><tr><td>Search engine (ES)</td><td>arbitrary filter/sort combos</td><td>second system to run</td></tr></tbody></table>
+<p>GitHub's REST API (<code>Link</code> headers), Slack's (<code>next_cursor</code>), and Twitter's (<code>max_id</code>/<code>since_id</code> — cursor-by-tweet-ID) all converged on cursors for exactly these reasons; GraphQL codified them as the Relay connection spec (<code>edges</code>, <code>pageInfo</code>, <code>endCursor</code>).</p>
+<h3>War Story</h3>
+<p>Twitter's developer documentation has long taught cursoring through its timeline via <code>max_id</code> — an early, public admission that offset pagination cannot survive a write-heavy feed: with thousands of tweets arriving between two page fetches, "page 2" by offset would re-serve or skip content unpredictably, while "everything older than tweet 123456" stays exact forever. The bookmark, not the page number, is the scalable primitive.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is <code>OFFSET 1000000 LIMIT 20</code> slow even with a perfect index on the sort column?</li><li>Why must a cursor's sort key be unique, and how does <code>(created_at, id)</code> achieve that?</li><li>Name two client capabilities you give up moving from offset to cursor pagination, and your mitigation for each.</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Errors, retries, timeouts, and deadlines</h2>
+<p><b>MOTTO:</b> Untuned retries are how a hiccup becomes an outage — with your own clients as the botnet.</p>
+<h3>The Problem</h3>
+<p>A dependency slows down. Callers time out and retry. Now the struggling service receives 2x, then 4x, the load — each retry layer multiplying the last — and a 30-second blip becomes a self-sustaining <b>retry storm</b> that outlives the original fault. The failure-handling code becomes the failure.</p>
+<h3>The Concept</h3>
+<p>Four disciplines, layered:</p>
+<pre><code> timeout:   never wait forever (every call, no exceptions)
+ retry:     only on retryable errors, budgeted, with...
+ backoff:   exponential (1s, 2s, 4s...) — give the victim air
+ jitter:    randomize the backoff — or all clients return in synchronized
+            waves, a thundering herd with a metronome
+
+ deadline propagation:
+ user (2s budget) -&gt; A (spent 0.3s, passes 1.7s) -&gt; B (passes 1.2s) -&gt; C
+ C sees 1.2s left; if it can&#x27;t answer in time, fail NOW — a result after
+ the user gave up is pure wasted load</code></pre>
+<p>Classify before retrying: <code>429</code>/<code>503</code>/timeouts → retry with backoff; <code>400</code>/<code>403</code>/<code>422</code> → <i>never</i> retry, it will fail identically forever; <code>500</code> → maybe once, if the operation is idempotent (Lesson 06 — non-idempotent retries need keys).</p>
+<h3>Build It</h3>
+<pre><code>import random, time
+
+def call_with_retries(fn, deadline_s, max_attempts=4, base=0.5, cap=8.0):
+    for attempt in range(max_attempts):
+        remaining = deadline_s - time.monotonic()
+        if remaining &lt;= 0:
+            raise TimeoutError(&quot;deadline exhausted&quot;)
+        try:
+            return fn(timeout=min(remaining, cap))
+        except RetryableError:
+            sleep = random.uniform(0, min(cap, base * 2 ** attempt))  # full jitter
+            if time.monotonic() + sleep &gt; deadline_s: raise
+            time.sleep(sleep)
+    raise MaxRetriesExceeded</code></pre>
+<p>System-level guards beyond one client: <b>retry budgets</b> (retries ≤ ~10–20% of request volume — Finagle/Envoy style), retry at <i>one</i> layer only (edge retries + mesh retries + client retries = combinatorial amplification), and <b>circuit breakers</b> (past a failure threshold, fail fast without calling — periodically probe for recovery).</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Mechanism</th><th>Where you'll meet it</th></tr></thead><tbody><tr><td>Timeout + deadline propagation</td><td>gRPC deadlines (first-class, propagated), <code>context</code> in Go</td></tr><tr><td>Backoff + jitter</td><td>every AWS SDK default</td></tr><tr><td>Circuit breaker</td><td>Envoy/Istio, Resilience4j, Polly</td></tr><tr><td>Retry budget</td><td>Finagle, Envoy retry policies</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>AWS's 2015 "Exponential Backoff and Jitter" post (Marc Brooker) simulated competing clients and showed <i>full jitter</i> dramatically reducing total work and time-to-recovery versus plain exponential backoff — turning a folk practice into measured doctrine. The companion cautionary tale is the September 2015 DynamoDB disruption, whose public postmortem describes storage servers timing out against an overloaded metadata service and re-requesting in unison — retry pressure sustaining the brownout until AWS throttled it to let the system breathe.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does jitter matter even when everyone already uses exponential backoff?</li><li>A downstream call returns 422. Retry or not — and what about a timeout on a non-idempotent POST?</li><li>Explain deadline propagation and the specific waste it prevents in a 4-service call chain.</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Webhooks: APIs in reverse</h2>
+<p><b>MOTTO:</b> Don't call us, we'll call you — signed, retried, and occasionally twice.</p>
+<h3>The Problem</h3>
+<p>Your app needs to know when a payment settles or a repo gets pushed. Polling the provider's API every few seconds wastes both sides' resources and still averages seconds of staleness (Phase 2, Lesson 10's math). The provider knows <i>instantly</i> — the efficient design inverts the arrow: they call you.</p>
+<h3>The Concept</h3>
+<p>A webhook is you registering a URL; the provider POSTs event payloads to it as things happen. Congratulations: you are now a <i>server</i> receiving traffic from the internet, and you've inherited server problems — authenticity (is this really Stripe, or an attacker POSTing <code>payment.succeeded</code>?), reliability (your endpoint was down for the deploy — where did the event go?), and ordering/duplication (delivery is at-least-once and networks reorder).</p>
+<pre><code> [provider] --POST /hooks/payments  {event, id, timestamp}--&gt; [you]
+                 |  signature: HMAC-SHA256(secret, timestamp + body)
+                 |  you verify BEFORE trusting a byte
+                 └─ no 2xx? retry with backoff: 1m, 5m, 30m, ... (hours-days)
+                    -&gt; your handler WILL see duplicates -&gt; dedupe by event id</code></pre>
+<h3>Build It</h3>
+<p>The consumer-side checklist (where all webhook bugs live):</p>
+<ol><li><b>Verify the signature</b> — recompute the HMAC over timestamp+raw-body with your shared secret; compare in constant time; reject stale timestamps (replay defense). Raw body, <i>before</i> any JSON re-serialization mangles it.</li><li><b>Ack fast, work later</b> — return <code>200</code> immediately after persisting the event to a queue/table; do the real processing async. A 30-second handler gets timed out and re-delivered forever.</li><li><b>Dedupe</b> — store processed event IDs (Lesson 06's idempotency, arriving from the other direction) since retries guarantee duplicates.</li><li><b>Don't trust order</b> — use the event's timestamp/sequence, or better, treat the webhook as a <i>hint</i> and re-fetch authoritative state from the API ("trust but verify").</li><li>Local dev: tunnels (<code>ngrok</code> and kin) expose your laptop; providers offer test-event senders and delivery logs — read them during incidents.</li></ol>
+<p>Provider side, the same list mirrored: sign everything, per-endpoint retry queues with backoff, a dead-letter view customers can replay from, and event types the consumer opts into.</p>
+<h3>Use It</h3>
+<p>Stripe (payments), GitHub (pushes/PRs), Twilio, Slack, and essentially every SaaS platform ship webhooks with this exact shape — HMAC signature headers, documented retry schedules, delivery dashboards, and replay buttons. Newer alternatives layer on it rather than replace it: event streams you pull (Kafka-style "fan-in"), or standardized envelopes (CloudEvents).</p>
+<h3>War Story</h3>
+<p>Webhook retry queues have a failure mode providers learned publicly: when a large consumer's endpoint goes down for hours and then recovers, the accumulated backlog delivers as a flood — at-least-once semantics mean the recovering service is greeted by its own missed history at full speed. It's why mature providers document retry schedules and offer replay-on-demand, and why mature consumers ack-fast-and-queue: a webhook endpoint must be engineered for the day it comes back from the dead.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must webhook signatures be verified over the raw request body, and what does the timestamp in the signature prevent?</li><li>Why is "return 200 immediately, process async" the rule, and what happens to slow handlers?</li><li>Given at-least-once delivery with retries, what two consumer-side mechanisms make processing correct anyway?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> The API gateway pattern</h2>
+<p><b>MOTTO:</b> One front door — so every service doesn't have to be its own bouncer, translator, and accountant.</p>
+<h3>The Problem</h3>
+<p>Twenty microservices each need auth, rate limiting, TLS, request logging, and CORS. Implement that twenty times and you get twenty subtly different security postures, and clients must learn twenty hostnames. Every cross-cutting concern duplicated per service is a bug farm with a deployment schedule.</p>
+<h3>The Concept</h3>
+<p>Put one <b>gateway</b> — a reverse proxy with opinions (Phase 2, Lesson 12) — at the edge. Clients see one host; the gateway authenticates, throttles, terminates TLS, then routes each request to the right internal service. Cross-cutting concerns move from N implementations to one policy point.</p>
+<pre><code>                        ┌─&gt; /users/*     -&gt; users service
+ clients ─&gt; [ GATEWAY ] ┼─&gt; /orders/*    -&gt; orders service
+             │          └─&gt; /search/*    -&gt; search service
+             ├ authn/authz (validate JWT once; pass claims inward)
+             ├ rate limits &amp; quotas (per key/user/IP)
+             ├ TLS termination · routing · retries/timeouts
+             ├ logging/metrics/tracing headers · CORS · caching
+             └ protocol translation (REST outside -&gt; gRPC inside)</code></pre>
+<p>Kin worth distinguishing: <b>BFF</b> (backend-for-frontend — a gateway variant per client type, so the TV app and the phone get tailored aggregation) and <b>service mesh</b> (Envoy sidecars doing gateway-ish work for <i>internal</i> east-west traffic, while the gateway guards north-south).</p>
+<h3>Build It</h3>
+<p>A functioning gateway in nginx, to demystify the category:</p>
+<pre><code>server {
+  listen 443 ssl;                       # TLS terminates here
+  location /users/  { proxy_pass http://users:8000/;  }
+  location /orders/ { proxy_pass http://orders:8000/; }
+  limit_req zone=perip burst=20;        # rate limiting
+  proxy_set_header X-Request-Id $request_id;   # tracing correlation
+  proxy_connect_timeout 2s; proxy_read_timeout 5s;   # Lesson 08 lives here too
+}</code></pre>
+<ol><li>Wire two lab services behind it (Phase 0 playground) and confirm one hostname fronts both.</li><li>Add an <code>auth_request</code> subrequest so the gateway rejects bad tokens before services see them.</li><li>Now feel the tradeoffs: the gateway is a single point of failure (run replicas), a latency hop (~ms), and — the classic disease — a <i>temptation</i>: business logic accretes in gateway config until it's an unversioned, untested service that everyone fears. Policy at the gateway, logic in services.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Option</th><th>Flavor</th></tr></thead><tbody><tr><td>nginx / HAProxy</td><td>DIY, maximal control</td></tr><tr><td>Kong, Envoy Gateway, Traefik</td><td>gateway products, plugin ecosystems</td></tr><tr><td>AWS API Gateway / cloud equivalents</td><td>managed, per-request pricing, deep cloud hooks</td></tr><tr><td>Apigee, Zuplo, etc.</td><td>full API-management (keys, portals, monetization)</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Netflix's Zuul (open-sourced 2013) became the reference implementation of the pattern: the front door for all Netflix API traffic, handling routing, resiliency, and insight for the device fleet. Its sequel is the instructive part — Zuul 2 (2016–2018 writeups) rewrote the core from blocking thread-per-request to async/non-blocking, and Netflix's posts frankly tallied the price of that migration: at gateway scale, Phase 1's threading lessons stop being theory and start being roadmap.</p>
+<h3>Checkpoint</h3>
+<ul><li>Name five cross-cutting concerns that belong in a gateway rather than in each service.</li><li>What distinguishes a BFF from a generic gateway, and a service mesh from both?</li><li>What is the classic failure mode of gateway <i>governance</i> (not uptime), and what rule prevents it?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="02-networking.html">← 🌐 Phase 02</a>
+    <span class="spacer"></span>
+    <a href="04-storage-engines.html">Phase 04 💾 →</a>
+  </div>
+</div>
+</body>
+</html>

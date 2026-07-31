@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardware & OS Foundations — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 01</div>
+  <h1><span class="pnum">01</span> ⚙️ Hardware &amp; OS Foundations</h1>
+  <div class="tagline">Every distributed system is just computers. Know the computer.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>The CPU and the memory hierarchy</a>
+<a href="#lesson-02"><span class="lnum">02</span>RAM vs disk: the great divide</a>
+<a href="#lesson-03"><span class="lnum">03</span>HDD vs SSD vs NVMe</a>
+<a href="#lesson-04"><span class="lnum">04</span>Sequential vs random I/O</a>
+<a href="#lesson-05"><span class="lnum">05</span>Processes, threads, and context switches</a>
+<a href="#lesson-06"><span class="lnum">06</span>Concurrency primitives: locks, semaphores, atomics</a>
+<a href="#lesson-07"><span class="lnum">07</span>Event loops and async I/O</a>
+<a href="#lesson-08"><span class="lnum">08</span>File systems: what happens when you save a file</a>
+<a href="#lesson-09"><span class="lnum">09</span>Memory management and garbage collection</a>
+<a href="#lesson-10"><span class="lnum">10</span>Zero-copy and the page cache</a>
+<a href="#lesson-11"><span class="lnum">11</span>The network path through the kernel</a>
+<a href="#lesson-12"><span class="lnum">12</span>The cost of everything (a benchmark tour)</a>
+  </div>
+  <article>
+<blockquote>Every distributed system is just computers. Know the computer.</blockquote>
+<p>Distributed systems have a dirty secret: they're ordinary boxes running ordinary operating systems, and every exotic behavior at scale — tail latency, throughput cliffs, mysterious stalls — traces back to a CPU cache, a disk head, or a kernel scheduler doing exactly what it was built to do. This phase takes you down the stack until the magic stops. When you come back up, "the service is slow" will decompose into questions you can actually answer.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> The CPU and the memory hierarchy</h2>
+<p><b>MOTTO:</b> The CPU is a genius chained to a slow mailbox; the hierarchy exists to keep it fed.</p>
+<h3>The Problem</h3>
+<p>A modern CPU can execute an instruction in well under a nanosecond, but fetching data from RAM takes ~100 ns. Naively, your 4 GHz processor spends 99% of its life waiting for the mail. Something has to bridge a 100x speed gap — and that something shapes how fast <i>your code</i> runs far more than your algorithm's big-O.</p>
+<h3>The Concept</h3>
+<p>The fix is a pyramid of progressively bigger, slower memories, each caching the one below. Analogy: your desk (registers), the shelf behind you (L1), the office bookcase (L2/L3), the library across town (RAM). You keep what you're using close, and hardware bets — via cache lines and prefetching — that you'll want the neighbors of whatever you just touched.</p>
+<pre><code> registers   ~1 KB      &lt;1 ns    on the desk
+ L1 cache    ~64 KB    ~0.5 ns   arm&#x27;s reach
+ L2 cache    ~1 MB      ~7 ns    across the room
+ L3 cache   ~32 MB     ~30 ns    down the hall
+ RAM        ~256 GB   ~100 ns    across town</code></pre>
+<p>Data moves in <b>cache lines</b> (64 bytes). Touch one byte, you paid for 64 — so touching the other 63 next is nearly free. That's <i>locality</i>, and it's the whole game.</p>
+<h3>Build It</h3>
+<p>Feel it in Python (the effect survives even the interpreter overhead):</p>
+<pre><code>import time, random
+N = 10_000_000
+data = list(range(N))
+idx_seq = list(range(N))
+idx_rnd = idx_seq[:]; random.shuffle(idx_rnd)
+for name, idx in [(&quot;sequential&quot;, idx_seq), (&quot;random&quot;, idx_rnd)]:
+    t = time.perf_counter(); s = 0
+    for i in idx: s += data[i]
+    print(name, round(time.perf_counter() - t, 2), &quot;s&quot;)</code></pre>
+<p>Same work, same big-O; random loses badly because every access is a cache miss. In C the gap is often 10x+.</p>
+<h3>Use It</h3>
+<p>Cache-consciousness explains real designs: columnar databases (ClickHouse, Parquet) lay values of one column contiguously so scans stream through cache lines; arrays beat linked lists in practice despite identical asymptotics; "mechanical sympathy" is why LMAX's Disruptor queue outran conventional queues by orders of magnitude.</p>
+<h3>War Story</h3>
+<p>Meltdown and Spectre (disclosed January 2018) weaponized this very machinery: CPUs speculatively execute ahead and leave footprints in the cache, and attackers learned to read secrets by timing cache hits. The industry's fixes — kernel page-table isolation among them — made syscalls measurably slower worldwide. The memory hierarchy is so fundamental that its side effects became a global security event.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does touching one byte of memory effectively cost you 64 bytes, and how can you exploit that?</li><li>Order these by latency: L1 hit, RAM reference, L3 hit, register access.</li><li>Why can an O(n) array scan beat an O(n) linked-list traversal by 10x in wall-clock time?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> RAM vs disk: the great divide</h2>
+<p><b>MOTTO:</b> RAM is where data lives; disk is where data survives.</p>
+<h3>The Problem</h3>
+<p>You must constantly choose where state lives, and the two options differ by everything that matters: RAM is ~1,000x faster than even good SSDs for random access, but it evaporates on power loss and costs ~10-50x more per byte. Put hot data on disk and you're slow; put durable data only in RAM and one reboot is an extinction event.</p>
+<h3>The Concept</h3>
+<p>Think of RAM as your working desk and disk as the filing cabinet in the basement. The desk is instant but small and gets swept clean every night; the cabinet is vast and permanent but every trip costs you. Every storage system ever built is some strategy for shuttling data between these two worlds — caches pull hot data up, write-ahead logs push durability down, and the page cache (the OS's own shuttle) sits invisibly in the middle.</p>
+<pre><code>            speed      cost/GB     survives power loss?
+ RAM       ~100 ns     $$$$        no
+ SSD       ~100 µs     $$          yes
+ HDD       ~10 ms      $           yes
+             ^-- each step: ~1000x slower, ~5-10x cheaper</code></pre>
+<h3>Build It</h3>
+<p>The canonical durable-but-fast recipe, used by essentially every database:</p>
+<ol><li>Keep the working set in RAM (buffer pool / cache).</li><li>On write: append the change to a sequential <b>write-ahead log</b> on disk first (cheap — sequential), <i>then</i> update RAM.</li><li>Acknowledge the client only after the log write is flushed (<code>fsync</code>).</li><li>Periodically checkpoint RAM state to disk in bulk; truncate the log.</li><li>On crash: reload the checkpoint, replay the log. Nothing acknowledged is lost.</li></ol>
+<p>You get RAM-speed reads, disk-grade durability, and the only disk work on the write path is sequential appends.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Strategy</th></tr></thead><tbody><tr><td>Redis</td><td>RAM-first; optional AOF log / RDB snapshots for durability</td></tr><tr><td>PostgreSQL/MySQL</td><td>Buffer pool in RAM + WAL on disk (the recipe above)</td></tr><tr><td>Memcached</td><td>RAM only, proudly; a cache, not a store</td></tr><tr><td>Kafka</td><td>Disk-first, but sequential + page cache makes it fast anyway</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Facebook's NSDI 2013 paper "Scaling Memcache at Facebook" describes running memcached as a RAM-based shield in front of MySQL at the scale of over a billion requests per second — and most of the paper is about the failure modes of that divide: stale data, thundering herds on cache misses, and what happens when the fast layer and the durable layer disagree.</p>
+<h3>Checkpoint</h3>
+<ul><li>In the WAL recipe, why is it safe to acknowledge a write before updating the on-disk checkpoint?</li><li>Why does the write-ahead log avoid the main cost of disk I/O?</li><li>Your "cache" has data that exists nowhere else. What is it actually, and what just became your problem?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> HDD vs SSD vs NVMe</h2>
+<p><b>MOTTO:</b> One is a record player, one is a filing wall of flash, and one finally removed the middleman.</p>
+<h3>The Problem</h3>
+<p>"Disk" hides three wildly different animals. Pick wrong and you either pay 10x too much for cold archives or watch your database do 200 random reads per second on spinning rust while your users watch spinners of their own.</p>
+<h3>The Concept</h3>
+<p>An <b>HDD</b> is mechanical: platters spin (7,200 RPM), a head seeks (~10 ms per random access) — physics caps it at ~100–200 random IOPS, though sequential streaming hits 100–250 MB/s. An <b>SSD</b> is flash: no moving parts, ~100 µs access, tens of thousands of IOPS — but it can only erase in large blocks, so a controller (the FTL) shuffles data behind your back, and cells wear out after finite write cycles. <b>NVMe</b> isn't a new medium — it's a new <i>interface</i>: flash attached directly to PCIe instead of the SATA protocol designed for record players, unlocking multi-GB/s and up to a million IOPS with deep parallel queues.</p>
+<pre><code>             random IOPS     latency      sequential      $/TB
+ HDD         ~100-200        ~10 ms       ~200 MB/s       $
+ SATA SSD    ~50-100K        ~100 µs      ~550 MB/s*      $$     *SATA ceiling
+ NVMe SSD    ~100K-1M+       ~20-100 µs   ~3-7 GB/s       $$$</code></pre>
+<h3>Build It</h3>
+<p>Choosing, as an algorithm:</p>
+<ol><li>Random-access working set (databases, indexes)? → SSD/NVMe. HDDs are disqualified by IOPS, not capacity.</li><li>Sequential, cold, huge (backups, logs, video archives)? → HDD. Streaming is its one trick, and it's cheap.</li><li>Latency-critical or IOPS-hungry (write-heavy DBs, queues)? → NVMe.</li><li>Mind SSD write endurance: a cell survives ~1K–100K program/erase cycles; write amplification from the FTL burns them faster. Check the drive's rated TBW against your write volume.</li></ol>
+<h3>Use It</h3>
+<p>Cloud storage tiers mirror the table: AWS gp3/io2 volumes are SSD-class with provisioned IOPS, st1/sc1 are HDD-class for streaming, and S3 Glacier sits on the coldest, cheapest media. Databases now assume SSDs; Kafka and backup systems still happily ride HDDs because they engineered themselves to be sequential (next lesson).</p>
+<h3>War Story</h3>
+<p>Backblaze, the backup company, has published quarterly failure statistics on its fleet — well over 200,000 spinning drives — since 2013, turning drive reliability from vendor marketing into public data: annualized failure rates of roughly 1–2%, with specific models occasionally spiking far higher. At fleet scale, "disks fail" isn't a possibility; it's a Tuesday.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why are HDDs capped near ~200 random IOPS regardless of how fancy the drive is?</li><li>What does NVMe actually change, given the flash inside can be identical to a SATA SSD's?</li><li>You're storing 2 PB of surveillance video written once and read rarely. Which medium, and why?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Sequential vs random I/O</h2>
+<p><b>MOTTO:</b> Storage doesn't reward reading fast; it rewards reading in order.</p>
+<h3>The Problem</h3>
+<p>Two programs read the same 1 GB from the same HDD. One finishes in 5 seconds, the other in 3 hours. Nothing differs but access order. If you don't design your data layout around this, the hardware will design your latency around it.</p>
+<h3>The Concept</h3>
+<p>On an HDD it's obvious: sequential means the head stays put while platters spin data underneath it (~200 MB/s); random means paying a ~10 ms seek per read — 4 KB per seek is a catastrophic ~0.4 MB/s. The napkin math: 1 GB sequential ≈ 5 s; 1 GB in random 4 KB reads ≈ 262,144 seeks × 10 ms ≈ 43 minutes-to-hours. SSDs shrink the gap but don't erase it — sequential still wins by exploiting internal parallelism and being kind to the FTL. So the great trick of storage engineering: <b>turn random writes into sequential ones</b>.</p>
+<pre><code> Random writes arrive:   w5, w2, w9, w1 ...
+ Log-structured answer:  append them all, in arrival order:
+   log: [w5][w2][w9][w1][...]        &lt;- sequential! fast!
+   + in-RAM index: key -&gt; log offset  &lt;- reads find them
+   + background compaction merges/sorts old segments</code></pre>
+<h3>Build It</h3>
+<p>That sketch is the <b>LSM tree</b> (log-structured merge tree), the storage engine of half the modern data world:</p>
+<ol><li>Writes go to an in-memory sorted buffer (memtable) + a sequential WAL.</li><li>When full, flush the memtable as an immutable sorted file (SSTable) — one big sequential write.</li><li>Reads check memtable, then recent SSTables (Bloom filters skip most).</li><li>Compaction merges SSTables in the background — sequential reads, sequential writes.</li></ol>
+<p>Contrast with B-trees (Postgres, MySQL): update-in-place, better for reads, more random I/O on writes. Neither is "better"; they trade read vs write amplification.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Pattern</th><th>Embodiment</th></tr></thead><tbody><tr><td>Append-only log</td><td>Kafka, WALs everywhere</td></tr><tr><td>LSM tree</td><td>RocksDB, Cassandra, LevelDB, HBase</td></tr><tr><td>B-tree</td><td>PostgreSQL, MySQL/InnoDB, SQLite</td></tr><tr><td>Big sequential scans</td><td>Analytics engines, backup/restore</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Kafka's original LinkedIn-era design documentation makes the counterintuitive case openly: a "disk-based" log that reads and writes sequentially through the OS page cache can outperform designs that try to keep everything in memory, because linear disk access on even modest hardware streams at hundreds of MB/s. Kafka's entire architecture — an append-only partitioned log — is this lesson wearing a trench coat.</p>
+<h3>Checkpoint</h3>
+<ul><li>Compute the approximate throughput of an HDD doing random 4 KB reads at 10 ms per seek.</li><li>How does an LSM tree convert random writes into sequential I/O, and what's the price paid at read time?</li><li>Why do B-trees generally favor read-heavy workloads and LSM trees write-heavy ones?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Processes, threads, and context switches</h2>
+<p><b>MOTTO:</b> Concurrency is the OS lying to every program about having the machine to itself.</p>
+<h3>The Problem</h3>
+<p>One CPU core, ten thousand things to do. Someone must slice time, isolate the slices from each other, and switch between them — and switching isn't free. Servers have died not from work, but from the overhead of juggling it.</p>
+<h3>The Concept</h3>
+<p>A <b>process</b> is a program with its own private virtual address space — a house. A <b>thread</b> is an execution stream inside that house — a roommate: cheap to add, shares everything, and can therefore burn the house down. The kernel's scheduler preempts and rotates threads across cores; each <b>context switch</b> saves one thread's registers, loads another's, and — the hidden tax — trashes warm CPU caches and TLB entries. Direct cost ~1–10 µs; indirect cost, often more.</p>
+<pre><code> Process A (address space) | Process B (address space)
+   thread 1  thread 2      |   thread 1
+      \        /           |      |
+       [ kernel scheduler: save regs, switch, restore ]
+            cores: [c0] [c1] [c2] [c3]</code></pre>
+<h3>Build It</h3>
+<p>Why "one thread per connection" hits a wall — the arithmetic:</p>
+<ol><li>Each thread needs a stack: often ~1 MB virtual (less resident). 10K connections ≈ gigabytes of address space and real scheduling load.</li><li>If most threads are blocked on I/O, the scheduler still must inspect, wake, and switch among them; wake-ups cost switches.</li><li>10K threads × even 1K switches/sec × ~3 µs = 30% of a core doing pure bookkeeping — before any real work.</li><li>Escape hatches: thread pools (bound the count), or event loops (Lesson 07), or user-space "green threads" (goroutines, ~KB stacks, scheduled in-process).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Model</th><th>Isolation</th><th>Cost</th><th>Used by</th></tr></thead><tbody><tr><td>Process per unit</td><td>Strong (own memory)</td><td>Heavy</td><td>Chrome tabs, Postgres backends</td></tr><tr><td>OS thread per task</td><td>Weak (shared memory)</td><td>Medium</td><td>Classic Java servers</td></tr><tr><td>Green threads</td><td>Weak</td><td>Tiny</td><td>Go, Erlang, Java virtual threads</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Dan Kegel's 1999 "C10K problem" page posed the era-defining question: why should a beefy server struggle to hold ten thousand concurrent connections? The answer — thread-per-connection overhead — drove a decade of redesign toward event-driven servers like nginx, and the document became one of the most influential webpages in systems engineering.</p>
+<h3>Checkpoint</h3>
+<ul><li>What does a context switch actually save and restore, and what's the <i>indirect</i> cost beyond that?</li><li>Why do Chrome and PostgreSQL use processes where a game engine would use threads?</li><li>Roughly why does thread-per-connection break down around 10K connections but goroutine-per-connection doesn't?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Concurrency primitives: locks, semaphores, atomics</h2>
+<p><b>MOTTO:</b> Shared mutable state is a loaded gun; primitives are the safety, not the holster.</p>
+<h3>The Problem</h3>
+<p>Two threads both run <code>count += 1</code>. That's three machine steps — load, add, store — and if they interleave, one increment vanishes. No error, no log line, just wrong numbers, rarely, under load, never in tests. Race conditions are the closest thing software has to ghosts.</p>
+<h3>The Concept</h3>
+<p>A <b>mutex</b> is a bathroom key: one holder, everyone else waits; the code inside is a <i>critical section</i>. A <b>semaphore</b> is a parking lot with N spaces: it limits concurrency rather than forbidding it. An <b>atomic</b> is hardware doing tiny operations (increment, compare-and-swap) indivisibly — no key needed for a single shelf. And a <b>condition variable</b> lets a thread sleep until someone announces the thing it's waiting for.</p>
+<pre><code> T1: load count(=5) ---- add -&gt; 6 ---- store 6
+ T2:      load count(=5) ---- add -&gt; 6 ---- store 6   &lt;- lost update!
+
+ with mutex:  T1 [lock][load 5][store 6][unlock]
+              T2 .......waits....... [lock][load 6][store 7][unlock]</code></pre>
+<h3>Build It</h3>
+<p>CAS (compare-and-swap) — the atom from which lock-free code is built:</p>
+<pre><code># hardware guarantees this whole check-and-set is indivisible
+def cas(ref, expected, new):        # returns True if it won
+    if ref.value == expected:
+        ref.value = new; return True
+    return False
+
+def atomic_increment(ref):
+    while True:                      # optimistic retry loop
+        old = ref.value
+        if cas(ref, old, old + 1): return</code></pre>
+<p>The two classic ways to die: <b>deadlock</b> (T1 holds A wants B; T2 holds B wants A — cure: acquire locks in a global fixed order) and <b>contention</b> (everyone queuing on one hot lock — cure: shard the state, shrink critical sections, or go atomic).</p>
+<h3>Use It</h3>
+<p>Every language ships these (Python <code>threading.Lock</code>, Java <code>synchronized</code>/<code>j.u.c</code>, Go <code>sync.Mutex</code>, C++ <code>std::atomic</code>). The same ideas reappear at distributed scale — Redis <code>SETNX</code> locks, ZooKeeper leases — with a cruel twist: there, the "hardware guarantee" is gone and leases can expire while you still think you hold them.</p>
+<h3>War Story</h3>
+<p>In 1997 the Mars Pathfinder lander began rebooting on Mars: a low-priority task held a mutex needed by a high-priority task, while medium-priority work starved it — the textbook <b>priority inversion</b>. JPL diagnosed it from 100+ million miles away and hot-patched the fix (priority inheritance) onto the spacecraft. Your on-call rotation could be worse.</p>
+<h3>Checkpoint</h3>
+<ul><li>Walk through how two concurrent <code>count += 1</code> operations lose an update.</li><li>What's the difference in purpose between a mutex and a semaphore?</li><li>State the standard rule that prevents deadlock, and why it works.</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Event loops and async I/O</h2>
+<p><b>MOTTO:</b> Don't hire a waiter per table; hire one who never stands still.</p>
+<h3>The Problem</h3>
+<p>Network servers spend almost all their time waiting — for packets, for disks, for slow clients. Thread-per-connection assigns a costly OS thread to do that waiting (Lesson 05's wall). We want one thread to <i>wait on ten thousand things at once</i> and only spend effort where something actually happened.</p>
+<h3>The Concept</h3>
+<p>The event loop is a single relentless waiter: the kernel keeps a list of sockets you care about, you ask "which are ready?", and you handle exactly those — never blocking on any one of them. The enabling syscalls are <code>epoll</code> (Linux), <code>kqueue</code> (BSD/macOS), IOCP (Windows): register many fds once, then harvest ready events in O(ready), not O(watched).</p>
+<pre><code> loop forever:
+   events = epoll_wait(all 10,000 sockets)   # sleeps until something&#x27;s ready
+   for (socket, event) in events:
+       run its handler a little (MUST NOT BLOCK)
+       if handler needs I/O -&gt; register interest, return to loop</code></pre>
+<p>The contract has teeth: one handler that blocks (sleeps, spins, calls a sync API) freezes <i>every</i> connection. Async is cooperative multitasking — everyone must actually cooperate.</p>
+<h3>Build It</h3>
+<p><code>async/await</code> is compiler sugar over exactly this loop:</p>
+<pre><code>import asyncio
+
+async def handle(reader, writer):
+    data = await reader.read(1024)     # &#x27;await&#x27; = park here, free the loop
+    await asyncio.sleep(0.1)           # pretend to work — without blocking
+    writer.write(b&quot;echo: &quot; + data)
+    await writer.drain(); writer.close()
+
+async def main():
+    server = await asyncio.start_server(handle, &quot;127.0.0.1&quot;, 9000)
+    async with server: await server.serve_forever()
+
+asyncio.run(main())   # one thread; try 10K concurrent clients against it</code></pre>
+<p>Each <code>await</code> is a voluntary yield back to the loop; the "thread of execution" is just a state machine parked in memory — kilobytes, not megabytes.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Runtime</th><th>Model</th></tr></thead><tbody><tr><td>nginx, Redis</td><td>Event loop in C (epoll/kqueue)</td></tr><tr><td>Node.js</td><td>Event loop (libuv) + worker pool for the blocking stuff</td></tr><tr><td>Go</td><td>Best of both: blocking-<i>looking</i> code, event loop underneath the runtime</td></tr><tr><td>Python asyncio</td><td>Explicit async/await, single loop</td></tr></tbody></table>
+<p>Rule of thumb: I/O-bound + many connections → event loop. CPU-bound → threads/processes; an event loop gains you nothing and one hot handler starves the world.</p>
+<h3>War Story</h3>
+<p>Ryan Dahl introduced Node.js at JSConf EU 2009 with a pointed demo: thread-based servers burn memory and switches to wait, while an event loop waits for free — and JavaScript, having no threads, couldn't cheat. nginx, built by Igor Sysoev on the same event-driven principle as a direct answer to C10K, went on to overtake Apache as the web's most deployed server.</p>
+<h3>Checkpoint</h3>
+<ul><li>What does <code>epoll_wait</code> give you that calling <code>read()</code> on 10,000 sockets in a loop does not?</li><li>Why does one blocking call inside an async handler damage all connections, not just its own?</li><li>For a service doing heavy image processing per request, why is an event loop the wrong tool?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> File systems: what happens when you save a file</h2>
+<p><b>MOTTO:</b> "Saved" is a negotiation between your program, the kernel, and a disk that lies.</p>
+<h3>The Problem</h3>
+<p>Your program wrote the file, the call returned success, the process exited cleanly — and after the power flicked, the file is empty. Nobody lied, exactly. There are three layers of buffering between <code>write()</code> and magnetized platter, and each returns "done" meaning something different.</p>
+<h3>The Concept</h3>
+<p>A file system maps names to bytes using <b>inodes</b> (metadata: size, permissions, pointers to data blocks), <b>directories</b> (name → inode tables), and a block allocator. The treachery is in the write path: <code>write()</code> usually just copies into the kernel's <b>page cache</b> and returns; actual disk I/O happens seconds later, batched, in whatever order the kernel and the disk's own cache prefer. Journaling file systems (ext4, XFS, NTFS) keep a WAL of <i>metadata</i> so a crash can't corrupt the file system itself — but your file's <i>contents</i> are your problem.</p>
+<pre><code> write(&quot;a.txt&quot;)                     survives crash?
+   -&gt; app buffer (fwrite)              no
+   -&gt; kernel page cache (write)        no          &lt;- &quot;success&quot; returned here!
+   -&gt; disk write cache  (fsync...)     maybe
+   -&gt; platter/flash     (...fsync)     yes</code></pre>
+<h3>Build It</h3>
+<p>The crash-safe save, as every database and serious editor does it:</p>
+<ol><li>Write the full new contents to a temp file: <code>a.txt.tmp</code>.</li><li><code>fsync(a.txt.tmp)</code> — force contents to stable storage.</li><li><code>rename("a.txt.tmp", "a.txt")</code> — POSIX rename is atomic: readers see old or new, never a mangled hybrid.</li><li><code>fsync</code> the containing directory — the rename itself is metadata that must also survive.</li></ol>
+<p>Skip step 2 and a crash can leave <code>a.txt</code> pointing at zero-length garbage; skip step 4 and the rename may quietly not have happened.</p>
+<h3>Use It</h3>
+<p>ext4/XFS (Linux), APFS, NTFS all journal metadata by default, not data. Databases therefore bypass hope entirely: Postgres <code>fsync</code>s its WAL on commit; SQLite's whole design is atomic-commit machinery. ZFS and btrfs go further with copy-on-write and checksums — they can detect the disk lying.</p>
+<h3>War Story</h3>
+<p>In 2018 the PostgreSQL community discovered "fsyncgate": on Linux, if a background writeback failed, the error could be reported to <i>one</i> <code>fsync</code> call and then cleared — a subsequent <code>fsync</code> returned success while data was silently gone. Postgres had misunderstood this contract for roughly two decades. The fix: treat any fsync failure as grounds to crash and recover from WAL. Even the experts were being lied to.</p>
+<h3>Checkpoint</h3>
+<ul><li>Name the buffering layers between <code>write()</code> returning and data being durable, and which call forces the crossing.</li><li>Why does write-temp / fsync / rename / fsync-dir guarantee readers never see a partial file?</li><li>What does a journaling file system protect by default — and what does it <i>not</i> protect?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Memory management and garbage collection</h2>
+<p><b>MOTTO:</b> Someone must free the memory; the only question is who suffers, and when.</p>
+<h3>The Problem</h3>
+<p>Programs allocate constantly. Free memory manually and humans ship use-after-frees and leaks; free it automatically and the collector shows up mid-request like a fire drill — and at p99, your users are the ones standing in the parking lot.</p>
+<h3>The Concept</h3>
+<p>The OS hands processes <b>virtual memory</b> (per-process fantasy address space, mapped to physical pages on demand). Above that, language runtimes manage a <b>heap</b>. Manual management (C) is fast and lethal. <b>Tracing GC</b> (Java, Go, C#, JS, Python's cycle collector) starts from roots (stacks, globals), marks everything reachable, and reclaims the rest. <b>Reference counting</b> (Python's primary mechanism, Swift) frees at zero refs — prompt, but cycles need a backup tracer. <b>Ownership</b> (Rust) proves lifetimes at compile time: no collector, no pauses, stricter compiler arguments.</p>
+<pre><code> roots: [stack] [globals]
+          |        |
+          v        v
+         (A) ---&gt; (B)      reachable: A, B  -&gt; keep
+                  (C) &lt;-&gt; (D)   unreachable cycle -&gt; tracing GC frees;
+                                 pure refcounting leaks it forever</code></pre>
+<h3>Build It</h3>
+<p>Why GCs pause, and how they mostly stopped:</p>
+<ol><li>Naive mark-and-sweep must freeze the world — pointers can't move under the marker. Pause grows with heap size: multi-GB heap, multi-second pause.</li><li><b>Generational</b> collectors exploit the fact that most objects die young: collect the nursery often and cheaply, the old space rarely.</li><li><b>Concurrent/incremental</b> collectors (Go's GC, Java's ZGC/Shenandoah) mark while your code runs, using write barriers to catch mutations — pauses drop to sub-millisecond, paid for as ~few-% throughput tax.</li><li>Practitioner levers regardless: allocate less on hot paths, reuse buffers/pools, keep heaps sized so collection isn't perpetual.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Strategy</th><th>Pause profile</th><th>Tax</th><th>Languages</th></tr></thead><tbody><tr><td>Manual</td><td>none</td><td>your sanity</td><td>C</td></tr><tr><td>Refcounting</td><td>tiny, constant</td><td>per-assignment overhead; cycles</td><td>Python, Swift</td></tr><tr><td>Tracing GC</td><td>rare, once large, now ~ms</td><td>throughput %, memory headroom</td><td>Java, Go, C#</td></tr><tr><td>Ownership</td><td>none</td><td>compile-time fight</td><td>Rust</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>In 2020, Discord published why they rewrote their Read States service from Go to Rust: the service was fast except for latency spikes every couple of minutes — the Go garbage collector (of that era) walking a huge long-lived cache. The Rust rewrite, with no collector, flattened the spikes entirely. Not a verdict on Go — a verdict on <i>knowing where your pauses come from</i>.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does pure reference counting leak cyclic structures, and which collector design does not?</li><li>What empirical fact about object lifetimes makes generational GC effective?</li><li>Your p50 is 5 ms but p99 is 900 ms in a GC'd service. What's your first hypothesis and how would you confirm it?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Zero-copy and the page cache</h2>
+<p><b>MOTTO:</b> The fastest way to move bytes is to stop moving them.</p>
+<h3>The Problem</h3>
+<p>A file server "just" sends files. The naive path — <code>read()</code> then <code>write()</code> — copies each byte four times and crosses the user/kernel boundary four times: disk→page cache, page cache→your buffer, your buffer→socket buffer, socket buffer→NIC. Your CPU is a highly paid bucket brigade.</p>
+<h3>The Concept</h3>
+<p>Two kernel gifts. The <b>page cache</b>: the kernel keeps recently used file pages in otherwise-idle RAM, so repeated reads never touch disk — this is why "free" memory on a healthy Linux box is nearly zero and why the <i>second</i> run of anything is fast. <b>Zero-copy</b>: <code>sendfile()</code> tells the kernel "move file → socket yourself," skipping userspace entirely; with DMA scatter-gather, the CPU may only shuffle descriptors while the NIC pulls data straight from the page cache.</p>
+<pre><code> naive:      disk -&gt;[DMA]-&gt; page cache -&gt;copy-&gt; user buf -&gt;copy-&gt; socket buf -&gt;[DMA]-&gt; NIC
+                                  (2 copies through userspace, 4 mode switches)
+ sendfile:   disk -&gt;[DMA]-&gt; page cache -------------------------&gt;[DMA]-&gt; NIC
+                                  (0 userspace copies)</code></pre>
+<h3>Build It</h3>
+<ol><li>Serve static bytes? Use the primitive: <code>sendfile(sock, file_fd, offset, count)</code> — Python exposes <code>socket.sendfile(f)</code>; nginx has <code>sendfile on;</code>.</li><li>Need the data mapped, not streamed? <code>mmap()</code> the file: page cache pages appear in your address space; reads become memory access, no copy.</li><li>Measure the cache: run a grep over a big file twice — cold vs warm timings differ by ~100x; <code>free -h</code> shows the cache column doing it.</li><li>Caveat: zero-copy helps when you <i>don't transform</i> the bytes. TLS encryption historically forced data through userspace — which is why kernel TLS (kTLS) exists: encrypt in-kernel, keep the zero-copy path.</li></ol>
+<h3>Use It</h3>
+<p>Kafka's throughput story is page cache + <code>sendfile</code>: brokers barely touch userspace to fan out logs to consumers. nginx serves static content the same way. The flip side: databases like Postgres partially <i>fight</i> the page cache (double buffering with their own pool), and <code>O_DIRECT</code> exists for engines that want to manage caching themselves.</p>
+<h3>War Story</h3>
+<p>Netflix's Open Connect appliances — the boxes it places inside ISPs — serve video from FreeBSD using an aggressively tuned <code>sendfile</code> path, with Netflix engineers contributing async sendfile and in-kernel TLS work upstream to push a <i>single commodity server</i> past 100 Gbps, and later toward 400 Gbps, of video delivery. That headroom is almost entirely "stop copying."</p>
+<h3>Checkpoint</h3>
+<ul><li>Count the copies and user/kernel crossings in the naive read/write file-serving loop.</li><li>Why does encrypting traffic complicate zero-copy, and what's the kernel's answer?</li><li>Why is near-zero "free" RAM on a Linux server usually good news?</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> The network path through the kernel</h2>
+<p><b>MOTTO:</b> Between the wire and your <code>recv()</code> lies a small, opinionated bureaucracy.</p>
+<h3>The Problem</h3>
+<p>"The network is slow" is rarely the network. A packet arriving at your NIC passes through interrupts, kernel queues, protocol code, and socket buffers before your app sees byte one — and each stage can drop, delay, or batch. If you can't name the stages, you can't find the loss.</p>
+<h3>The Concept</h3>
+<p>Follow one inbound packet:</p>
+<pre><code> wire -&gt; NIC -&gt; [DMA into ring buffer in RAM] -&gt; IRQ (&quot;mail!&quot;)
+      -&gt; softirq/NAPI: kernel polls ring, builds skbuffs
+      -&gt; IP layer (checksums, routing, firewall/netfilter)
+      -&gt; TCP layer (reassembly, ACKs, congestion bookkeeping)
+      -&gt; socket receive buffer
+      -&gt; your recv() copies to userspace  (finally, a copy you asked for)</code></pre>
+<p>Backpressure lives at every hop: ring buffer full → silent NIC drops; socket buffer full → TCP advertises a smaller window and the <i>sender</i> slows; accept queue full → new connections refused. Interrupt-per-packet would melt a CPU at 10 Gbps, so NAPI switches to polling under load; multi-queue NICs (RSS) spread flows across cores.</p>
+<h3>Build It</h3>
+<p>Field kit — observe each stage on a Linux box:</p>
+<ol><li>NIC-level drops: <code>ethtool -S eth0 | grep -i drop</code> (ring buffer overruns live here).</li><li>Protocol counters: <code>netstat -s</code> — retransmits, listen-queue overflows ("SYNs to LISTEN sockets dropped").</li><li>Per-socket queues: <code>ss -tmi</code> — send/receive buffer occupancy, congestion window.</li><li>Tuning levers: socket buffer sizes (<code>net.core.rmem_max</code>), accept backlog (<code>somaxconn</code>), NIC ring sizes. Measure before and after; folklore tuning is how configs rot.</li></ol>
+<h3>Use It</h3>
+<p>When the bureaucracy itself becomes the bottleneck (millions of packets/sec: trading, DDoS scrubbing, load balancers), engineers bypass or shortcut it — DPDK (userspace drivers, poll the NIC directly), XDP/eBPF (run filters at the driver, pre-skbuff), or io_uring (batch syscalls). Costs: burned cores, custom stacks, exotic bugs. Most services should tune, not bypass.</p>
+<h3>War Story</h3>
+<p>Cloudflare's engineering blog series ("How to receive a million packets per second," "Kernel bypass") documented exactly this walk: a stock socket path topping out far below line rate, then each fix — multi-queue spreading, receive batching, and ultimately XDP-based DDoS filtering dropping attack packets at the driver before the kernel spends <i>any</i> further work on them. The packet path is their product's front line.</p>
+<h3>Checkpoint</h3>
+<ul><li>List, in order, the stages an inbound packet traverses from wire to <code>recv()</code>.</li><li>What happens upstream when a receiver's socket buffer fills, and why is that a feature?</li><li>Why does the kernel switch from interrupts to polling (NAPI) under high packet rates?</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> The cost of everything (a benchmark tour)</h2>
+<p><b>MOTTO:</b> In God we trust; all others must bring benchmarks.</p>
+<h3>The Problem</h3>
+<p>This phase handed you a dozen claims: caches are fast, seeks are slow, syscalls cost, GC pauses. Believing them is not the same as <i>knowing</i> them — and hardware, kernels, and runtimes drift every year. An engineer who measures owns their numbers; an engineer who quotes rents them.</p>
+<h3>The Concept</h3>
+<p>A benchmark is an experiment, and experiments have failure modes: measuring the first run (cold caches), measuring the mean (tails hidden), letting the compiler delete your unused work, or benchmarking your laptop's thermal throttling. The discipline is the same as science class — isolate one variable, warm up, repeat, report distributions, and stay suspicious of numbers that flatter you.</p>
+<pre><code> the honest benchmark loop:
+   warm up  -&gt;  measure N times  -&gt;  report p50 / p99 / max
+        ^                                     |
+        +---- change ONE thing  &lt;-------------+</code></pre>
+<h3>Build It</h3>
+<p>A micro-harness and your lab agenda:</p>
+<pre><code>import time, statistics
+def bench(fn, n=30, warmup=5):
+    for _ in range(warmup): fn()
+    t = []
+    for _ in range(n):
+        s = time.perf_counter(); fn(); t.append(time.perf_counter() - s)
+    t.sort()
+    return {&quot;p50&quot;: t[n//2], &quot;p99&quot;: t[int(n*0.99)-1], &quot;max&quot;: t[-1]}</code></pre>
+<p>Measure, on your own machine: (1) sequential vs random list traversal (Lesson 01); (2) <code>write()</code> alone vs <code>write()+fsync</code> (Lesson 08 — expect ~1000x); (3) thread spawn vs asyncio task spawn (Lessons 05/07); (4) dict lookup vs local SQLite read vs Redis-in-Docker round trip (Phase 0 lab). Write your numbers down. They're your personal latency table now.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Layer</th></tr></thead><tbody><tr><td><code>time</code>, <code>hyperfine</code></td><td>whole programs</td></tr><tr><td><code>fio</code></td><td>disk I/O patterns</td></tr><tr><td><code>wrk</code>, <code>hey</code></td><td>HTTP services under load</td></tr><tr><td><code>perf</code>, flame graphs</td><td>where CPU time actually goes</td></tr><tr><td><code>iperf3</code></td><td>raw network throughput</td></tr></tbody></table>
+<p>Cardinal rule for services: benchmark at realistic concurrency and read the <i>tail</i>. A system with a great mean and a 2-second p99 is a bad system experienced occasionally by everyone.</p>
+<h3>War Story</h3>
+<p>Brendan Gregg's flame graphs — born from performance work at Joyent and later Netflix — turned profiler output into a single glanceable picture of where CPU time goes, and became the industry's default way to <i>see</i> cost. His accompanying "USE method" (Utilization, Saturation, Errors for every resource) is the checklist version of this entire phase: don't guess, enumerate and measure.</p>
+<h3>Checkpoint</h3>
+<ul><li>Name three classic ways a benchmark lies, and the countermeasure for each.</li><li>Why report p99 and max rather than the mean for a service benchmark?</li><li>Predict, then measure: how much slower is <code>write()+fsync</code> than <code>write()</code> on your machine — and why (Lesson 08)?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="00-setup-and-mental-models.html">← 🧠 Phase 00</a>
+    <span class="spacer"></span>
+    <a href="02-networking.html">Phase 02 🌐 →</a>
+  </div>
+</div>
+</body>
+</html>

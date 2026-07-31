@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databases II — Distributed Data — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 05</div>
+  <h1><span class="pnum">05</span> 🗄️ Databases II — Distributed Data</h1>
+  <div class="tagline">One database is a pet. A hundred shards is a farm.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>Replication: leader-follower</a>
+<a href="#lesson-02"><span class="lnum">02</span>Multi-leader and leaderless replication</a>
+<a href="#lesson-03"><span class="lnum">03</span>Replication lag and read-your-writes</a>
+<a href="#lesson-04"><span class="lnum">04</span>Partitioning (sharding) strategies</a>
+<a href="#lesson-05"><span class="lnum">05</span>Consistent hashing</a>
+<a href="#lesson-06"><span class="lnum">06</span>Rebalancing without downtime</a>
+<a href="#lesson-07"><span class="lnum">07</span>Secondary indexes in a sharded world</a>
+<a href="#lesson-08"><span class="lnum">08</span>Document stores: MongoDB and friends</a>
+<a href="#lesson-09"><span class="lnum">09</span>Wide-column stores: Cassandra internals</a>
+<a href="#lesson-10"><span class="lnum">10</span>Key-value at scale: the Dynamo paper</a>
+<a href="#lesson-11"><span class="lnum">11</span>Graph databases</a>
+<a href="#lesson-12"><span class="lnum">12</span>NewSQL: Spanner and CockroachDB</a>
+<a href="#lesson-13"><span class="lnum">13</span>Choosing a database: a decision framework</a>
+<a href="#lesson-14"><span class="lnum">14</span>Build consistent hashing from scratch</a>
+  </div>
+  <article>
+<blockquote>One database is a pet. A hundred shards is a farm.</blockquote>
+<p>Phase 4 taught you how one database node works. Now we break it — or rather, we outgrow it: more data than one disk, more reads than one CPU, more nines than one machine can promise. The moment your data lives on two machines, physics files a complaint, and you inherit replication lag, split brains, and rebalancing migrations that make grown engineers weep. This phase is your field guide to keeping a herd of databases pointed in roughly the same direction.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> Replication: leader-follower</h2>
+<p><b>MOTTO:</b> One node decides, everyone else copies — democracy is for later phases.</p>
+<h3>The Problem</h3>
+<p>A single database node is a single point of failure and a single point of throughput. When the disk dies, you're down; when the read traffic triples, you're slow. You need copies of your data on multiple machines — but copies that receive independent writes will diverge into chaos. The simplest fix: only one node accepts writes.</p>
+<h3>The Concept</h3>
+<p>Leader-follower replication is a newsroom: one editor-in-chief (leader) approves every story, and syndicated papers (followers) reprint them in order. Readers can read any paper; corrections flow one way. The wire feed carrying stories is literally the WAL from Phase 4 — replication is "recovery, but on another machine, forever."</p>
+<pre><code>            writes
+   client ─────────&gt; [ LEADER ]
+                       │  replication log (WAL / binlog)
+              ┌────────┼────────┐
+              v        v        v
+        [follower] [follower] [follower]
+   client ──reads──────^ (any follower, or the leader)</code></pre>
+<h3>Build It</h3>
+<ol><li>Leader appends every write to its replication log; followers stream the log and apply records in order — identical inputs, identical state.</li><li><b>Sync vs async:</b> synchronous = leader waits for follower ack before confirming commit (no data loss, higher latency, a dead sync follower blocks writes); asynchronous = confirm immediately (fast, but an un-replicated tail can be lost on leader death). Semi-sync (wait for <i>one of N</i>) is the popular compromise.</li><li><b>New follower:</b> snapshot the leader, restore it, then replay the log from the snapshot's position until caught up. No downtime needed.</li><li><b>Failover:</b> detect leader death (timeouts — perilous), promote the most-caught-up follower, repoint clients, ensure the old leader — if it returns — demotes itself. Every step hides a razor blade.</li><li>Deadly failover bug: async replication + promotion = the new leader may lack the old leader's last writes. If the old leader comes back believing it still leads, you have <b>split brain</b>: two leaders accepting conflicting writes.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Mechanism</th></tr></thead><tbody><tr><td>PostgreSQL</td><td>streaming WAL replication + hot standby</td></tr><tr><td>MySQL</td><td>binlog replication (async/semi-sync)</td></tr><tr><td>MongoDB</td><td>replica sets with automated elections</td></tr><tr><td>Kafka</td><td>leader per partition, ISR followers</td></tr></tbody></table>
+<p>Managed offerings (RDS Multi-AZ, Cloud SQL HA) are this exact pattern with the failover runbook automated.</p>
+<h3>War Story</h3>
+<p>On October 21, 2018, a 43-second network partition between GitHub's data centers triggered an automated MySQL leader failover to the West coast — while the East coast leader had writes the new leader never received. The split brain forced GitHub into over 24 hours of degraded service while they carefully reconciled both histories, and their public postmortem became required reading on why automated failover is not a solved problem.</p>
+<h3>Checkpoint</h3>
+<ul><li>What can be lost in async replication failover that can't be lost in sync — and what do you pay for that safety?</li><li>Why must a recovered old leader be fenced or demoted before rejoining?</li><li>Why do followers apply the log in strict order rather than in parallel willy-nilly?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Multi-leader and leaderless replication</h2>
+<p><b>MOTTO:</b> When everyone can write, everyone can disagree.</p>
+<h3>The Problem</h3>
+<p>One leader means every write crosses the planet to reach it — brutal for multi-region apps — and leader failover is a scary, stateful dance. What if multiple nodes accepted writes? You gain locality and availability, but two datacenters can now accept <i>conflicting</i> writes for the same key at the same moment. Someone must decide what "the value" even is.</p>
+<h3>The Concept</h3>
+<p>Multi-leader is a document shared by two editors working offline on a plane — both edit paragraph 3, and someone must merge on landing. Leaderless (Dynamo-style) abolishes the editor entirely: you mail your edit to several archivists, and readers poll several archivists and trust the freshest-looking copy.</p>
+<pre><code>Leaderless write/read with N=3, W=2, R=2:
+
+  write ──&gt; [node A ✓] [node B ✓] [node C ✗ down]   ack after W=2
+  read  ──&gt; [node A: v2] [node C: v1(stale!)]        take newest of R=2
+
+  W + R &gt; N  →  read set ∩ write set ≠ ∅  →  you&#x27;ll see the new value</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Multi-leader:</b> each region has a leader; leaders asynchronously exchange changes. Conflict resolution options: last-writer-wins (LWW — silently drops data, beware), per-field merge, CRDTs, or "record the conflict and ask the app/human."</li><li><b>Leaderless quorums:</b> choose N (replicas), W (write acks), R (read fan-out). W+R &gt; N gives overlap; W=R=2, N=3 is the classic.</li><li><b>Read repair:</b> a read that sees stale replicas writes the newer value back to them.</li><li><b>Anti-entropy:</b> background process compares replicas (Merkle trees) and syncs differences — catches keys that are never read.</li><li><b>Hinted handoff:</b> if a home replica is down, another node holds the write with a "hint," delivering it when the node returns. Availability preserved; sloppy quorums weaken guarantees.</li><li>Even with quorums, concurrent writes conflict — you need <b>versioning</b> (vector clocks / dotted versions) to distinguish "newer" from "concurrent." Concurrent siblings must be merged.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Style</th><th>Systems</th><th>Cost</th></tr></thead><tbody><tr><td>Multi-leader</td><td>Postgres BDR, MySQL Group Replication (multi-primary), CouchDB</td><td>conflict resolution burden</td></tr><tr><td>Leaderless</td><td>Cassandra, Riak, Dynamo, Voldemort</td><td>tunable but never "simply consistent"</td></tr></tbody></table>
+<p>Rule of thumb: multi-leader across regions only if you can define merges for your data; leaderless when availability trumps freshness.</p>
+<h3>War Story</h3>
+<p>Amazon's 2007 Dynamo paper (Lesson 10 does the full tour) canonized leaderless quorums, hinted handoff, and vector clocks — motivated by shopping carts, where the merge rule is delightfully simple: union the carts, because accidentally re-adding a deleted item beats losing an added one. The paper is admirably honest that this pushed conflict resolution onto application programmers, and a decade of Cassandra LWW data-loss surprises proved how sharp that edge is.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does W + R &gt; N guarantee a read overlaps the latest successful write — and name one way that guarantee still leaks (hint: sloppy quorums, or failed partial writes).</li><li>What's wrong with last-writer-wins when clocks are involved?</li><li>Why is a shopping cart an unusually forgiving use case for leaderless replication?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Replication lag and read-your-writes</h2>
+<p><b>MOTTO:</b> You posted the comment; the replica hasn't heard the news yet.</p>
+<h3>The Problem</h3>
+<p>Async followers run milliseconds — or, during a spike, minutes — behind the leader. A user updates their profile photo (write hits leader), refreshes the page (read hits a lagging follower), and their change has vanished. They didn't witness "eventual consistency"; they witnessed a bug, and they will file it as one.</p>
+<h3>The Concept</h3>
+<p>Replication lag is watching a "live" broadcast on a 30-second delay: the game has moved on, your feed hasn't. The fix isn't eliminating the delay (physics disagrees) — it's making sure each viewer never sees the <i>feed jump backward</i>. That yields a family of session guarantees:</p>
+<pre><code>Read-your-writes:  after MY write, MY reads include it
+Monotonic reads:   MY successive reads never go back in time
+Consistent prefix: I never see effect-before-cause
+                   (&quot;answer&quot; visible before its &quot;question&quot;)</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Read-your-writes, option A:</b> route a user's reads to the leader for T seconds after their own write (track "last wrote at" per session).</li><li><b>Option B (better):</b> on write, capture the leader's log position (e.g., Postgres LSN, MySQL GTID). On read, pick any follower but <i>wait until it has replayed past that position</i> — or bounce to the leader.</li><li><b>Monotonic reads:</b> pin each session to one follower (hash user → replica), so time never rewinds between requests.</li><li>Watch multi-device: read-your-writes per <i>session</i> won't cover "posted on phone, refreshed on laptop" unless the token travels (server-side session store).</li><li>Operationally: expose lag as a metric (<code>pg_stat_replication</code>, <code>Seconds_Behind_Source</code>), and make the read router lag-aware — evict followers that fall too far behind.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Mechanism</th><th>Where</th></tr></thead><tbody><tr><td>GTID/LSN wait</td><td>MySQL <code>WAIT_FOR_EXECUTED_GTID_SET</code>, Postgres LSN checks</td></tr><tr><td>Lag-aware routing</td><td>ProxySQL, pgpool, app-level read routers</td></tr><tr><td>Session pinning</td><td>sticky routing by user ID</td></tr><tr><td>Causal tokens</td><td>MongoDB causal consistency sessions</td></tr></tbody></table>
+<p>Cheapest correct answer for small apps: send reads-after-writes to the leader and don't be clever until you must be.</p>
+<h3>War Story</h3>
+<p>Doug Terry and colleagues at Xerox PARC defined these session guarantees — read-your-writes, monotonic reads, writes-follow-reads — in a 1994 paper on the Bayou system, decades before "eventual consistency" became a cloud-era buzzword. Nearly every "my update disappeared on refresh" bug ever filed against a read-replica architecture is a rediscovery of exactly the anomalies Bayou catalogued.</p>
+<h3>Checkpoint</h3>
+<ul><li>A user writes, then reads from a follower 200ms behind. Describe two distinct fixes and their costs.</li><li>How can a user see comments appear and then <i>disappear</i> on refresh, and which guarantee prevents it?</li><li>Why does per-session read-your-writes break down across devices?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Partitioning (sharding) strategies</h2>
+<p><b>MOTTO:</b> When the data won't fit in one box, the hard part is choosing the knife.</p>
+<h3>The Problem</h3>
+<p>Replication copies <i>all</i> data to every node — it scales reads, not data size or write throughput. At some point the dataset or write load exceeds any single machine. You must split (<b>partition/shard</b>) the data across nodes. Split badly and one shard gets all the traffic while nine idle: the dreaded <b>hot spot</b>.</p>
+<h3>The Concept</h3>
+<p>Sharding is assigning students to exam halls. By surname range (A–F → Hall 1) keeps friends-with-similar-names together — great if you need to visit "all the Singhs" (range scans!) — but Hall S–Z overflows in some countries. By hash of student ID spreads everyone evenly, but now "all the Singhs" are scattered across every hall.</p>
+<pre><code>Range:  [A──F] [G──M] [N──S] [T──Z]   scans easy, skew likely
+Hash:   hash(key) % nodes             even spread, ranges scattered
+
+Hot-spot horror: keys = timestamps, range-partitioned
+    → ALL of today&#x27;s writes land on the last shard. 🔥</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Range partitioning:</b> keep a sorted key→shard map. Pros: efficient range queries, easy splits at observed boundaries. Cons: sequential keys (timestamps, auto-increment) hammer one shard.</li><li><b>Hash partitioning:</b> shard = f(hash(key)). Pros: uniform. Cons: range queries become scatter-gather; naive <code>mod N</code> reshuffles nearly everything when N changes (Lesson 05 fixes this).</li><li><b>Compound keys:</b> hash a prefix, range the suffix — Cassandra's <code>(partition key, clustering key)</code>: spread users across shards, keep each user's events sorted together.</li><li><b>Celebrity problem:</b> even perfect hashing can't save you when <i>one key</i> is hot (a viral post). Mitigations: split the key (append random suffix, aggregate on read), or cache in front.</li><li>Choose the shard key by your dominant query: the goal is most queries touching <b>one</b> shard. Cross-shard queries and transactions are where sharding stops being fun.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Strategy</th></tr></thead><tbody><tr><td>Cassandra/DynamoDB</td><td>hash partition key (+ sorted clustering)</td></tr><tr><td>HBase/Bigtable</td><td>range on row key</td></tr><tr><td>Vitess (MySQL)</td><td>configurable vindexes</td></tr><tr><td>Citus (Postgres)</td><td>hash or range distribution column</td></tr><tr><td>MongoDB</td><td>ranged or hashed shard key</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Instagram's early engineering posts describe sharding Postgres by embedding a shard identifier into their snowflake-style photo IDs — ID design <i>was</i> shard routing. Meanwhile "we chose a timestamp-leading row key" is such a notorious Bigtable/HBase hot-spot trap that Google's own Bigtable schema documentation warns against it explicitly; generations of monitoring pipelines have relearned it the hard way.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why do range-partitioned timestamp keys create a hot spot, and what compound-key trick fixes it while preserving in-shard ordering?</li><li>What breaks with <code>shard = hash(key) % N</code> the day you add a node?</li><li>Your app's top query is "all orders for customer X, newest first." Design the shard key.</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Consistent hashing</h2>
+<p><b>MOTTO:</b> Add a server, move a sliver — not the whole warehouse.</p>
+<h3>The Problem</h3>
+<p>With <code>hash(key) % N</code>, changing N from 10 to 11 remaps roughly 10/11ths of all keys — nearly every key migrates, every cache entry misses at once, and the origin gets trampled. Nodes join and leave constantly at scale. We need a scheme where adding a node moves only ~1/N of the data, touching nothing else.</p>
+<h3>The Concept</h3>
+<p>Picture a circular clock face of hash values. Each server sits at (several) positions on the circle; each key hashes to a point and walks clockwise to the first server it meets. Add a server, and it only claims the arc between itself and its counter-clockwise neighbor — every other arc is untouched.</p>
+<pre><code>        0/2^32
+     ┌────●────┐        ● = node position
+   key K ↘     │        K walks clockwise → owned by B
+     A ●       ● B
+     │           │      add node D between A and B:
+     └───● C ────┘      D steals only part of B&#x27;s arc.
+                        A and C never notice.</code></pre>
+<p>One node per position makes arcs lumpy and failure unfair (the next neighbor inherits <i>everything</i>). Fix: <b>virtual nodes</b> — each physical server appears at 100–200 points, smoothing load and spreading a dead node's arc across everyone.</p>
+<h3>Build It</h3>
+<ol><li>Hash each node ID (with vnode suffixes: <code>"nodeA#0"</code>, <code>"nodeA#1"</code>, ...) onto a ring of size 2^32 (or 2^64).</li><li>Keep node positions in a <b>sorted array</b>; lookup = hash the key, binary-search for the first position ≥ hash (wrap to index 0 past the end). O(log V).</li><li>Add node: insert its vnode positions; only keys in the claimed arcs migrate (~K/N of them).</li><li>Remove node: delete its positions; its arcs fall to clockwise successors — with vnodes, spread across many machines.</li><li>Replication on the ring: store each key on its owner <i>plus the next R−1 distinct physical successors</i> — the "preference list."</li><li>Alternative for fixed-ish clusters: <b>jump consistent hash</b> (Google, 2014) — no ring storage at all, just arithmetic.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Use of consistent hashing</th></tr></thead><tbody><tr><td>Cassandra / Dynamo / Riak</td><td>data placement via token ring + vnodes</td></tr><tr><td>Memcached (client libs like ketama)</td><td>cache server selection</td></tr><tr><td>Envoy / load balancers</td><td>ring-hash session affinity</td></tr><tr><td>Discord, Twemproxy</td><td>shard routing</td></tr></tbody></table>
+<p>Lesson 14 builds this in real Python — hold that thought.</p>
+<h3>War Story</h3>
+<p>Consistent hashing comes from Karger et al.'s 1997 STOC paper, born from the web-caching problem at MIT that also spawned Akamai — the founding technology of an entire CDN industry. A decade later the Dynamo paper made the ring the load-bearing icon of NoSQL architecture diagrams, vnodes and all.</p>
+<h3>Checkpoint</h3>
+<ul><li>Exactly which keys move when a node joins the ring, and roughly how many?</li><li>What two distinct problems do virtual nodes solve?</li><li>Why is <code>% N</code> fine inside a fixed-size hash table but catastrophic across a fleet of cache servers?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Rebalancing without downtime</h2>
+<p><b>MOTTO:</b> Rearrange the furniture while the party is still going.</p>
+<h3>The Problem</h3>
+<p>Shard 7 is at 90% disk. You bought three new machines. Now you must move terabytes between live nodes while reads and writes continue, without dropping a write, serving stale data, or saturating the network so badly that production notices. Rebalancing is where sharding designs go to be judged.</p>
+<h3>The Concept</h3>
+<p>Rebalancing is moving a library to a new building without ever closing: you photocopy a shelf (bulk copy), forward every new borrowing slip for that shelf to both buildings (dual-write/catch-up), verify the copies match, then update the card catalog (routing) and finally clear the old shelf. At no point may a reader be told "we don't know where that book is."</p>
+<pre><code>Phase 1: bulk copy shelf S  (old node → new node, throttled)
+Phase 2: stream changes since copy began (catch-up via log)
+Phase 3: brief sync point → flip routing for S
+Phase 4: old node forwards stragglers, then drops S</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Pre-split into many partitions:</b> create far more partitions than nodes up front (e.g., 1024 partitions on 8 nodes). Rebalancing = reassigning <i>whole partitions</i>, never re-splitting keys. This is the single best trick in this lesson.</li><li><b>Copy + catch-up:</b> snapshot the partition, then replay its change log from the snapshot point — identical to bootstrapping a replica (Lesson 01). Cutover happens when lag ≈ 0.</li><li><b>Routing update:</b> somebody authoritative (coordination service, config epoch) flips ownership atomically; in-flight requests to the old owner get "moved, ask node X" redirects (Redis Cluster's <code>MOVED</code>/<code>ASK</code> do exactly this).</li><li><b>Throttle:</b> cap migration bandwidth and concurrent moves; a rebalance that causes an outage has negative value.</li><li><b>Never fully automate carelessly:</b> auto-rebalancers reacting to a slow node can start mass data movement during an incident — exactly when you can least afford it. Human-approved rebalancing is a respectable choice (and Kafka's cruise-control-style tools expose knobs for this reason).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Approach</th></tr></thead><tbody><tr><td>Cassandra</td><td>vnode token reassignment, streaming</td></tr><tr><td>Vitess</td><td>resharding workflows with VReplication</td></tr><tr><td>Redis Cluster</td><td>16384 hash slots, slot-by-slot migration</td></tr><tr><td>Kafka</td><td>partition reassignment + throttles</td></tr><tr><td>CockroachDB/TiKV</td><td>automatic range splits + rebalancing</td></tr></tbody></table>
+<p>Fixed hash-slot schemes (Redis's 16384) are pre-splitting taken to its logical, pleasant conclusion.</p>
+<h3>War Story</h3>
+<p>Foursquare's famous 2010 outage — roughly 11 hours down — happened when one MongoDB shard outgrew RAM and the emergency fix (adding a shard) couldn't rebalance fast enough while the overloaded shard thrashed; the postmortem, published openly, became the canonical cautionary tale that you must reshard <i>before</i> you're at capacity, because rebalancing consumes the very headroom you've run out of.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does pre-splitting into many small partitions make rebalancing dramatically simpler?</li><li>During copy + catch-up, what guarantees no write to the moving partition is lost at cutover?</li><li>Why can fully automatic rebalancing amplify an outage instead of fixing one?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Secondary indexes in a sharded world</h2>
+<p><b>MOTTO:</b> Sharded by user, searched by email — pick which query gets to be cheap.</p>
+<h3>The Problem</h3>
+<p>Your users table is sharded by <code>user_id</code>. Now someone queries <code>WHERE email = 'x@y.com'</code>. The email could live on any shard. Your options: ask every shard (slow, fan-out), or maintain a separate email→shard mapping (a distributed index — with its own consistency problems). There is no free lunch here, only two well-understood lunches with different prices.</p>
+<h3>The Concept</h3>
+<p><b>Local indexes</b>: every branch library keeps a card catalog of <i>its own</i> books — finding a title means phoning every branch. <b>Global indexes</b>: one central catalog covers all branches — one phone call to find any book, but every new book requires updating a catalog that lives somewhere else (a remote, possibly-failing write).</p>
+<pre><code>LOCAL (document-partitioned):        GLOBAL (term-partitioned):
+shard1: idx{email→row} its rows      email a–m index on shard1
+shard2: idx{email→row} its rows      email n–z index on shard2
+query email → ASK ALL SHARDS         query email → ask ONE shard
+write row  → one shard, done         write row → data shard + index
+                                       shard (2 writes, 2 places)</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Local (document-partitioned) index:</b> each shard indexes only its own rows. Writes stay single-shard (fast, atomic). Reads on the secondary key = <b>scatter-gather</b> across all shards; latency is the <i>slowest</i> shard's, and tail latency degrades as shard count grows.</li><li><b>Global (term-partitioned) index:</b> the index itself is sharded by the indexed value. Reads touch one index shard. Writes now span the data shard <i>and</i> the index shard — either you pay distributed-transaction costs, or the index is updated async and is briefly stale.</li><li>Middle path used everywhere: async global index + treating it as a <i>routing hint</i> — read the hinted shard, verify against the source of truth.</li><li>Or step outside: ship changes to a search system (Elasticsearch) via CDC and accept indexing lag explicitly.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Model</th></tr></thead><tbody><tr><td>MongoDB</td><td>local per-shard indexes (scatter-gather off shard key)</td></tr><tr><td>Cassandra native 2i</td><td>local — infamous for fan-out pain</td></tr><tr><td>DynamoDB GSI</td><td>global, asynchronously maintained (eventually consistent reads)</td></tr><tr><td>CockroachDB/Spanner</td><td>global, transactionally maintained (pay at write time)</td></tr></tbody></table>
+<p>DynamoDB makes the tradeoff beautifully explicit: a GSI is literally a second table with its own provisioned write capacity — and a throttled GSI backpressures writes to the base table.</p>
+<h3>War Story</h3>
+<p>Cassandra's built-in secondary indexes earned a durable community reputation as a "use sparingly" feature precisely because they're node-local: any query not scoped to a partition fans out cluster-wide, and performance degrades as the cluster grows — the opposite of why you adopted Cassandra. The ecosystem's answer (materialized views, SASI, and ultimately storage-attached indexes) is a decade-long tour of every point in this lesson's design space.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why do local secondary indexes get <i>worse</i> for reads as you add shards?</li><li>What atomicity problem do global indexes introduce on the write path, and name two ways real systems handle it?</li><li>A DynamoDB GSI is "eventually consistent." Trace a read-after-write that exposes this.</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Document stores: MongoDB and friends</h2>
+<p><b>MOTTO:</b> Store the whole aggregate where you'll read the whole aggregate.</p>
+<h3>The Problem</h3>
+<p>Your <code>order</code> is one thing to your application — items, addresses, payment status — but a relational schema shatters it across six tables, reassembled by joins on every read. For aggregate-shaped data with evolving fields, the constant shredding and rejoining (and the migration ceremony for every new field) is friction you can feel. What if the database stored the aggregate as the app sees it?</p>
+<h3>The Concept</h3>
+<p>A relational database is a warehouse of standardized parts bins — maximum flexibility to build any report from parts. A document store is a shelf of packed boxes: everything for one order in one box, grab-and-go. Fast when you want whole boxes; awkward when you ask "find every box containing a size-9 shoe" — and risky if the same fact is copied into many boxes (denormalization means <i>you</i> own the update fan-out).</p>
+<pre><code>{ &quot;_id&quot;: &quot;order_9127&quot;,
+  &quot;customer&quot;: { &quot;id&quot;: 42, &quot;name&quot;: &quot;Priya&quot; },
+  &quot;items&quot;: [ {&quot;sku&quot;: &quot;A1&quot;, &quot;qty&quot;: 2, &quot;price&quot;: 499} ],
+  &quot;status&quot;: &quot;shipped&quot;,
+  &quot;events&quot;: [ {&quot;t&quot;: &quot;...&quot;, &quot;type&quot;: &quot;packed&quot;} ] }
+   ← one read, no joins, atomic to update</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Model by access pattern:</b> embed what you read together (order + items); reference what's shared, unbounded, or independently queried (customer profile). The classic sins: unbounded embedded arrays, and embedding data that many documents duplicate.</li><li><b>Atomicity:</b> single-document updates are atomic — schema design <i>is</i> transaction design. Multi-document ACID exists in MongoDB (4.0+, 2018) but costs more; leaning on it everywhere means you probably wanted Postgres.</li><li><b>Under the hood:</b> MongoDB's WiredTiger engine is B-trees + WAL + MVCC-style snapshots — Phase 4 all over again; "schemaless" is a storage-format claim, not a data-modeling exemption.</li><li><b>Distribution:</b> replica sets (Lesson 01 with elections) + sharding by shard key (Lesson 04's rules apply verbatim — bad shard keys are the top MongoDB scaling incident).</li><li>"Schemaless" really means <b>schema-on-read</b>: the reader must tolerate every historical shape of the document. Use validators; your future self is the reader.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Store</th><th>Notes</th></tr></thead><tbody><tr><td>MongoDB</td><td>richest queries/indexes in class, aggregation pipeline</td></tr><tr><td>Amazon DocumentDB / Azure Cosmos DB</td><td>managed, API-compatible-ish</td></tr><tr><td>CouchDB</td><td>multi-master sync, offline-first replication</td></tr><tr><td>Postgres JSONB</td><td>"document store inside a relational DB" — often the right call</td></tr></tbody></table>
+<p>Honest heuristic: aggregate-shaped reads and evolving schemas → documents shine; many-to-many relationships and ad-hoc cross-entity queries → relations shine. Postgres JSONB covers a shocking amount of the middle.</p>
+<h3>War Story</h3>
+<p>MongoDB's early defaults became a legend of their own: for a period, drivers defaulted to unacknowledged writes (fire-and-forget), producing spectacular benchmark numbers and a genre of "MongoDB lost my data" blog posts, until acknowledged writes became the default in 2012. Jepsen testing over the following decade repeatedly sharpened its consistency claims — a public case study in a database maturing under adversarial scrutiny.</p>
+<h3>Checkpoint</h3>
+<ul><li>Give one signal that data should be embedded and one that it should be referenced.</li><li>Why is "schemaless" better described as schema-on-read, and who pays the cost?</li><li>Why does single-document atomicity make document design a transactional decision?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Wide-column stores: Cassandra internals</h2>
+<p><b>MOTTO:</b> Design the table for the query, because the query won't bend for the table.</p>
+<h3>The Problem</h3>
+<p>You need to absorb hundreds of thousands of writes per second, across regions, surviving node and even datacenter failures — and your access patterns are known upfront (time-series, feeds, device events). A leader-based relational cluster buckles or bottlenecks on the leader. You want a database where <i>every</i> node accepts writes and adding nodes adds capacity linearly.</p>
+<h3>The Concept</h3>
+<p>Cassandra is this course's greatest-hits album: Dynamo's ring on the outside (leaderless replication, consistent hashing, gossip), Bigtable's engine on the inside (LSM: memtable, SSTables, compaction). Data modeling flips relational habits: a table is a <i>precomputed answer to one query</i>, physically laid out so that answer is a single-partition sequential read.</p>
+<pre><code>CREATE TABLE events (
+  device_id  text,      -- partition key → which node (hash on ring)
+  ts         timestamp, -- clustering key → sort order inside partition
+  reading    double,
+  PRIMARY KEY ((device_id), ts)
+) WITH CLUSTERING ORDER BY (ts DESC);
+
+Partition &quot;device42&quot;: [ts9|r][ts8|r][ts7|r]...  ← contiguous, sorted
+Query &quot;latest N for device42&quot; = one node, one sequential scan. Fast.</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Placement:</b> partition key hashes to a ring token; the key lives on that node plus the next RF−1 (replication factor) distinct nodes. No leader — any node coordinates any request.</li><li><b>Write path:</b> coordinator forwards to replicas; each replica appends to commit log (WAL) + memtable → later flushed to SSTables. Writes are blind appends — that's why Cassandra's writes are famously fast.</li><li><b>Read path:</b> merge memtable + relevant SSTables (Bloom filters prune), newest timestamp wins. Reads cost more than writes — inverted from B-tree engines.</li><li><b>Tunable consistency per query:</b> <code>ONE</code>, <code>QUORUM</code>, <code>LOCAL_QUORUM</code>, <code>ALL</code>. Read QUORUM + write QUORUM &gt; RF gives Lesson-02 overlap.</li><li><b>Deletes are writes:</b> tombstones mask data until compaction passes <code>gc_grace_seconds</code>. Queue-like workloads (write, read, delete, repeat) drown in tombstones — a top Cassandra anti-pattern.</li><li><b>Model by query:</b> one table per access pattern; duplicate data freely at write time. Joins don't exist; "denormalize" is not a slur here, it's the manual.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Fit</th><th>Anti-fit</th></tr></thead><tbody><tr><td>time-series, event feeds, write-heavy telemetry</td><td>ad-hoc queries, aggregations</td></tr><tr><td>multi-region active-active</td><td>strong transactions across keys</td></tr><tr><td>linear scale-out, no single leader</td><td>queue patterns (tombstone hell)</td></tr></tbody></table>
+<p>Kin: ScyllaDB (C++ rewrite, same model), HBase (Bigtable-style but <i>leader-per-region</i>, CP-flavored — an instructive contrast), Google Bigtable itself.</p>
+<h3>War Story</h3>
+<p>Cassandra was created at Facebook (by engineers including Avinash Lakshman, a Dynamo co-author) for inbox search, open-sourced in 2008 — literally Dynamo's distribution married to Bigtable's storage, the two papers of this phase fused into one system. Apple, Netflix, and Discord ran it at enormous scale; Discord's engineering blog later publicly chronicled migrating their trillions of messages to ScyllaDB in 2023, citing JVM GC pauses and hot-partition pain — hot partitions being, of course, Lesson 04's problem wearing a trench coat.</p>
+<h3>Checkpoint</h3>
+<ul><li>What different jobs do the partition key and clustering key perform, physically?</li><li>Why are writes cheaper than reads in Cassandra, when B-tree engines are the reverse?</li><li>Explain why using a Cassandra table as a work queue leads to tombstone-driven slow reads.</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Key-value at scale: the Dynamo paper</h2>
+<p><b>MOTTO:</b> The cart must never say no.</p>
+<h3>The Problem</h3>
+<p>Amazon, mid-2000s: an unavailable shopping cart is directly lost revenue, and their relational infrastructure made unavailability a real risk during failures. The requirement was inverted from classical databases: availability and latency SLAs first (99.9th percentile!), consistency negotiable. No existing system fit. So they wrote one, then told everyone how.</p>
+<h3>The Concept</h3>
+<p>Dynamo (SOSP 2007) is less a database than a <i>bill of materials</i> for AP systems — a checklist of techniques this phase has been assembling, snapped together:</p>
+<pre><code>Problem                    → Dynamo&#x27;s pick
+─────────────────────────────────────────────────────
+Placement                  → consistent hashing + vnodes   (L05)
+Write availability         → leaderless, sloppy quorum,
+                             hinted handoff                (L02)
+Conflict detection         → vector clocks → app merges    (L02)
+Replica divergence repair  → Merkle-tree anti-entropy      (L02)
+Membership &amp; failure       → gossip protocol, no master
+Interface                  → get(key) / put(key, ctx, val)</code></pre>
+<p>The philosophical core: <b>always writeable</b>. Conflicts are resolved on <i>read</i> (by the application), never refused on write.</p>
+<h3>Build It</h3>
+<ol><li><code>put()</code> goes to a coordinator, which writes to the key's N-node preference list, acking at W. If home nodes are down, <i>any</i> node accepts the write with a hint (sloppy quorum) — availability over strict overlap.</li><li><code>get()</code> reads R replicas; the returned <code>context</code> carries vector clocks. If versions are concurrent, the client receives <b>siblings</b> and must merge (carts: union).</li><li>Gossip spreads membership and liveness — no central coordinator to lose.</li><li>Merkle trees let replicas compare key ranges with logarithmic data exchange, syncing quietly in the background.</li><li>Note what's <i>absent</i>: transactions, joins, secondary indexes (v1), strong consistency. Ruthless subtraction in service of one SLA.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Descendant</th><th>Relationship</th></tr></thead><tbody><tr><td>Cassandra</td><td>Dynamo ring + Bigtable engine</td></tr><tr><td>Riak</td><td>closest open-source implementation</td></tr><tr><td>Voldemort</td><td>LinkedIn's take</td></tr><tr><td><b>DynamoDB</b> (2012)</td><td><i>shares the name, not the architecture</i> — a managed multi-tenant service; later papers describe leader-based replication per partition (Paxos-flavored), plus optional strong consistency and transactions</td></tr></tbody></table>
+<p>That last row is a top-tier interview trap: Dynamo (paper) ≠ DynamoDB (product).</p>
+<h3>War Story</h3>
+<p>The Dynamo paper won the SOSP Hall of Fame award and is arguably the most influential industry systems paper of its decade — it handed the industry a shared vocabulary (quorums, hinted handoff, vector clocks, anti-entropy) and directly seeded Cassandra, Riak, and Voldemort. Werner Vogels, Amazon's CTO, framed its publication as recruiting-and-ecosystem strategy as much as science; it worked on both counts.</p>
+<h3>Checkpoint</h3>
+<ul><li>What does "always writeable" force onto the read path, and onto the application?</li><li>How does a sloppy quorum differ from a strict one, and what guarantee does it sacrifice?</li><li>Name three concrete mechanisms Cassandra inherited from Dynamo, and the one big thing Cassandra's storage layer took from elsewhere.</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> Graph databases</h2>
+<p><b>MOTTO:</b> When the JOINs are three deep and screaming, the edges were the point all along.</p>
+<h3>The Problem</h3>
+<p>"Friends of my friends who like hiking and live in Vancouver" — in SQL, that's self-JOINs stacked three high, each join re-scanning indexes, with cost exploding as depth grows. Relational engines <i>store</i> relationships as foreign keys but <i>rediscover</i> them on every query via index lookups. When relationships are the data — social graphs, fraud rings, dependency trees, recommendations — you want traversal to be a pointer-chase, not a join.</p>
+<h3>The Concept</h3>
+<p>A relational join asks the phone book for each friend's address, every single hop. A graph database is walking a city where every house has direct tunnels to its neighbors: each node physically stores references to its edges — <b>index-free adjacency</b> — so hop cost is O(edges at this node), independent of total graph size.</p>
+<pre><code>(Alice) ─FRIENDS→ (Bob) ─FRIENDS→ (Carol) ─LIKES→ (Hiking)
+   │
+   └─LIVES_IN→ (Vancouver)
+
+Cypher:
+  MATCH (me:Person {name:&#x27;Alice&#x27;})-[:FRIENDS*2]-&gt;(fof)
+  WHERE (fof)-[:LIKES]-&gt;(:Tag {name:&#x27;Hiking&#x27;})
+  RETURN fof</code></pre>
+<p>Property graph model: nodes and edges both carry labels and key-value properties. The rival model, RDF/SPARQL (subject-predicate-object triples), rules the semantic-web and knowledge-graph world.</p>
+<h3>Build It</h3>
+<ol><li>Store nodes and edges as records where a node holds direct pointers (record IDs) into its adjacency list — traversal never consults a global index after the entry point.</li><li>Query = anchor lookup (one index hit to find Alice), then pure pointer-walking with filters; depth-3 costs ~(avg degree)^3 edge visits whether the graph has thousands or billions of nodes.</li><li>Contrast the SQL plan: each hop is an index-nested-loop over <code>friendships(user_id, friend_id)</code> — log-factor index costs per hop, join machinery throughout, and unbounded-depth queries need recursive CTEs.</li><li>Beware the supernode: a celebrity with 10M edges wrecks (degree)^k traversals — the hot key of Lesson 04, reborn with edges.</li><li>Distribution is genuinely hard: graphs resist clean partitioning (edges cross any cut you draw), which is why graph databases scaled up before they scaled out.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Model / niche</th></tr></thead><tbody><tr><td>Neo4j</td><td>property graph, Cypher — the reference point</td></tr><tr><td>Amazon Neptune</td><td>managed; Gremlin + SPARQL + openCypher</td></tr><tr><td>ArangoDB</td><td>multi-model (docs + graphs)</td></tr><tr><td>JanusGraph</td><td>distributed, over Cassandra/HBase backends</td></tr><tr><td>Postgres + recursive CTEs</td><td>fine for shallow/small graphs — start here</td></tr></tbody></table>
+<p>Killer domains: fraud rings (shared devices/addresses linking "unrelated" accounts), recommendations, network/dependency analysis, knowledge graphs.</p>
+<h3>War Story</h3>
+<p>The 2016 Panama Papers investigation — 2.6TB of leaked offshore-finance documents — was famously analyzed by the ICIJ using Neo4j and its visualization tooling, letting journalists traverse officer→company→address networks to surface hidden ownership chains. Graph queries found in minutes what document review would never have connected; the ICIJ discussed the tooling publicly, and it remains graph databases' best mainstream moment.</p>
+<h3>Checkpoint</h3>
+<ul><li>What is index-free adjacency, and precisely which cost does it remove compared to a SQL join per hop?</li><li>Why does traversal cost scale with local degree rather than total graph size — and what's the supernode exception?</li><li>Why is partitioning a graph across machines fundamentally harder than partitioning a key-value table?</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> NewSQL: Spanner and CockroachDB (TrueTime!)</h2>
+<p><b>MOTTO:</b> Google bought atomic clocks so your transactions could span continents.</p>
+<h3>The Problem</h3>
+<p>This phase kept offering a bleak menu: SQL-with-transactions on one box, or scale-out with weak consistency and no cross-shard transactions. But some workloads — payments, inventory, anything with invariants spanning shards — need <i>both</i>: serializable transactions AND horizontal scale AND survival of datacenter loss. The catch in distribution is always ordering: without a shared clock, nodes can't agree on what happened "before" what.</p>
+<h3>The Concept</h3>
+<p>Spanner's heresy: make the clock a hardware feature. <b>TrueTime</b> equips datacenters with GPS receivers and atomic clocks, and its API refuses to lie about precision — it returns an <i>interval</i>: <code>TT.now() = [earliest, latest]</code>, guaranteed to contain true time (skew typically bounded to a few milliseconds).</p>
+<pre><code>Commit-wait — buying external consistency with patience:
+  txn ready at TT.now() = [t1, t2]
+  pick commit timestamp s = t2
+  WAIT until TT.now().earliest &gt; s     (~ the uncertainty, few ms)
+  then commit &amp; release locks
+
+  ⇒ if txn B starts after txn A finishes — anywhere on Earth —
+    B&#x27;s timestamp &gt; A&#x27;s. Timestamp order = real-time order.</code></pre>
+<p>That's <b>external consistency</b> (strict serializability): the strongest guarantee in the book, at planet scale, priced at a few milliseconds of deliberate waiting per read-write transaction.</p>
+<h3>Build It</h3>
+<ol><li><b>Layout:</b> data in sorted key ranges; each range is a replication group running <b>Paxos</b> (Spanner) or <b>Raft</b> (CockroachDB) — Phase 4's WAL, replicated by consensus.</li><li><b>Transactions:</b> 2PL within ranges, two-phase commit <i>across</i> ranges, with the coordinator's state itself consensus-replicated — 2PC's classic "coordinator dies, everyone blocks" failure is engineered away.</li><li><b>Reads:</b> snapshot reads at a timestamp need no locks at all — MVCC (Phase 4, Lesson 08) with globally meaningful timestamps.</li><li><b>No atomic clocks?</b> CockroachDB uses NTP-synced clocks with a max-offset bound and hybrid logical clocks: instead of commit-wait, a read that encounters a write inside its uncertainty window <i>restarts at a higher timestamp</i>. Similar guarantee, different currency (occasional retries vs. hardware).</li><li>The tradeoff never disappears: cross-region writes pay consensus round-trips — geography is latency; NewSQL makes it <i>correct</i>, not free.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Clock strategy</th><th>Notes</th></tr></thead><tbody><tr><td>Google Spanner</td><td>TrueTime (GPS + atomic)</td><td>powers Google's ad billing (F1)</td></tr><tr><td>CockroachDB</td><td>NTP + HLC, uncertainty restarts</td><td>Postgres wire compatible</td></tr><tr><td>YugabyteDB</td><td>HLC, Raft</td><td>Postgres-compatible layer</td></tr><tr><td>TiDB</td><td>centralized timestamp oracle (PD)</td><td>MySQL compatible; TSO is a design contrast worth knowing</td></tr></tbody></table>
+<p>Reach for NewSQL when you need multi-region + real transactions; skip it when a single-region Postgres with replicas already fits — consensus tax on every write is real.</p>
+<h3>War Story</h3>
+<p>The 2012 Spanner paper (OSDI) landed with the deadpan-audacious claim that the right fix for distributed clock uncertainty was <i>better clocks</i> — GPS antennas and atomic references in every datacenter — and that uncertainty could then simply be <i>waited out</i>. Google migrated its revenue-critical ads database (F1) onto it, upgrading the paper's claims from research to load-bearing fact, and in 2017 Spanner became a public cloud product.</p>
+<h3>Checkpoint</h3>
+<ul><li>What does TrueTime return instead of a single timestamp, and why is that honesty the whole trick?</li><li>Explain commit-wait: what is waited for, how long, and what guarantee does it purchase?</li><li>How does CockroachDB approximate Spanner's guarantee without atomic clocks, and what does it cost instead?</li></ul>
+<h2 id="lesson-13"><span class="lnum">13</span> Choosing a database: a decision framework</h2>
+<p><b>MOTTO:</b> Nobody gets fired for choosing Postgres — and that's not a joke, it's a prior.</p>
+<h3>The Problem</h3>
+<p>You've now met a zoo: B-tree monoliths, LSM rings, document shelves, graphs, Spanner-class exotica. Real projects die from choosing <i>interestingly</i> rather than <i>correctly</i> — adopting a distributed database for 40GB of data, or discovering at scale that the "webscale" store can't do the one join the business runs on. You need a repeatable interrogation, not a favorite.</p>
+<h3>The Concept</h3>
+<p>Choosing a database is choosing a vehicle: the answer follows from the cargo, the route, and the driver — never from the brochure. The interrogation, in priority order:</p>
+<pre><code>1. SHAPE     relational? aggregate/doc? key-value? graph? time-series?
+2. QUERIES   known access patterns or ad-hoc? joins? ranges? search?
+3. SCALE     GB, TB, PB? writes/sec? growth curve? (be honest)
+4. CONSISTENCY  invariants that must never break? or feed-like data?
+5. LATENCY   p99 target? single-region or global users?
+6. OPS       who&#x27;s on call? managed service budget? team&#x27;s scar tissue?</code></pre>
+<p>Most projects that answer honestly discover at step 3 that one well-indexed Postgres (≲ a few TB, ≲ tens of thousands of writes/sec, with read replicas) answers steps 1–6 at once.</p>
+<h3>Build It</h3>
+<p>The decision procedure, as pseudocode:</p>
+<ol><li><b>Default to Postgres.</b> Deviate only when a specific answer above disqualifies it — write the disqualifying sentence down; it's your design doc.</li><li>Relationships-as-data, deep traversals → graph DB (or recursive CTEs first).</li><li>Aggregate documents, evolving schema, dominant whole-object reads → document store — after trying JSONB.</li><li>Extreme write volume, known queries, multi-region active-active, no cross-key transactions → wide-column / Dynamo-family.</li><li>Global scale AND real transactions → NewSQL; accept consensus latency.</li><li>Caching, sessions, counters → Redis <i>beside</i>, not instead of, the source of truth. Search → Elasticsearch <i>beside</i>, fed by CDC. <b>Polyglot means derived copies with one system of record</b> — decide staleness bounds explicitly.</li><li>Re-run the interrogation at every 10× of load; the right answer changes, and migrations are easiest <i>before</i> they're urgent.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Smell</th><th>Diagnosis</th></tr></thead><tbody><tr><td>"We chose Cassandra; now we need ad-hoc joins"</td><td>step 2 skipped</td></tr><tr><td>"Kafka + Mongo + Redis, unclear system of record"</td><td>step 6's rule violated</td></tr><tr><td>"Sharded at 50GB for future-proofing"</td><td>step 3 dishonesty (premature)</td></tr><tr><td>"MySQL monolith at 40TB, nightly ALTERs failing"</td><td>step 7 skipped (overdue)</td></tr></tbody></table>
+<p>The two failure modes are symmetric: resume-driven over-engineering, and monolith denial. The framework exists to catch both.</p>
+<h3>War Story</h3>
+<p>Both ditches are well-populated. The mid-2010s produced a genre of "we migrated off MongoDB/Cassandra back to Postgres" engineering posts whose root cause was choosing by scale they never reached, forfeiting joins and transactions they used daily. The opposite ditch is real too: teams that stayed on a single relational box past its limits and paid with multi-year emergency sharding projects — Vitess exists because YouTube lived exactly that story with MySQL.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is "start with Postgres" a defensible engineering prior rather than mere conservatism?</li><li>In a polyglot stack, what single question determines whether the design is sound?</li><li>Name one honest trigger that should force a re-evaluation of a working database choice.</li></ul>
+<h2 id="lesson-14"><span class="lnum">14</span> Build consistent hashing from scratch</h2>
+<p><b>MOTTO:</b> Fifty lines of Python, one ring to route them all.</p>
+<h3>The Problem</h3>
+<p>Lesson 05 gave you the theory; theory doesn't page you at 3 a.m. — implementations do. Time to build a hash ring with virtual nodes and <i>measure</i> the two claims we made: keys spread evenly, and adding a node moves only ~1/N of them. If the numbers don't come out, the lesson didn't stick.</p>
+<h3>The Concept</h3>
+<p>The whole design compresses to one sentence: keep a <b>sorted list of (hash, node) points</b>; to place a key, hash it and <b>binary-search</b> for the next point clockwise. Everything else — vnodes, joins, departures — is bookkeeping on that sorted list.</p>
+<pre><code>ring (sorted hashes):  [h(A#0), h(B#0), h(A#1), h(C#0), h(B#1), ...]
+lookup(key): i = bisect(ring, h(key)); wrap if past the end → owner
+add(node):   insert its vnode hashes  → steals only adjacent arcs</code></pre>
+<h3>Build It</h3>
+<pre><code>import hashlib, bisect
+
+def h(s: str) -&gt; int:
+    return int.from_bytes(hashlib.md5(s.encode()).digest()[:8], &quot;big&quot;)
+
+class HashRing:
+    def __init__(self, vnodes: int = 150):
+        self.vnodes, self._ring = vnodes, []   # sorted [(hash, node)]
+
+    def add(self, node: str):
+        for i in range(self.vnodes):
+            bisect.insort(self._ring, (h(f&quot;{node}#{i}&quot;), node))
+
+    def remove(self, node: str):
+        self._ring = [(hv, n) for hv, n in self._ring if n != node]
+
+    def get(self, key: str) -&gt; str:
+        i = bisect.bisect(self._ring, (h(key), &quot;&quot;))
+        return self._ring[i % len(self._ring)][1]      # wrap = clockwise
+
+    def get_n(self, key: str, n: int) -&gt; list[str]:    # preference list
+        i, out = bisect.bisect(self._ring, (h(key), &quot;&quot;)), []
+        while len(out) &lt; n:
+            node = self._ring[i % len(self._ring)][1]
+            if node not in out: out.append(node)
+            i += 1
+        return out
+
+# ---- measure the claims ----
+ring = HashRing()
+for node in [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;]: ring.add(node)
+keys = [f&quot;user:{i}&quot; for i in range(100_000)]
+before = {k: ring.get(k) for k in keys}
+
+from collections import Counter
+print(Counter(before.values()))     # claim 1: ~25k each (±few %)
+
+ring.add(&quot;E&quot;)
+moved = sum(before[k] != ring.get(k) for k in keys)
+print(f&quot;moved: {moved/len(keys):.1%}&quot;)   # claim 2: ~20% (= 1/5), not 80%</code></pre>
+<p>Experiments to run: set <code>vnodes=1</code> and watch balance crumble (rerun a few times — variance is the lesson); sweep vnodes over 1/10/100/500 and plot standard deviation of load; implement <code>remove("B")</code> and verify only B's keys moved; use <code>get_n(key, 3)</code> to simulate Dynamo-style replica placement.</p>
+<h3>Use It</h3>
+<p>This is, at honest fidelity, the routing core of ketama-style memcached clients, Cassandra's token ring (theirs adds ownership metadata and gossip), and Envoy's ring-hash balancer. Production upgrades from here: replace md5 with a faster non-crypto hash (xxHash/murmur), make ring updates copy-on-write for lock-free concurrent readers, and gossip membership instead of calling <code>add()</code> by hand.</p>
+<h3>War Story</h3>
+<p>The ketama library (from Last.fm, 2007) brought exactly this vnode ring to memcached clients, and its name became shorthand for consistent hashing in a dozen languages' client libraries. Amusingly, ketama-compatible quirks — like how many points per server and how they're derived — became de facto standards that later clients reproduce bug-for-bug, because changing them would remap everyone's cache.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why <code>bisect</code> over a linear scan — and what's the lookup complexity in vnodes?</li><li>In the measurement harness, why ~20% moved rather than ~1/5 of <i>each node's</i> keys — what exactly does the 1/N claim promise?</li><li>Why must <code>get_n</code> deduplicate physical nodes when walking vnode positions?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="04-storage-engines.html">← 💾 Phase 04</a>
+    <span class="spacer"></span>
+    <a href="06-caching.html">Phase 06 ⚡ →</a>
+  </div>
+</div>
+</body>
+</html>

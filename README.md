@@ -121,7 +121,11 @@ lesson in itself, with a demo in `__main__`.
 3. **Interview in two weeks?** Do Phase 0, skim 4–9, then live in
    Phases 17–18.
 4. **Track progress** on the website — checkboxes persist in your
-   browser.
+   browser, and every lesson title links to a styled reader page.
+
+The website lives in [`site/`](site/) — open `site/index.html` directly,
+no server needed. Reader pages are generated from the phase markdown:
+`python scripts/build_site.py` (rerun after editing any lesson).
 
 ## Philosophy
 

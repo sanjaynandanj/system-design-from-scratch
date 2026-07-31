@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud, Containers & Infrastructure — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 15</div>
+  <h1><span class="pnum">15</span> ☁️ Cloud, Containers &amp; Infrastructure</h1>
+  <div class="tagline">Someone else&#x27;s computer, industrialized.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>VMs vs containers</a>
+<a href="#lesson-02"><span class="lnum">02</span>Docker internals: namespaces and cgroups</a>
+<a href="#lesson-03"><span class="lnum">03</span>Kubernetes architecture</a>
+<a href="#lesson-04"><span class="lnum">04</span>Kubernetes patterns: deployments to operators</a>
+<a href="#lesson-05"><span class="lnum">05</span>Serverless and FaaS</a>
+<a href="#lesson-06"><span class="lnum">06</span>Infrastructure as code</a>
+<a href="#lesson-07"><span class="lnum">07</span>CI/CD pipelines</a>
+<a href="#lesson-08"><span class="lnum">08</span>Blue-green and canary deployments</a>
+<a href="#lesson-09"><span class="lnum">09</span>Multi-region architectures</a>
+<a href="#lesson-10"><span class="lnum">10</span>Cell-based architecture</a>
+<a href="#lesson-11"><span class="lnum">11</span>Edge computing</a>
+<a href="#lesson-12"><span class="lnum">12</span>Cloud cost optimization</a>
+  </div>
+  <article>
+<blockquote>Someone else's computer, industrialized.</blockquote>
+<p>The cloud didn't eliminate servers; it turned them into a utility you rent by the millisecond and configure with code. That shift changed what "infrastructure" means: it's no longer racks you touch, it's APIs you call, declarations you commit, and abstractions stacked from hypervisors up to functions-as-a-service. This phase walks the whole stack — VMs to containers to Kubernetes to serverless — then zooms out to how modern teams ship (CI/CD, canaries), survive (multi-region, cells), and avoid going broke doing it.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> VMs vs Containers</h2>
+<p><b>MOTTO:</b> A VM virtualizes the hardware; a container virtualizes the operating system — and that one sentence explains every tradeoff.</p>
+<h3>The Problem</h3>
+<p>One app per physical server is absurdly wasteful — most servers idle at 10-15% utilization. But cramming multiple apps onto one OS means dependency hell (app A needs libssl 1.0, app B needs 3.0), noisy neighbors, and "works on my machine." You need isolation <i>and</i> density <i>and</i> portability, and the two mainstream answers slice the stack at different heights.</p>
+<h3>The Concept</h3>
+<p>A VM is a house: its own foundation, plumbing, and walls (full guest OS on virtual hardware). A container is an apartment: private rooms, but shared foundation and plumbing (shared kernel, isolated userspace).</p>
+<pre><code>      VMs                                Containers
+┌─────────┐ ┌─────────┐            ┌─────────┐ ┌─────────┐
+│  App A  │ │  App B  │            │  App A  │ │  App B  │
+│ Bins/Libs│ │Bins/Libs│            │Bins/Libs │ │Bins/Libs│
+│ Guest OS │ │Guest OS │            └────┬────┘ └────┬────┘
+└────┬────┘ └────┬────┘            ┌─────┴───────────┴────┐
+┌────┴───────────┴────┐            │   Container runtime   │
+│     Hypervisor      │            │      Host OS (one     │
+│      Host HW        │            │    shared kernel!)    │
+└─────────────────────┘            └──────────────────────┘
+Boot: minutes  Size: GBs           Start: ms-secs  Size: MBs
+Strong HW-level isolation          Kernel is the shared wall</code></pre>
+<p>The consequences all follow: containers start in milliseconds and pack densely because there's no OS to boot per instance; VMs isolate more strongly because escaping requires beating the hypervisor, not just the kernel.</p>
+<h3>Build It</h3>
+<ol><li>VM mechanics: the hypervisor (KVM, Xen, Hyper-V) traps privileged instructions from the guest and mediates hardware access; modern CPUs assist with VT-x/AMD-V so most guest code runs at native speed.</li><li>Container mechanics: no virtualization at all — just a normal Linux process wearing kernel-enforced blinders (namespaces) and handcuffs (cgroups). Next lesson dissects them.</li><li>Decision procedure: untrusted multi-tenant code or a different kernel/OS → VM. Your own microservices, CI jobs, dense packing → containers. Both → containers <i>inside</i> VMs, which is exactly what every managed Kubernetes service does.</li><li>Know the hybrids: Firecracker microVMs (VM isolation, ~125ms boot, runs AWS Lambda) and gVisor (userspace kernel shim) exist precisely because "shared kernel" is the scary phrase in multi-tenant clouds.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tech</th><th>Isolation</th><th>Startup</th><th>Use when</th></tr></thead><tbody><tr><td>KVM/EC2 VMs</td><td>Hardware-level</td><td>Minutes</td><td>Untrusted tenants, foreign OS</td></tr><tr><td>Docker/OCI containers</td><td>Kernel-level</td><td>ms–secs</td><td>Your own services, CI, density</td></tr><tr><td>Firecracker microVMs</td><td>Hardware-level</td><td>~125ms</td><td>Serverless multi-tenancy</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>AWS built Firecracker (open-sourced 2018) because Lambda's original architecture gave each <i>customer</i> dedicated EC2 instances — safe but wasteful. Firecracker's stripped-down microVMs (no BIOS, minimal devices, ~125ms boot, ~5MB overhead) let AWS pack thousands of hardware-isolated tenant workloads per server, proving the VM-vs-container dichotomy false: you can have most of both, if you delete enough legacy from the VM.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why can a container start in milliseconds while a VM takes tens of seconds? What work is each skipping or doing?</li><li>Your platform runs arbitrary code uploaded by strangers. Why are plain containers the wrong isolation boundary?</li><li>What specifically does the hypervisor virtualize that the container runtime doesn't?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Docker Internals: Namespaces and cgroups</h2>
+<p><b>MOTTO:</b> A container is just a Linux process that's been lied to about the world and told how much it can eat.</p>
+<h3>The Problem</h3>
+<p>"Container" sounds like a thing — a box, an object the kernel knows about. It isn't. There is no <code>struct container</code> in Linux. Treating Docker as magic means you can't debug it: why can the container see that file? why did it get OOM-killed? why does <code>ps</code> inside show PID 1? Demystifying the two kernel features underneath answers all of it.</p>
+<h3>The Concept</h3>
+<p>Two independent kernel mechanisms, composed:</p>
+<ul><li><b>Namespaces</b> control what a process can <i>see</i> — like giving someone VR goggles showing a private world: their own process list, network stack, filesystem root, hostname.</li><li><b>cgroups</b> control what a process can <i>use</i> — a metered allowance for CPU, memory, and I/O.</li></ul>
+<pre><code>Container = ordinary process
+   + PID namespace    → sees itself as PID 1, no other processes
+   + NET namespace    → own interfaces, IPs, ports, routing table
+   + MNT namespace    → own filesystem tree (pivot_root&#x27;ed to image)
+   + UTS namespace    → own hostname
+   + IPC/USER/... ns  → own IPC, remapped UIDs
+   + cgroup           → &quot;≤ 2 CPUs, ≤ 512MB RAM&quot; (exceed memory → OOM kill)
+   + layered image    → overlayfs: read-only layers + one writable top</code></pre>
+<p>Images stack via overlayfs: shared read-only layers (base OS, dependencies) plus a thin copy-on-write layer per container — which is why 50 containers from one image cost almost nothing extra in disk.</p>
+<h3>Build It</h3>
+<p>You can hand-roll a crude container with nothing but shell:</p>
+<pre><code># 1. New namespaces + fresh PID space, running our own root filesystem
+sudo unshare --pid --net --mount --uts --fork bash
+hostname lied-to-process              # 2. UTS ns: private hostname
+mount -t proc proc /proc              # 3. now `ps` shows ~only us, PID 1
+# 4. chroot/pivot_root into an extracted image tarball = &quot;the image&quot;
+# 5. cgroup: cap memory at 100MB
+mkdir /sys/fs/cgroup/demo
+echo 100M &gt; /sys/fs/cgroup/demo/memory.max
+echo $$   &gt; /sys/fs/cgroup/demo/cgroup.procs</code></pre>
+<p>That's ~80% of <code>docker run</code>. Docker adds the image format and registry protocol (OCI), a veth pair bridging the NET namespace to the host, overlayfs assembly, and a daemon API. Runtime layering: <code>dockerd → containerd → runc</code>, where runc is the small binary that actually makes the syscalls above.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Layer</th><th>Note</th></tr></thead><tbody><tr><td>runc / crun</td><td>OCI runtime — creates the ns/cgroup sandwich</td><td>What everything bottoms out in</td></tr><tr><td>containerd / CRI-O</td><td>Image pull, lifecycle management</td><td>What Kubernetes actually talks to</td></tr><tr><td>Podman</td><td>Daemonless, rootless containers</td><td>Better default security posture</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Docker began as an internal tool at dotCloud, a struggling PaaS, and was demoed by Solomon Hykes in a five-minute lightning talk at PyCon 2013. The kernel features were old news — Google had run everything in cgroups (which it contributed to Linux in 2007) for years, and LXC existed — but Docker's packaging insight (the image format + Dockerfile + registry) made the technology usable by everyone, and within two years it had reshaped the industry. Distribution, not virtualization, was the invention.</p>
+<h3>Checkpoint</h3>
+<ul><li>A process inside a container runs <code>ps aux</code> and sees itself as PID 1. Which mechanism produces this, and what is its PID on the host?</li><li>Your container was killed with exit code 137. Which kernel mechanism did that, and what limit did it enforce?</li><li>Why do 50 containers sharing one image consume far less disk and page cache than 50 VM clones? Which filesystem trick is responsible?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Kubernetes Architecture (Control Plane, kubelet, etcd, Scheduler)</h2>
+<p><b>MOTTO:</b> Kubernetes is a distributed while-loop: compare desired state to actual state, fix the difference, forever.</p>
+<h3>The Problem</h3>
+<p>Containers on one machine are a solved problem. Now run 500 services across 200 nodes: place each container on a machine with room, restart it when it dies, replace it when its node dies, wire up networking so services find each other, and roll out new versions — continuously, without a human watching. That's a control problem, and Kubernetes is the industry's shared answer.</p>
+<h3>The Concept</h3>
+<p>Kubernetes is a thermostat, not a remote control. You don't command "start container on node 7"; you declare "there shall be 3 replicas" and controllers work relentlessly to make reality match. Everything is this one pattern — the <b>reconciliation loop</b> — applied dozens of times.</p>
+<pre><code>CONTROL PLANE
+┌──────────────────────────────────────────────────┐
+│  API Server ◀──── the ONLY door to state         │
+│      │                                            │
+│    etcd  ◀─ desired + observed state (Raft)      │
+│      ▲                                            │
+│  Scheduler ─ assigns pending pods to nodes        │
+│  Controller Manager ─ loops: Deployment,          │
+│      ReplicaSet, Node, ... watch &amp; reconcile      │
+└──────┬───────────────────────────────────────────┘
+       │ (kubelets watch the API server)
+┌──────┴──────────┐   ┌─────────────────┐
+│ NODE: kubelet   │   │ NODE: kubelet   │  kubelet: &quot;pods assigned to
+│  + container    │   │  + container    │   me should be running&quot; —
+│    runtime      │   │    runtime      │   another reconcile loop
+│  + kube-proxy   │   │  + kube-proxy   │
+└─────────────────┘   └─────────────────┘</code></pre>
+<p>Crucially, components never talk to each other directly — they all watch and write through the API server, with etcd as the single source of truth. That's why the control plane can restart without killing your workloads: the desired state persists; loops resume.</p>
+<h3>Build It</h3>
+<p>Trace one <code>kubectl apply</code> of a 3-replica Deployment:</p>
+<ol><li>API server authenticates, authorizes, validates, writes the Deployment object to etcd. Nothing is running yet.</li><li>Deployment controller notices (via watch), creates a ReplicaSet; ReplicaSet controller creates 3 Pod objects with <code>nodeName</code> unset.</li><li>Scheduler watches for unbound pods, scores nodes (resource fit, affinity, spreading), and binds each pod by writing <code>nodeName</code>.</li><li>The kubelet on each chosen node sees a pod assigned to it, tells containerd to pull images and start containers, then reports status back.</li><li>A node dies → node controller marks it gone → its pods are marked failed → ReplicaSet controller sees 2 &lt; 3 → creates a replacement → scheduler places it. Nobody orchestrated the recovery; five independent loops did.</li></ol>
+<p>etcd needs Raft quorum (run 3 or 5 members): lose quorum and the cluster becomes read-only-ish — running pods keep running, but nothing can change. Also note the scaling folklore is real: etcd is the bottleneck that cluster size limits are written around.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>Offering</th><th>You manage</th><th>Tradeoff</th></tr></thead><tbody><tr><td>EKS / GKE / AKS</td><td>Workloads only; control plane is theirs</td><td>Some version/feature lag, cost</td></tr><tr><td>kubeadm / k3s</td><td>Everything, incl. etcd backups</td><td>Full control, full pain</td></tr><tr><td>OpenShift / Rancher</td><td>Cluster fleet + policy</td><td>Heavier platform, opinionated</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Kubernetes descends from Borg, the cluster manager Google had run internally since ~2003-2004; the 2015 Borg paper ("Large-scale cluster management at Google with Borg") disclosed the design, and Kubernetes (open-sourced 2014) was built by Borg veterans as a cleaned-up, label-driven, declarative rethink. The reconciliation-loop pattern and the "pods of co-scheduled containers" idea are Borg lessons, industrialized for everyone else.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does killing the entire control plane not stop already-running application pods? What <i>does</i> stop working?</li><li>Walk the chain of objects and controllers from <code>kubectl apply -f deployment.yaml</code> to containers running on a node.</li><li>Why is etcd run with 3 or 5 members rather than 2 or 4, and what degrades when quorum is lost?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Kubernetes Patterns: Deployments to Operators</h2>
+<p><b>MOTTO:</b> Kubernetes' real product isn't scheduling — it's a programmable pattern for turning ops knowledge into software.</p>
+<h3>The Problem</h3>
+<p>Raw pods are cattle with no herder: they don't restart on node failure, don't roll out new versions, and can't hold state. Real workloads need patterns layered on top — and eventually you hit workloads (databases, message brokers) whose operational logic ("resize the cluster," "perform failover," "take a backup") no built-in object understands. The question becomes: how does Kubernetes let you teach it new tricks?</p>
+<h3>The Concept</h3>
+<p>Think of Kubernetes primitives as verbs of increasing sophistication, all built from the same reconcile-loop grammar:</p>
+<pre><code>Pod          ─ run these containers together (atom, no self-healing)
+ReplicaSet   ─ keep N identical pods alive
+Deployment   ─ ReplicaSets + versioned rollouts/rollbacks   ← stateless apps
+StatefulSet  ─ stable identity (pod-0, pod-1) + per-pod storage ← databases
+DaemonSet    ─ one pod per node                              ← agents, log shippers
+Job/CronJob  ─ run to completion / on schedule
+Service      ─ stable virtual IP + load balancing over ephemeral pods
+Ingress/GW   ─ HTTP routing from outside
+ConfigMap/Secret ─ config injected, not baked into images
+─────────────────────────────────────────────────────────────
+Operator     ─ YOUR reconcile loop over YOUR custom resource:
+               &quot;kind: PostgresCluster, replicas: 3, backup: nightly&quot;</code></pre>
+<p>An <b>Operator</b> is a human operator's runbook compiled into a controller: a Custom Resource Definition (the noun) plus a controller (the verb loop) that knows domain-specific operations Kubernetes doesn't.</p>
+<h3>Build It</h3>
+<ol><li>A Deployment rollout under the hood: create a new ReplicaSet at 0, then step new up / old down within <code>maxSurge</code>/<code>maxUnavailable</code>, gated by readiness probes. Rollback = re-scale the old ReplicaSet, which was kept at 0.</li><li>Get probes right — this is where most self-inflicted outages live: <b>liveness</b> = "restart me if this fails" (keep it dumb: process wedged?), <b>readiness</b> = "don't route traffic to me" (dependencies, warm-up). Putting a dependency check in a liveness probe means a flaky database restarts your entire fleet in a loop.</li><li>Writing an operator's reconcile function — same shape as every Kubernetes loop:</li></ol>
+<pre><code>def reconcile(desired: PostgresCluster):
+    actual = observe(desired.name)             # pods, PVCs, primary/replica roles
+    if actual.replicas &lt; desired.replicas:
+        create_replica(clone_from=actual.primary)
+    if actual.primary is None:                  # failover: domain knowledge!
+        promote(most_caught_up(actual.replicas))
+    if backup_overdue(desired.backup_policy, actual.last_backup):
+        run_backup(actual)
+    # must be IDEMPOTENT: called repeatedly, converges, never assumes prior runs</code></pre>
+<ol><li>Set resource <code>requests</code> (scheduler placement) and <code>limits</code> (cgroup caps) on everything; unbounded pods are how one memory leak evicts a node.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Pattern/Tool</th><th>Job</th><th>Watch out</th></tr></thead><tbody><tr><td>Deployment + HPA</td><td>Stateless services with autoscaling</td><td>HPA on CPU alone lags bursty traffic</td></tr><tr><td>StatefulSet + operator (e.g. CloudNativePG, Strimzi)</td><td>Databases, Kafka on k8s</td><td>An operator's bugs act with cluster-admin speed</td></tr><tr><td>Helm / Kustomize</td><td>Templating &amp; packaging manifests</td><td>Templated YAML sprawl is its own tax</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The Operator pattern was coined by CoreOS in a 2016 blog post introducing the etcd operator — explicitly framed as "the ops runbook, encoded." It answered the era's raging debate ("never run stateful things on Kubernetes!") not by winning the argument but by automating away the objection; today mature operators run Postgres, Kafka, and Elasticsearch on k8s at serious scale, and OperatorHub lists hundreds of them.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does a database need a StatefulSet rather than a Deployment? Name two concrete guarantees it adds.</li><li>A liveness probe that checks database connectivity took down a whole service fleet during a DB blip. Explain the failure mechanics and the fix.</li><li>What two artifacts make up an Operator, and why must its reconcile function be idempotent?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Serverless and FaaS (Cold Starts!)</h2>
+<p><b>MOTTO:</b> Serverless means the server is someone else's problem — until the cold start makes it yours.</p>
+<h3>The Problem</h3>
+<p>Even with Kubernetes you're still capacity-planning, patching nodes, and paying for idle. For spiky or low-volume workloads the math is ugly: a service handling 50 requests/day still occupies replicas 24/7. FaaS inverts the deal — upload a function, the platform runs an instance per burst of requests and bills you per invocation-millisecond, scaling to literal zero between calls. The catch is hiding in "scales to zero."</p>
+<h3>The Concept</h3>
+<p>Provisioned servers are your own car idling in the driveway: instant departure, constant cost. FaaS is ride-hailing: pay per trip — but sometimes no driver is nearby and you wait. That wait is the <b>cold start</b>:</p>
+<pre><code>WARM (instance exists):   invoke ──▶ run handler            ~1-10ms overhead
+COLD (scale from zero):   invoke ──▶ provision microVM      \
+                                  ──▶ pull + load code       ├─ 100ms – several s
+                                  ──▶ init runtime + deps    │  (worst: JVM + VPC
+                                  ──▶ run global/init code  /    + huge bundle)
+Platform then keeps the instance warm a while, hoping for reuse.
+One instance handles ONE request at a time (classic Lambda model)
+ → a burst of N concurrent requests can trigger N cold starts.</code></pre>
+<p>Cold starts don't hurt your <i>average</i> — they hurt your <b>tail</b>, and bursts synchronize them right when traffic (and attention) spikes.</p>
+<h3>Build It</h3>
+<ol><li>Write handlers to exploit the lifecycle: heavy things (DB clients, SDK init, config fetch) in global scope — paid once per instance, reused across warm invocations. Never per-request.</li><li>Cut cold-start cost mechanically: small bundles (tree-shake, no fat frameworks), fast-init runtimes (Rust/Go/Node beat cold JVMs by an order of magnitude), lazy-load rarely used deps.</li><li>Statelessness is compulsory: instances are born and killed freely, and in-memory state is a cache at best. Externalize to a store — and mind connection storms: 1,000 concurrent instances opening 1,000 DB connections melts Postgres. Use a proxy/pool (e.g. RDS Proxy) or HTTP-native data APIs.</li><li>For latency-critical paths, pay to pre-warm (provisioned concurrency) — which is quietly admitting you want a server again; price that honestly.</li><li>Design event-driven: queues, streams, and triggers between functions; keep per-function scope small and timeouts explicit.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Platform</th><th>Model</th><th>Cold-start posture</th></tr></thead><tbody><tr><td>AWS Lambda</td><td>Function-per-event, Firecracker microVMs</td><td>ms–seconds; SnapStart (resume from snapshot) for JVM</td></tr><tr><td>Cloudflare Workers</td><td>V8 isolates, not VMs</td><td>~ms cold starts; restricted runtime in exchange</td></tr><tr><td>Google Cloud Run</td><td>Serverless <i>containers</i>, concurrent reqs per instance</td><td>Fewer cold starts by design; min-instances option</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>AWS Lambda's 2014 launch created the category, but the definitive cold-start artifact is Firecracker (see Lesson 01): AWS rebuilt its virtualization layer largely to shrink the cold path to ~125ms of microVM boot. Cloudflare Workers then attacked the same problem from the other side — using V8 isolates instead of VMs so "cold start" nearly ceased to exist, at the cost of a restricted runtime. The whole sub-industry is one long negotiation with the cold start.</p>
+<h3>Checkpoint</h3>
+<ul><li>Enumerate the stages of a cold start and rank which typically dominate for a large JVM function inside a VPC.</li><li>Why do cold starts show up at p99 rather than p50, and why do traffic bursts make it worse in the one-request-per-instance model?</li><li>Your Lambda fleet is exhausting Postgres connections at 1,000 concurrent executions. Explain the mechanics and two standard fixes.</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Infrastructure as Code</h2>
+<p><b>MOTTO:</b> If it isn't in version control, it doesn't exist — it's just a rumor about your infrastructure.</p>
+<h3>The Problem</h3>
+<p>Click-built infrastructure rots: the staging and prod environments drift apart in undocumented ways, the one engineer who knows why that security group rule exists leaves, and disaster recovery means "rebuild from memory." Console changes have no diff, no review, no rollback, and no second copy. You'd never run application code this way; infrastructure stopped being an excuse the moment it became API calls.</p>
+<h3>The Concept</h3>
+<p>IaC treats infrastructure like sheet music instead of a live improvisation: the score (declarative config) is the artifact — reviewable, versioned, replayable note-for-note in any concert hall (region/account). The engine that makes it work is <b>declarative reconciliation</b> — the same thermostat idea as Kubernetes:</p>
+<pre><code>   desired state          current state
+  (your .tf/.yaml)   vs   (real cloud +
+        │                  state file)
+        └──────┬───────────────┘
+               ▼
+             DIFF  ──▶  PLAN: &quot;+ create 2   ~ modify 1   - destroy 1&quot;
+               │              (a human or CI reviews THIS)
+               ▼
+             APPLY ──▶ ordered API calls following the dependency graph</code></pre>
+<p>You say <i>what</i> should exist; the tool computes <i>how</i> — including ordering (subnet before VM) from the resource dependency graph. The state file is the tool's memory of what it manages; lose or corrupt it and the tool is amnesiac about your world.</p>
+<h3>Build It</h3>
+<ol><li>Structure: modules for reusable components (a "service" = ALB + service + alarms), thin per-environment compositions passing different variables. Dev/prod parity becomes a variable file, not a hope.</li><li>Remote state with locking (e.g. S3 + lock) — two engineers applying concurrently against local state is how resources get orphaned or double-created.</li><li>Pipeline: PR → <code>plan</code> posted as a comment → human review of the <i>diff, not the code</i> → merge → <code>apply</code> from CI only. Nobody applies from a laptop; laptop applies are console-clicking with extra steps.</li><li>Treat <b>drift</b> (manual console changes behind the tool's back) as an incident: scheduled <code>plan</code> in CI to detect it; the fix is either codify or revert.</li><li>Never store secrets in state or code; reference a secrets manager (Phase 14, Lesson 06). State files famously contain more secrets than people expect — encrypt and access-control them like credentials.</li><li><code>destroy</code> is one command away from résumé-generating. Protect stateful resources (<code>prevent_destroy</code>, deletion protection) and separate blast domains into separate state files.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Model</th><th>Tradeoff</th></tr></thead><tbody><tr><td>Terraform / OpenTofu</td><td>Declarative HCL, multi-cloud, explicit state</td><td>State management is your problem</td></tr><tr><td>Pulumi / CDK</td><td>Real languages compiled to declarations</td><td>Power + the temptation to be too clever</td></tr><tr><td>CloudFormation</td><td>AWS-native, managed state</td><td>AWS-only, slower feedback loops</td></tr><tr><td>Ansible</td><td>Procedural config management</td><td>Better for machine config than cloud topology</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Terraform (HashiCorp, 2014) won the multi-cloud era, then in 2023 HashiCorp switched it from open source to the BSL license — and the community forked it as <b>OpenTofu</b> under the Linux Foundation within weeks. Beyond the licensing drama, the episode proved how load-bearing IaC had become: companies discovered their entire infrastructure's definition had a software supply chain, with all the governance questions that implies.</p>
+<h3>Checkpoint</h3>
+<ul><li>What is the state file for, and what failure modes appear when it's lost, stale, or edited concurrently?</li><li>Why should humans review the <code>plan</code> output rather than (only) the config diff? Give a case where the config change looks tiny but the plan is scary.</li><li>Someone "quickly fixed" a security group in the console during an incident. What happens on the next apply, and what's the disciplined follow-up?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> CI/CD Pipelines</h2>
+<p><b>MOTTO:</b> The pipeline is the only path to production — every shortcut around it is a future incident with a timestamp TBD.</p>
+<h3>The Problem</h3>
+<p>Manual releases concentrate risk: giant infrequent deploys, a wiki page of steps executed slightly differently each time, and one person who "does releases." Integration pain compounds too — branches diverging for weeks merge like continental plates. The fix is old wisdom: if it hurts, do it more often, and make a machine do it. Continuous integration merges and verifies constantly; continuous delivery keeps every green build shippable.</p>
+<h3>The Concept</h3>
+<p>A pipeline is a factory line with quality gates: raw commit in one end, verified deployable artifact out the other, with the line stopping the instant any station rejects the work.</p>
+<pre><code>commit ─▶ build ─▶ unit ─▶ package ─▶ integration ─▶ deploy ─▶ deploy
+          &amp;lint    tests    ARTIFACT    tests (svcs    staging   prod
+                            (image,     in containers)  + smoke  (gated or
+                            digest-      │              tests     automatic)
+                            pinned)      ▼
+  ◀──── fail fast: cheapest checks first, minutes not hours ────</code></pre>
+<p>Two iron rules. <b>Build once, promote everywhere</b>: the <i>same</i> immutable artifact (image digest) moves through every stage — rebuilding for prod means testing one thing and shipping another. And <b>the artifact's journey is the audit trail</b>: what's in prod is answerable by digest, not by folklore.</p>
+<h3>Build It</h3>
+<ol><li>Order stages by cost: lint and unit tests (seconds–minutes) before integration tests (minutes) before deploys. A 40-minute wait for feedback trains people to batch changes, which raises risk — the opposite of the goal.</li><li>Keep main releasable: small PRs, trunk-based or short-lived branches, and <b>feature flags</b> to decouple <i>deploy</i> (moving code) from <i>release</i> (exposing behavior). Half-done features ship dark.</li><li>Make everything reproducible and hermetic: pinned dependencies, containerized build steps, no snowflake build agents.</li><li>Gate deploys on automated verification (smoke tests, error-rate checks post-deploy), not just test suites — next lesson makes this progressive.</li><li>Secure the pipeline as production infrastructure, because it <i>is</i>: it holds deploy credentials for everything. Short-lived OIDC-federated cloud credentials instead of static secrets in CI config; least-privilege per pipeline; sign artifacts and verify provenance at deploy time.</li><li>Measure yourself with the DORA four: deploy frequency, lead time, change-failure rate, time-to-restore.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Style</th><th>Tradeoff</th></tr></thead><tbody><tr><td>GitHub Actions / GitLab CI</td><td>YAML workflows in-repo</td><td>Ubiquitous; YAML sprawl at scale</td></tr><tr><td>Jenkins</td><td>Self-hosted, infinitely pluggable</td><td>You become a Jenkins administrator</td></tr><tr><td>Argo CD / Flux</td><td>GitOps CD — cluster pulls desired state from git</td><td>Reconciliation model; another controller to run</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The 2020 SolarWinds compromise weaponized a build pipeline: attackers implanted malware <i>inside the build system</i> so that officially signed Orion updates shipped a backdoor to ~18,000 customers, including US government agencies. Nothing in the source repo was wrong — the pipeline itself was the vulnerability. It reframed CI/CD security from afterthought to supply-chain frontline (SLSA, artifact signing, provenance attestation all trace lineage to it).</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must the exact artifact tested be the artifact deployed? Describe a failure that rebuild-per-stage permits.</li><li>How do feature flags separate "deploy" from "release," and what new hygiene problem do they introduce?</li><li>Your CI holds static admin cloud keys. Rank the blast radius and name the modern replacement pattern.</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Blue-Green and Canary Deployments</h2>
+<p><b>MOTTO:</b> Never send new code to 100% of users when 1% will tell you everything you need to know.</p>
+<h3>The Problem</h3>
+<p>Even a perfectly tested build meets production — real traffic, real data, real dependency weirdness — for the first time at deploy. In-place deploys make that first contact a cliff: everything cuts over at once, and "rollback" means a panicked redeploy of the old version measured in tens of minutes of full-blast impact. Deployment strategy is blast-radius engineering: how few users see a bad build, for how short a time?</p>
+<h3>The Concept</h3>
+<ul><li><b>Blue-green</b> is a theater with two identical stages: the audience watches Blue while you fully set up Green, then you rotate the whole seating section at once — and can rotate right back.</li><li><b>Canary</b> is named for the coal-mine bird: expose a small slice of real traffic to the new version, watch vital signs, widen only while healthy.</li></ul>
+<pre><code>BLUE-GREEN                             CANARY
+ LB ──100%──▶ Blue v1                   LB ──95%──▶ v1
+      0%───▶ Green v2 (idle,               └─5%──▶ v2  ← compare error rate,
+              smoke-tested)                            p99, business metrics
+ flip: 0/100 → instant, all-or-        healthy? → 25% → 50% → 100%
+ nothing; rollback = flip back         unhealthy? → auto-rollback to 0%
+ cost: 2× fleet during deploy          gradual, metric-gated, cheaper</code></pre>
+<h3>Build It</h3>
+<ol><li>Prerequisite for both — <b>N and N+1 must coexist</b>: backward-compatible APIs and, critically, databases. Use expand/migrate/contract: add the new column (both versions fine) → ship code using it → remove the old one releases later. Never a breaking migration in the same deploy as the code that needs it.</li><li>Canary analysis must be automated and pre-declared:</li></ol>
+<pre><code>def canary_gate(canary, baseline):     # baseline = SAME-SIZE slice of v1,
+    for m in [error_rate, p99_latency, # not the whole fleet — else statistics lie
+              checkout_conversion]:     # business metrics catch what 200s hide
+        if degraded(m(canary), m(baseline), significance=0.95):
+            return ROLLBACK
+    return PROMOTE</code></pre>
+<ol><li>Route the slice deliberately: internal users → 1% random → sticky-by-user percentage ramp (a user flapping between versions mid-session is its own bug).</li><li>Watch for the canary's blind spots: slow-burn issues (memory leaks, cache poisoning) outlive the analysis window — keep watching after 100%; and low-traffic slices need longer bakes to reach statistical significance.</li><li>Blue-green's sharp edge is state: long-lived connections, in-flight jobs, and queues must drain from Blue before you recycle it.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Strategy</th><th>Note</th></tr></thead><tbody><tr><td>Argo Rollouts / Flagger</td><td>Automated canary + analysis on k8s</td><td>Metric queries define the gate — write them well</td></tr><tr><td>AWS CodeDeploy</td><td>Blue-green &amp; canary for EC2/ECS/Lambda</td><td>Linear/canary traffic shifting built in</td></tr><tr><td>LaunchDarkly-style flags</td><td>Percentage rollout at app layer</td><td>Finest targeting; not an infra rollback</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Knight Capital, August 1, 2012: a manual deploy to 8 servers left old code on the 8th, and a reused feature flag activated a dormant test routine on it — the mismatched fleet fired ~4 million errant orders into the market in 45 minutes, losing about $440 million and ending the company. It is <i>the</i> canonical argument for automated, verified, all-or-nothing-consistent deployments: the disaster wasn't the bug, it was the partial rollout nobody could see.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must database migrations be backward-compatible for either strategy to work? Sketch expand/migrate/contract for renaming a column.</li><li>Why compare the canary against a same-sized baseline slice rather than against the whole remaining fleet?</li><li>Name two failure classes a 30-minute canary at 5% traffic will systematically miss, and the mitigation for each.</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Multi-Region Architectures (Active-Passive, Active-Active)</h2>
+<p><b>MOTTO:</b> A region is a blast radius; multi-region is deciding what you'll pay so one blast isn't everything.</p>
+<h3>The Problem</h3>
+<p>Cloud regions fail — rarely whole, but often enough in part (a control-plane outage, a networking event) to take dependent services down for hours. If your business can't tolerate that, you need presence in a second region. Immediately you meet the two costs: latency physics (~70-80ms round trip across the continental US; you cannot patch the speed of light) and the CAP-flavored question of what your data does when regions can't agree.</p>
+<h3>The Concept</h3>
+<p>Two restaurant strategies. <b>Active-passive</b>: one open restaurant plus a fully equipped dark kitchen — staffed, stocked (replicated), lights off — that opens only if the main one burns. <b>Active-active</b>: two open restaurants sharing one reservations book, which forces the hard question: what happens when both accept the last table at the same instant?</p>
+<pre><code>ACTIVE-PASSIVE                       ACTIVE-ACTIVE
+ users ─▶ Region A (all traffic)      users ─▶ nearest region (geo-DNS/anycast)
+             │ async replication       Region A ◀═ bidirectional ═▶ Region B
+             ▼                                    replication
+          Region B (warm standby)      + lower latency, no failover event
+ failover: promote B, shift DNS        − write conflicts OR cross-region
+ RTO: minutes+  RPO: replication lag     write latency: choose your poison</code></pre>
+<p>Vocabulary that anchors every DR conversation: <b>RPO</b> (how much data you may lose — replication lag) and <b>RTO</b> (how long until you're serving — failover time). Multi-region is buying those numbers down with money and complexity.</p>
+<h3>Build It</h3>
+<ol><li>Active-passive mechanics: async-replicate data to the standby; health-check-driven promotion; traffic shift via DNS/anycast. The catch nobody tests: failover promotes a replica that is <i>behind</i> — you must decide in advance whether to lose those writes or wait.</li><li><b>Drill failovers regularly.</b> An untested standby is a rumor: config drift, missing capacity, expired credentials, and IAM surprises all hide until the real event. Schedule game days.</li><li>Active-active data — pick one per dataset:</li></ol>
+<ul><li><b>Partition writes by home region</b> (EU users' data lives in EU): no conflicts, and each user's failover is really active-passive. The workhorse pattern.</li><li><b>CRDTs / last-writer-wins</b>: accept concurrent writes, merge deterministically; fine for carts and counters, unacceptable for money.</li><li><b>Consensus across regions</b> (Spanner-style): real consistency, and every write pays cross-region latency. Reserve for the data that truly needs it.</li></ul>
+<ol><li>Anti-pattern to hunt down: hidden single-region dependencies — the "global" auth service, config store, or scheduler quietly pinned to one region turns your multi-region design into theater.</li><li>Mind the bill: cross-region data transfer is one of the most underestimated line items in cloud budgets.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Role</th><th>Note</th></tr></thead><tbody><tr><td>Route 53 / Traffic Manager</td><td>Health-checked geo/failover routing</td><td>DNS TTLs bound your real RTO</td></tr><tr><td>Aurora Global Database / Cloud Spanner</td><td>Managed cross-region data</td><td>Spanner: consistency for write latency</td></tr><tr><td>DynamoDB Global Tables</td><td>Multi-master, last-writer-wins</td><td>You must be ok with LWW semantics</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The February 28, 2017 S3 outage in us-east-1 began with a routine debugging command that took out more subsystem capacity than intended; S3 was down for ~4 hours and dragged much of the internet with it — including, famously, the AWS status dashboard's own health icons, which were hosted on S3. The December 7, 2021 us-east-1 outage repeated the theme at the network layer. Both are the standing argument for regional independence — and for keeping your incident tooling out of your own blast radius.</p>
+<h3>Checkpoint</h3>
+<ul><li>Define RPO and RTO, and identify which one asynchronous replication lag directly determines.</li><li>Why does "partition writes by home region" sidestep the conflict problem, and what request pattern still pays cross-region latency?</li><li>Your standby region hasn't served production traffic in 14 months. List four distinct ways the failover plausibly fails.</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Cell-Based Architecture</h2>
+<p><b>MOTTO:</b> Don't build one big ship with watertight doors — build a fleet, and let a ship sink.</p>
+<h3>The Problem</h3>
+<p>Horizontal scaling as usually practiced shares fate: all 500 instances behind one load balancer, one connection-pool config, one deployment wave. A poison-pill request, a bad config push, or a cascading overload doesn't take down one instance — it sweeps the whole fleet, because the fleet is one failure domain wearing a thousand hats. Blast radius grows with scale unless you deliberately partition it.</p>
+<h3>The Concept</h3>
+<p>A cell is a complete, self-contained copy of your service stack — app tier, cache, database, queues — serving a fixed slice of customers, with <b>no runtime dependencies on other cells</b>. The system becomes a fleet of small ships instead of one Titanic with internal doors:</p>
+<pre><code>            THIN ROUTING LAYER (dumbest possible: customer → cell map)
+                 │              │              │
+        ┌────────┴───┐  ┌───────┴────┐  ┌──────┴─────┐
+        │  CELL 1    │  │  CELL 2    │  │  CELL 3    │
+        │ app+cache+ │  │ app+cache+ │  │ app+cache+ │
+        │ db+queues  │  │ db+queues  │  │ db+queues  │
+        │ cust A-H   │  │ cust I-P   │  │ cust Q-Z   │
+        └────────────┘  └────────────┘  └────────────┘
+Cell 2 dies → only customers I-P affected. Poison request lands
+in ONE cell. Scale = add cells, not grow cells. Deploy = one
+cell at a time (a cell is the ultimate canary unit).</code></pre>
+<p>It's sharding elevated from the database to the <i>entire stack</i>, chosen explicitly for blast-radius control: with N cells, the worst single-cell event hurts ~1/N of customers.</p>
+<h3>Build It</h3>
+<ol><li>Pick the partition key — almost always customer/tenant ID, because a tenant's whole experience should live (and fail) in one place.</li><li>Make the router boring and bulletproof: a static-ish <code>tenant → cell</code> lookup, aggressively cached, with no business logic. The router is the one shared component, so its simplicity <i>is</i> your availability story.</li><li>Cap cell size deliberately. A full cell is your tested, known-good scale unit — you know exactly how it behaves at capacity, because every cell is a copy. Growth = stamp out another cell from the same IaC template (Lesson 06 pays off here).</li><li>Handle the hard parts honestly:</li></ol>
+<ul><li><b>Migration</b>: moving a tenant between cells (growth, rebalancing) needs a real data-move procedure — build it early, it's the hardest part.</li><li><b>Whales</b>: a tenant bigger than a cell breaks the model; give whales dedicated cells.</li><li><b>Cross-cell features</b> (global search, analytics): route around, aggregate asynchronously, or accept the seam. Never let cells call each other synchronously — that quietly rebuilds the shared-fate monolith.</li></ul>
+<ol><li>Deploy cell-by-cell, always. Config changes too — config is code with a faster trigger.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Adopter/Tool</th><th>Form</th><th>Note</th></tr></thead><tbody><tr><td>AWS internally</td><td>Cells + shuffle sharding across many services</td><td>Documented in the Amazon Builders' Library</td></tr><tr><td>Slack, DoorDash (public eng posts)</td><td>Cellular production architectures</td><td>Motivated by gray failures &amp; AZ isolation</td></tr><tr><td>Shuffle sharding</td><td>Each customer → random small subset of nodes</td><td>Poison-pill blast radius shrinks combinatorially</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>AWS is the loudest proponent: the Amazon Builders' Library and re:Invent talks describe cell-based design and <b>shuffle sharding</b> as core to services like Route 53 — where each customer domain is served by a small pseudo-random subset of name-server capacity, so a DDoS against one customer's domain leaves nearly all other customers' subsets untouched. The punchline is combinatorial: with modest node counts, the odds that two customers share their entire shard drop to nearly zero.</p>
+<h3>Checkpoint</h3>
+<ul><li>How does cell-based architecture differ from ordinary horizontal scaling behind one load balancer, in terms of failure domains?</li><li>Why must the routing layer be as thin and logic-free as possible?</li><li>Name the three classic hard problems of cellular designs (think: moving, oversized, and cross-cutting) and one mitigation for each.</li></ul>
+<h2 id="lesson-11"><span class="lnum">11</span> Edge Computing</h2>
+<p><b>MOTTO:</b> You can't negotiate with the speed of light, but you can move the conversation closer.</p>
+<h3>The Problem</h3>
+<p>Light in fiber crosses the Atlantic and back in ~65ms minimum — before a single byte of your application logic runs. A user in Singapore hitting your Virginia origin eats 200ms+ of pure physics per round trip, multiplied by TLS handshakes and API calls. Some workloads (interactive apps, personalization, auth checks, IoT) can't tolerate it, and no amount of server tuning helps: the problem is <i>where</i>, not <i>how fast</i>.</p>
+<h3>The Concept</h3>
+<p>Classic CDNs put warehouses near customers (cached static goods). Edge computing puts <i>workshops</i> near customers: hundreds of small points of presence that can execute your logic, not just serve your files.</p>
+<pre><code>user ── 5-20ms ──▶ EDGE PoP (100s worldwide)          ── 50-200ms ──▶ ORIGIN
+                   │ static cache (classic CDN)                        │ core DB
+                   │ + compute: auth/JWT verify, redirects,            │ heavy logic
+                   │   A/B assignment, personalization,                │ source of
+                   │   full request handling                           │ truth
+                   │ + edge KV/queues (eventually consistent)
+                   └── goal: answer here; go to origin only when you must</code></pre>
+<p>The mental model: the edge is a <i>distributed reflex layer</i> — fast, local, slightly stale — in front of a centralized brain. The engineering discipline is deciding which decisions tolerate staleness (auth token verification: yes, it's signature math; account balance: no).</p>
+<h3>Build It</h3>
+<ol><li>Sort every request path into: static (cache at edge), computable-at-edge (needs only the request + replicated read-mostly data), origin-required (needs strongly consistent core state).</li><li>Edge runtimes are constrained on purpose — V8 isolates or WASM with millisecond cold starts, small memory, short CPU budgets (Lesson 05's cold-start lesson, solved by shrinking the unit). Design edge logic as small, pure, stateless functions.</li><li>State at the edge is the hard part. Use it honestly:</li></ol>
+<ul><li><b>Replicated read-mostly KV</b> (feature flags, geo rules, session-validation keys): fine, embrace eventual consistency measured in seconds.</li><li><b>Writes</b>: queue at the edge, apply at origin — or use per-object placement (e.g. Durable-Object-style "this chat room lives in one location") to regain consistency by <i>pinning</i>, not replicating.</li></ul>
+<ol><li>Standard wins to implement first, in order of ROI: TLS termination at edge (saves handshake round trips), cached API responses with short TTLs + stale-while-revalidate, JWT verification at edge (reject bad traffic before it crosses an ocean), geo-routing and redirects.</li><li>Observability caveat: your logic now runs in 300 places — centralized log/metric aggregation from the edge is non-optional.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Platform</th><th>Model</th><th>Tradeoff</th></tr></thead><tbody><tr><td>Cloudflare Workers (+KV, Durable Objects)</td><td>V8 isolates at every PoP</td><td>Restricted runtime; DO pins state to one place</td></tr><tr><td>AWS Lambda@Edge / CloudFront Functions</td><td>Functions at CloudFront PoPs</td><td>Two tiers with different limits; slower deploys</td></tr><tr><td>Fastly Compute</td><td>WASM at edge</td><td>Language-flexible; smaller ecosystem</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The June 8, 2021 Fastly outage is the edge's cautionary tale: a latent bug in an edge configuration system, triggered by one customer's valid config change, took down roughly 85% of Fastly's network in seconds — vanishing Reddit, Amazon, gov.uk, and major news sites globally for about an hour. Moving compute to 300 PoPs also means a bad config propagates to 300 PoPs at line speed; the edge inherits every lesson from Lessons 08 and 10 about staged rollout and blast radius.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is JWT signature verification a perfect edge workload while "check the user's current account balance" is not?</li><li>What consistency model does replicated edge KV give you, and name two data types that fit it comfortably?</li><li>Your edge provider deploys config globally in seconds. Which deployment discipline from earlier lessons does this violate, and what would you demand from the provider?</li></ul>
+<h2 id="lesson-12"><span class="lnum">12</span> Cloud Cost Optimization</h2>
+<p><b>MOTTO:</b> The cloud bill is an architecture diagram with dollar signs — every line item is a design decision you made.</p>
+<h3>The Problem</h3>
+<p>The cloud's superpower — anyone can provision anything instantly — is also the failure mode: spend is decentralized, invisible at decision time, and billed 30 days later in a 40,000-line CSV. Idle dev clusters at 3am, unattached volumes, over-provisioned instances "to be safe," and cross-AZ chatter quietly compound into bills that grow faster than traffic. Cost is a first-class non-functional requirement, exactly like latency — and like latency, it's mostly determined at design time.</p>
+<h3>The Concept</h3>
+<p>Think of cloud pricing as an electricity market with three tariffs, plus a toll system nobody reads:</p>
+<pre><code>On-demand   ─ full price, walk away anytime        (default = most expensive)
+Committed   ─ 1-3yr reserved/savings plans: ~30-60% off for baseline load
+Spot        ─ ~60-90% off surplus capacity that can vanish with 2min notice
+
+           capacity
+              ▲        ......... provisioned (you pay this)
+              │   ▄▄▄▄▄▄
+              │▄▄█ actual load █▄▄▄
+              └────────────────────▶ time
+              the gap IS the waste — cost opt = shrinking the gap
+              (rightsizing, autoscaling, scale-to-zero)
+
++ the toll roads: egress to internet ($$), cross-region ($$),
+  cross-AZ ($) — data transfer is the line item that ambushes everyone</code></pre>
+<p>Strategy: cover the predictable base with commitments, ride autoscaling on-demand for the swell, throw interruptible work at spot, and architect data flows like the tolls are real — because they are.</p>
+<h3>Build It</h3>
+<ol><li><b>See it first</b>: enforce tagging/labels (team, service, env) via IaC policy so every dollar has an owner; blocked-untagged is the only tagging policy that works. Show teams their own dashboards — visibility alone changes behavior.</li><li><b>Rightsize with data</b>: compare provisioned vs. actual P95 utilization over weeks; shrink the chronic over-provisioners. In Kubernetes, this is the requests-vs-usage gap — most clusters run under 30% utilization, i.e., most of the bill is reservation, not work.</li><li><b>Eliminate idle</b>: scale-to-zero for dev/staging off-hours (a 12×5 dev environment costs ~35% of a 24×7 one), TTLs and cleanup jobs for orphaned volumes, snapshots, and IPs.</li><li><b>Buy correctly</b>: commitments sized to the <i>observed floor</i> (never the peak); spot for stateless, checkpointable, retry-tolerant work (CI, batch, big data) with graceful-interruption handling.</li><li><b>Architect the big levers</b>: storage lifecycle tiering (hot → infrequent → archive); cache and compress before data crosses AZ/region/internet boundaries; question every cross-region chatty dependency (Lesson 09's bill arrives here).</li><li><b>Institutionalize</b>: unit economics (cost per request / per tenant / per GB) on the same dashboards as latency; cost review in design docs; anomaly alerts on spend like you alert on error rates. That's FinOps, minus the buzzword.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Job</th><th>Note</th></tr></thead><tbody><tr><td>AWS Cost Explorer / CUR + Athena</td><td>Visibility, allocation</td><td>Raw truth; needs tagging discipline to be useful</td></tr><tr><td>Karpenter / cluster autoscaler</td><td>Bin-pack k8s nodes, ride spot</td><td>Biggest single k8s cost lever</td></tr><tr><td>Infracost</td><td>Cost diff on IaC pull requests</td><td>Moves the cost conversation to design time</td></tr><tr><td>OpenCost / Kubecost</td><td>Per-namespace/pod cost allocation</td><td>Makes k8s spend attributable</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Dropbox ran one of the most famous repatriations: between 2015-2016 it moved user file storage off S3 onto its own custom hardware ("Magic Pocket"), and its IPO filing disclosed ~$75M in infrastructure cost savings over the following two years — workable because storage was its core competency and utterly predictable at exabyte scale. Counterpoint in the same breath: 37signals publicized its 2022-2024 cloud exit claiming multi-million-dollar annual savings for its steady-state workloads. The shared lesson isn't "leave the cloud" — it's that elasticity is what you're paying premium for, and paying it for perfectly flat, predictable load is renting a ballroom to store furniture.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is the gap between provisioned and actual utilization the central object of cost optimization, and name three distinct mechanisms that shrink it.</li><li>Which workload properties make something spot-safe? Give one workload that is and one that never will be.</li><li>Your bill shows massive inter-AZ transfer charges from a chatty microservice pair. What are your architectural options, and what does each trade away?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="14-security.html">← 🔐 Phase 14</a>
+    <span class="spacer"></span>
+    <a href="16-performance-engineering.html">Phase 16 🏎️ →</a>
+  </div>
+</div>
+</body>
+</html>

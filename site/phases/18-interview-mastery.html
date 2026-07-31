@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Mastery — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 18</div>
+  <h1><span class="pnum">18</span> 🎤 Interview Mastery</h1>
+  <div class="tagline">45 minutes, one whiteboard, zero panic.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>The 4-step interview framework</a>
+<a href="#lesson-02"><span class="lnum">02</span>Requirements clarification: questions that impress</a>
+<a href="#lesson-03"><span class="lnum">03</span>Capacity estimation drills</a>
+<a href="#lesson-04"><span class="lnum">04</span>High-level design, then deep dives</a>
+<a href="#lesson-05"><span class="lnum">05</span>The tradeoff vocabulary</a>
+<a href="#lesson-06"><span class="lnum">06</span>Communication and whiteboard craft</a>
+<a href="#lesson-07"><span class="lnum">07</span>Leveling: what L4 vs L5 vs L6 answers look like</a>
+<a href="#lesson-08"><span class="lnum">08</span>Mock interview rubrics and self-grading</a>
+  </div>
+  <article>
+<blockquote>45 minutes, one whiteboard, zero panic.</blockquote>
+<p>You now know more system design than most working engineers. Irrelevant — the interview doesn't measure what you know, it measures what you can <i>demonstrate</i> in 45 minutes under mild social stress. That's a performance skill, and like all performance skills it's trainable: structure, phrases, timing, recovery moves. This phase turns Phase 17's knowledge into something an interviewer can actually see.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> The 4-Step Interview Framework (Requirements → Estimation → High-Level → Deep-Dive)</h2>
+<p>Every strong system design interview has the same skeleton, and interviewers are literally grading against it. Memorize the time budget for a 45-minute slot:</p>
+<ol><li><b>Requirements (5–8 min).</b> Turn "design Twitter" into a scoped, agreed problem. Functional (what it does) and non-functional (how well). End with a spoken summary: <i>"So we're building the home timeline and posting, for 200M DAU, read-heavy, eventual consistency is fine — search and DMs are out of scope. Agreed?"</i> That last word matters — get the nod before touching the marker.</li><li><b>Estimation (3–5 min).</b> QPS, storage, bandwidth — just enough to know what kind of system this is. <i>"5,800 tweets/sec but 46K timeline reads/sec — so this design lives or dies on the read path."</i> Estimation isn't a ritual; it's how you justify every later decision.</li><li><b>High-level design (10–15 min).</b> Boxes and arrows covering every functional requirement, end to end. Resist the urge to perfect any one box. Narrate as you draw: <i>"Client hits the LB, API tier is stateless, writes land in the post service..."</i> By the end, the happy path works on paper.</li><li><b>Deep dives (15–20 min).</b> Pick the 2–3 hardest problems <i>for this system</i> and go deep — fan-out for Twitter, seat locking for Ticketmaster, ordering for chat. Say the transition out loud: <i>"The design works at a high level; the hardest part is X. Let me dig into that."</i> Senior candidates drive this phase; junior candidates wait to be dragged into it.</li></ol>
+<p>The most common failure isn't lack of knowledge — it's spending 25 minutes on steps 1–2, or diving into ID generation before there's an end-to-end picture. The framework is a clock. Respect the clock.</p>
+<p>Two more habits that hold the skeleton together: <b>checkpoint aloud</b> between steps ("before I move on — anything you want me to adjust?"), and <b>write decisions down</b> in a corner of the board (a running list like "eventual consistency ok / 5-yr retention / hybrid fanout") so neither of you re-litigates settled ground.</p>
+<h3>Checkpoint</h3>
+<ol><li>Without notes, recite the four steps with their time budgets for a 45-minute interview.</li><li>Take "Design Dropbox" and write only the <i>transition sentences</i> you'd say between the four steps.</li><li>You realize at minute 30 that you're still on high-level design. What exactly do you say and cut?</li></ol>
+<h2 id="lesson-02"><span class="lnum">02</span> Requirements Clarification: Questions That Impress</h2>
+<p>Weak candidates ask questions to stall. Strong candidates ask questions that visibly <i>shrink the problem</i> and <i>reveal judgment</i>. The difference is that every good question carries an implied design consequence.</p>
+<p>Ask about scale, because scale picks the architecture: <i>"Are we building for a startup's 10K users or 100M DAU? — because those are different designs, and I'd rather build the one you want."</i> Ask about the read/write ratio: <i>"Is this read-heavy like a feed or write-heavy like a metrics pipeline?"</i> Ask what's allowed to break: <i>"When the network partitions, would you rather show stale data or an error?"</i> — that single question scopes your consistency story for the whole interview.</p>
+<p>Then scope ruthlessly, out loud, as offers the interviewer can veto: <i>"I'll treat auth, and abuse prevention as solved and focus on the core flow — okay?"</i> Interviewers almost always accept, and you've just bought 10 minutes. The questions that impress most are the ones that show you've operated systems: <i>"Do we need to handle the celebrity case — a user with 100M followers — or is the follow graph capped?"</i> Nobody asks that without knowing why it matters.</p>
+<p>A concrete drill list — for any prompt, you should be able to generate these five in under a minute:</p>
+<ul><li><b>Users &amp; scale:</b> DAU? Growth? Geographic spread (one region or global)?</li><li><b>Core flows:</b> "Of everything X does, which 2–3 flows do you want designed?"</li><li><b>Read/write shape:</b> ratio, burstiness, payload sizes.</li><li><b>Guarantees:</b> consistency needs, durability needs, latency targets ("is 200 ms fine or is this a game?").</li><li><b>Non-goals:</b> "What are you explicitly <i>not</i> asking me to design?"</li></ul>
+<p>And write the answers on the board as you get them. A visible, agreed requirements list is armor: when you make a tradeoff at minute 35, you point at it.</p>
+<h3>Checkpoint</h3>
+<ol><li>For "Design a parking garage system," write 8 clarifying questions, and for each, the design decision it unlocks.</li><li>Practice the scoping offer: write three "I'll assume X is out of scope — okay?" sentences for "Design Netflix."</li><li>Which single question would most change your design of a rate limiter? Defend it.</li></ol>
+<h2 id="lesson-03"><span class="lnum">03</span> Capacity Estimation Drills (With Worked Answers)</h2>
+<p>Napkin math has one job: telling you what kind of system you're building. Interviewers don't care about your arithmetic; they care that your numbers <i>drive decisions</i>. The core toolkit: <b>86,400 sec/day (round to 100K for mental math)</b>, ~2.6M sec/month, powers of two for storage (1 GB ≈ 10⁹ B), and the habit of stating every assumption before using it. Round aggressively — 11,574 is 12K, and saying "roughly" is professional, not sloppy.</p>
+<p>Say your setup out loud before computing: <i>"Let me assume 100M DAU and 10 events per user per day — tell me if you'd like different numbers."</i> This turns estimation into a collaboration and protects you if the assumption is off.</p>
+<p><b>Drill 1 — QPS for a photo app.</b> 200M DAU, each views 50 photos and uploads 0.5/day. Views: 200M × 50 = 10B/day ÷ 100K sec ≈ <b>100K QPS</b> average; peak ≈ 2–3× → ~250K. Uploads: 200M × 0.5 = 100M/day ≈ <b>1K QPS</b>. Conclusion to say: "100:1 read-heavy — CDN and caching dominate this design."</p>
+<p><b>Drill 2 — storage for a messaging app.</b> 500M users × 40 messages/day × 100 bytes = 500M × 40 = 20B messages/day × 100 B = <b>2 TB/day</b> → ~730 TB/year → ~3.7 PB over 5 years. Conclusion: "Text is cheap — one order of magnitude below media; if we add photos at 5% of messages × 200 KB, that's 20B × 0.05 × 200 KB = <b>200 TB/day</b>, which is 100× the text. Media dominates; design the blob path first."</p>
+<p><b>Drill 3 — memory for a cache.</b> We want to cache 20% of a 10B-object catalog, objects ~2 KB. 10B × 0.2 = 2B objects × 2 KB = <b>4 TB</b>. At 64 GB usable per cache node → 4 TB / 64 GB ≈ <b>63 nodes</b>, call it 80 with replication headroom. Conclusion: "Feasible but a real cluster — worth checking whether the 80/20 rule means 2% of objects would capture most hits and 8 nodes suffice." (That last sentence — interrogating your own estimate — is the senior move.)</p>
+<p>The pattern in all three: assumption → arithmetic → <b>"therefore."</b> An estimate without a "therefore" is decoration. End every estimation block by naming the bottleneck: reads, writes, storage, or fan-out.</p>
+<h3>Checkpoint</h3>
+<ol><li>Estimate QPS, storage/day, and 5-year storage for a Strava-like fitness app (state your assumptions first, then compute, then say the "therefore").</li><li>Your interviewer says "assume 10× the users you just used." Redo Drill 3's cache sizing in under 60 seconds.</li><li>Estimate the bandwidth of a service serving 50M podcast streams/day at 128 kbps × 40 min average. Which number in your answer would change the design most if it doubled?</li></ol>
+<h2 id="lesson-04"><span class="lnum">04</span> High-Level Design, Then Deep Dives</h2>
+<p>The high-level phase has one deliverable: a diagram where <b>every functional requirement has a traceable path through the boxes</b>. Draw client → entry point (LB/gateway) → stateless services → data stores, then walk each requirement through it aloud: <i>"Requirement one, post a photo: client → API → upload service → object store, metadata → posts DB. Requirement two, view feed: ..."</i> That walk is your proof of completeness, and interviewers audibly relax when they hear it.</p>
+<p>Keep the first pass deliberately boring. Boxes named for responsibilities ("media service", not "Kafka"), arrows labeled with what flows, and technology choices deferred with a phrase: <i>"I'll put a queue here — whether it's Kafka or SQS is a decision I'll come back to if it matters."</i> Premature vendor-picking burns time and invites tangents. Also: don't erase — annotate. A messy board that evolved beats a clean board you spent minutes redrawing.</p>
+<p>Then comes the pivot most candidates fumble. Don't wait to be told. Look at your own diagram and name the danger: <i>"This works until someone with 50M followers posts — the fan-out box is the hard part. I'd like to deep-dive there."</i> Choosing the <i>right</i> deep dive is itself the skill being graded: it should be (a) genuinely hard, (b) specific to this system, and (c) something your estimation flagged. Fan-out for feeds, locking for inventory, ordering for chat, dedup + idempotency for payments, hot partitions for anything sharded.</p>
+<p>In a deep dive, run a tight loop: state the problem crisply → give 2–3 candidate approaches → compare against <i>this system's</i> requirements → commit. <i>"For feed delivery: push, pull, or hybrid. Push breaks on celebrities, pull breaks on read latency; our 200 ms read budget plus the celebrity case says hybrid with a follower threshold. Committing to that."</i> Two deep dives done this way beat five done shallowly. If the interviewer redirects you to a different component — follow immediately and cheerfully; their redirect <i>is</i> the rubric.</p>
+<h3>Checkpoint</h3>
+<ol><li>Draw a high-level design for a URL shortener in under 5 minutes, then perform the requirement-walk out loud, timed.</li><li>For each of: Ticketmaster, WhatsApp, an ad aggregator — name the single deep dive you'd volunteer, and the sentence you'd use to pivot into it.</li><li>Practice the commit: pick push vs. pull vs. hybrid for a news feed in ≤ 4 spoken sentences, ending with "committing to that."</li></ol>
+<h2 id="lesson-05"><span class="lnum">05</span> The Tradeoff Vocabulary</h2>
+<p>Interviewers grade tradeoff reasoning above almost everything, and it has a grammar: <b>claim, cost, justification by requirement.</b> The template — <i>"I'd choose X over Y because we need A, and I'm accepting cost B, which is fine here because C."</i> Never present a choice as free; a stated cost is what separates judgment from recitation.</p>
+<p>The phrasebook. Steal these whole:</p>
+<ul><li><b>Consistency vs. availability:</b> "This is a CP-vs-AP question. For the seat inventory I need CP — an oversold seat is worse than a 500 error. For the seat <i>map view</i>, AP — stale-by-2-seconds costs nothing because the hold step re-validates."</li><li><b>Latency vs. throughput:</b> "Batching writes raises throughput but adds up to 50 ms of latency; on the analytics path nobody's waiting, so batch. On the checkout path, never."</li><li><b>Latency vs. consistency:</b> "Replicating synchronously to a second region costs ~60 ms per write. Users won't pay that for a like; they will for a bank transfer."</li><li><b>Precompute vs. compute-on-read:</b> "Fan-out-on-write buys 10 ms reads at the price of write amplification — right for feeds because reads outnumber writes 50 to 1."</li><li><b>Simplicity vs. scalability:</b> "One Postgres handles this for the first 10M users, and I'd genuinely start there — the sharded design is what I'd migrate to, and here's the seam I'd leave for it."</li><li><b>Accuracy vs. cost:</b> "HyperLogLog gives unique counts within ~2% in 12 KB per key; exact sets would cost gigabytes. Dashboards get HLL; billing gets exact."</li><li><b>Buy vs. build:</b> "I'd take managed Kafka — our differentiation isn't in operating brokers."</li></ul>
+<p>Two power moves. First, <b>quantify the tradeoff when you can</b>: "strong consistency here costs one cross-region round trip, ~60 ms" lands harder than "it's slower." Second, <b>volunteer the losing option's best case</b>: "pull-based feeds would win if follow counts were tiny and posts rare — that's not our workload." Showing you know <i>when the other answer wins</i> is the strongest signal in the whole interview. And when the interviewer challenges a choice, the response is never defense — it's <i>"good push — under that constraint I'd flip to Y, because..."</i> Updating on new information is a feature, not a retreat.</p>
+<h3>Checkpoint</h3>
+<ol><li>Write out the full template sentence for three real decisions in your Phase 17 URL-shortener design (status code, key generation, storage).</li><li>For each phrasebook pair above, name one system where the <i>opposite</i> side wins, in one sentence each.</li><li>Drill: have a friend challenge any three of your choices; respond to each in ≤ 3 sentences without being defensive, ending with a concrete condition under which you'd switch.</li></ol>
+<h2 id="lesson-06"><span class="lnum">06</span> Communication and Whiteboard Craft</h2>
+<p>An interviewer can't grade what they can't follow. Half of "strong technical communication" is mechanical, and mechanics are learnable in a week.</p>
+<p><b>Narrate everything.</b> Silence while drawing reads as confusion, even when it's deep thought. The fix is a habit phrase: <i>"I'm drawing the write path first; talking while I go."</i> If you genuinely need quiet, buy it explicitly: <i>"Give me 30 seconds to think about the sharding key"</i> — announced silence is confidence; unannounced silence is dead air.</p>
+<p><b>Own the board like a document.</b> Requirements list top-left, and it never gets erased — it's your contract. Estimation numbers in a corner. Main diagram center, flowing left-to-right (client → edge → services → data), so "downstream" literally means rightward. Deep dives get their own region or a fresh area — don't scribble the fan-out detail on top of your clean architecture. Label arrows ("post_id", "2 MB image", "async") — an unlabeled arrow is a question the interviewer now has to ask. Number your components as you draw so speech can be precise: "the race is between 3 and 5."</p>
+<p><b>Manage the dialogue.</b> Checkpoint at every phase boundary: <i>"Before I go deeper — is this the area you want, or would you rather I look at storage?"</i> This is steering, not permission-seeking, and it means you never spend 10 minutes in a room the interviewer left. When you get a hint, take it <i>visibly</i>: "Ah — right, that breaks under partition. Let me fix that" beats plowing on to save face; interviewers report "coachability" directly. When you don't know something, trade honesty plus reasoning: <i>"I haven't operated Cassandra; I'd reason from what I know about LSM stores and quorum reads — here's how I'd verify."</i> That answer scores; bluffing about compaction settings does not.</p>
+<p><b>Time-keeping is a communication act.</b> Say the time out loud: <i>"We're at 25 minutes — I want to make sure we deep-dive the matcher, so I'll wrap the high level here."</i> Candidates who narrate the clock almost never lose to it. Virtual interviews: same rules, plus — practice your drawing tool <i>before</i> the interview, keep components small so the diagram fits one screen, and share early so they watch it grow rather than receiving a finished mystery.</p>
+<h3>Checkpoint</h3>
+<ol><li>Record yourself designing Pastebin for 10 minutes. Count the narration gaps &gt; 15 seconds and the unlabeled arrows. Redo it.</li><li>Write your personal phase-transition and checkpoint phrases — five sentences — and drill them until they're automatic.</li><li>Practice the honest-unknown: draft your response to "how does Kafka replication handle a partition leader failure?" assuming you half-know.</li></ol>
+<h2 id="lesson-07"><span class="lnum">07</span> Leveling: What L4 vs. L5 vs. L6 Answers Look Like</h2>
+<p>Same question, three transcripts. The question: <b>"Design a system to deliver in-app notifications."</b> Watch what changes — it isn't knowledge, it's <i>scope of ownership</i>.</p>
+<p><b>The L4 answer (competent, guided).</b> Asks a few clarifying questions when prompted. Produces a correct pipeline — API → queue → workers → push provider → device — with reasonable technology picks. Handles the interviewer's probes ("what if the provider is down?") sensibly: adds retries and a DLQ <i>when asked</i>. The design works; the interviewer did the steering. Signal: <b>can build a component correctly inside someone else's plan.</b> Typical gaps: doesn't volunteer the deep dive, treats estimation as a ritual, tradeoffs stated without costs.</p>
+<p><b>The L5 answer (owns the problem).</b> Scopes unprompted ("transactional and campaign traffic have different SLAs — I'll design for both and isolate them"). Estimation produces a <i>conclusion</i>: "1B/day is only 12K/sec average, but a 50M-user campaign is a 14K/sec sustained burst — so lane isolation is the design's spine." Volunteers the hard parts — idempotent delivery, token staleness, provider backpressure — and drives deep dives with committed tradeoffs and stated costs. Discusses failure modes before being asked: "if Redis dedup is down, I fail open and accept rare duplicates; here's why that's the right default for this product." Signal: <b>owns the whole problem, needs no steering.</b> This is the hiring bar at most companies for "senior."</p>
+<p><b>The L6 answer (owns the problem-space).</b> Everything in L5, plus three extra registers. <i>Product judgment</i>: "before designing batching, I'd ask whether notification fatigue is the real problem — the best system here might send less." <i>Evolution and operations</i>: "v1 is a single queue and a Postgres table, honestly; here are the two seams I'd leave so the lane-isolated design can be migrated to without a rewrite — and here's the dashboard I'd watch to know when." <i>Organizational reality</i>: "the provider-adapter boundary is also a team boundary; I'd spec its contract first because two teams will build either side." L6 answers treat the design as one point in a trajectory — cost curves, migration paths, what breaks at 10×, which parts are deliberately boring. Signal: <b>designs the system, its lifecycle, and the humans around it.</b></p>
+<p>The uncomfortable takeaway: L4→L5 is not "know more tech," it's <i>drive, don't ride</i> — scope it, estimate with conclusions, volunteer the pain, commit with costs. L5→L6 is <i>lift your horizon</i> — time (evolution), money (cost), people (boundaries). You can practice all six of those verbs on every Phase 17 case study.</p>
+<h3>Checkpoint</h3>
+<ol><li>Take your best Phase 17 answer and honestly grade it L4/L5/L6 against the signals above. Find the two cheapest upgrades.</li><li>Rewrite one L4-style moment ("added retries when asked") as the L5 version (volunteered, with cost) and the L6 version (with evolution/ops framing).</li><li>For "design a rate limiter," write the three one-line openings an L4, L5, and L6 candidate would say in their first 60 seconds.</li></ol>
+<h2 id="lesson-08"><span class="lnum">08</span> Mock Interview Rubrics and Self-Grading</h2>
+<p>You can't improve what you don't score. Real interviewers fill out a rubric within minutes of your interview; you should be filling out the same one about yourself. Here it is — score 1–5 per axis, where 3 = "hire at mid-level," 4 = "hire at senior."</p>
+<table><thead><tr><th>Axis</th><th>1 — No-hire</th><th>3 — Solid</th><th>5 — Exceptional</th></tr></thead><tbody><tr><td>Requirements &amp; scoping</td><td>Jumped straight to boxes</td><td>Asked good questions, agreed a scope</td><td>Questions reshaped the problem; scope had a rationale</td></tr><tr><td>Estimation</td><td>Skipped, or math for math's sake</td><td>Correct numbers, roughly right sizes</td><td>Every estimate ended in a "therefore" that drove design</td></tr><tr><td>High-level design</td><td>Gaps; requirements with no path</td><td>Complete, coherent, walked end-to-end</td><td>Clean, minimal, with seams left for the deep dives</td></tr><tr><td>Deep dives</td><td>Stayed shallow everywhere</td><td>Went deep when steered, correctly</td><td>Chose the right hard parts unprompted; multiple options compared</td></tr><tr><td>Tradeoffs</td><td>Choices asserted, no costs</td><td>Alternatives named, costs stated</td><td>Quantified; knew when the losing option wins</td></tr><tr><td>Failure &amp; scale reasoning</td><td>Happy path only</td><td>Handled probes on failures sensibly</td><td>Volunteered failure modes, bottlenecks, and the 10× story</td></tr><tr><td>Communication</td><td>Hard to follow; silent stretches</td><td>Clear narration, organized board</td><td>Steered time, checkpointed, coachable, a pleasure to follow</td></tr></tbody></table>
+<p><b>How to run a mock.</b> 45 minutes, honored strictly — a friend, a peer from this course, or you alone with a recording (solo mocks are ~70% as useful, which is plenty). Interviewer picks any Phase 17 prompt and behaves realistically: mostly quiet, two planted probes ("what if that node dies?", "10× the traffic — what breaks first?"), one redirect mid-deep-dive. Immediately after: both of you fill the rubric independently <i>before discussing</i> — the gaps between your self-scores and theirs are your blind spots, and they're the most valuable data the mock produces.</p>
+<p><b>How to turn scores into a training plan.</b> Don't retry the whole interview. Take your lowest axis and drill it in isolation: scored 2 on estimation → do Lesson 03's drills daily for a week; scored 2 on tradeoffs → run Lesson 05's challenge drill; scored 2 on communication → record-and-count from Lesson 06. Then a full mock on a <i>fresh</i> prompt (never re-mock a system you've just graded — you'll measure memory, not skill). Progress looks like this: most people start averaging ~2.5, reach a stable 3.5 after roughly six spaced mocks, and the last half-point to 4 is almost always communication and tradeoffs, not knowledge. Keep every filled rubric; a stack of seven of them showing the curve is more motivating than any prep book.</p>
+<h3>Checkpoint</h3>
+<ol><li>Run one full solo mock this week (record it, prompt from Phase 17 you haven't done recently), fill in the rubric within 10 minutes of finishing.</li><li>Identify your lowest axis and write a one-week drill plan for it using the earlier lessons in this phase.</li><li>Grade a <i>published</i> mock interview (any system design video) with this rubric. Where do you disagree with your own scores on rewatch? That gap is your calibration error — write it down.</li></ol>
+  </article>
+  <div class="pager">
+    <a href="17-case-studies.html">← 🏗️ Phase 17</a>
+    <span class="spacer"></span>
+    <a href="19-capstones.html">Phase 19 🏆 →</a>
+  </div>
+</div>
+</body>
+</html>

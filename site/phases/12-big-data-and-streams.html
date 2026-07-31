@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Data & Stream Processing — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 12</div>
+  <h1><span class="pnum">12</span> 🌊 Big Data &amp; Stream Processing</h1>
+  <div class="tagline">When the data is too big to fit anywhere, move the compute.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>MapReduce: the paper that started it all</a>
+<a href="#lesson-02"><span class="lnum">02</span>HDFS and object storage</a>
+<a href="#lesson-03"><span class="lnum">03</span>Spark: memory beats disk</a>
+<a href="#lesson-04"><span class="lnum">04</span>Stream processing fundamentals</a>
+<a href="#lesson-05"><span class="lnum">05</span>Flink and exactly-once state</a>
+<a href="#lesson-06"><span class="lnum">06</span>Windowing and watermarks</a>
+<a href="#lesson-07"><span class="lnum">07</span>Lambda vs Kappa architectures</a>
+<a href="#lesson-08"><span class="lnum">08</span>Stream joins and state stores</a>
+<a href="#lesson-09"><span class="lnum">09</span>Schema registries and evolution</a>
+<a href="#lesson-10"><span class="lnum">10</span>Build a stream processor from scratch</a>
+  </div>
+  <article>
+<blockquote>When the data is too big to fit anywhere, move the compute.</blockquote>
+<p>There's a moment in every data system's life when the dataset stops fitting on one machine — and then keeps growing until it stops fitting in one <i>building's</i> worth of machines you'd care to babysit by hand. Big data is the discipline of computing over that: splitting work across thousands of cheap boxes that fail constantly, and pretending to the programmer that none of that happened. Then streams arrive and remove the last comfortable assumption — that the data ever stops coming. This phase walks the whole arc: MapReduce to Spark to Flink, batch to stream, and ends with you building a windowed stream processor in plain Python.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> MapReduce: The Paper That Started It All</h2>
+<p><b>MOTTO:</b> Make the programmer write two pure functions; make the framework survive a thousand dying machines.</p>
+<h3>The Problem</h3>
+<p>Google circa 2003: index the web on thousands of commodity machines where disks die daily and the network is the bottleneck. Every team was rewriting the same grim scaffolding — split the input, ship the code, retry dead workers, shuffle intermediate data — around what was usually a trivially simple computation like "count words." The insight: the scaffolding is the hard part and it's <i>always the same</i>. Factor it out once.</p>
+<h3>The Concept</h3>
+<p>MapReduce is a deal: you express your computation as two pure functions, and the framework owns all distribution. <b>Map</b> takes an input record and emits key/value pairs. The framework <b>shuffles</b> — groups all values by key across the cluster. <b>Reduce</b> takes one key plus all its values and emits results. It's a national census: thousands of local counters each tally their own town (map), the envelopes get sorted by province (shuffle), and one clerk per province adds up its envelopes (reduce).</p>
+<pre><code>  input splits      MAP             SHUFFLE (group by key)      REDUCE
+  &quot;cat sat&quot;   -&gt; (cat,1)(sat,1) \                            cat:[1,1] -&gt; (cat,2)
+  &quot;cat ran&quot;   -&gt; (cat,1)(ran,1) --&gt; hash(key) % R buckets -&gt; ran:[1]   -&gt; (ran,1)
+  &quot;dog ran&quot;   -&gt; (dog,1)(ran,1) /   sort within bucket       ...</code></pre>
+<p>Because map and reduce are pure and inputs are immutable files, fault tolerance is just <i>re-execution</i>: a worker dies, its tasks rerun elsewhere, and nobody weeps. Stragglers get speculative backup copies; first one done wins.</p>
+<h3>Build It</h3>
+<p>The single-machine essence, faithful to the paper's structure:</p>
+<pre><code>from collections import defaultdict
+
+def map_fn(_, line):                      # (key, value) -&gt; [(k2, v2)]
+    for word in line.split():
+        yield (word, 1)
+
+def reduce_fn(key, values):               # (k2, [v2]) -&gt; [(k2, v3)]
+    yield (key, sum(values))
+
+def mapreduce(inputs, map_fn, reduce_fn):
+    groups = defaultdict(list)
+    for k, v in inputs:
+        for k2, v2 in map_fn(k, v):       # MAP
+            groups[k2].append(v2)         # SHUFFLE (grouping)
+    out = []
+    for k2, vs in sorted(groups.items()): # REDUCE
+        out.extend(reduce_fn(k2, vs))
+    return out</code></pre>
+<p>Distributed reality adds: (1) input split into 64 MB chunks colocated with GFS/HDFS replicas so map tasks read <i>locally</i> — move compute to data; (2) mappers partition output into R files by <code>hash(key) % R</code>; reducers pull, merge-sort, and reduce; (3) a master tracks task state and reschedules on failure; (4) <b>combiners</b> (mini-reducers on the map side) shrink shuffle traffic for associative ops like counting.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Hadoop MapReduce</td><td>The open-source clone (2006); historically vital, rarely written by hand today</td></tr><tr><td>Hive / Pig</td><td>SQL / scripting layers that compiled to MapReduce jobs</td></tr><tr><td>Spark, Flink</td><td>The successors — same shuffle heart, better execution (next lessons)</td></tr><tr><td>BigQuery, Snowflake</td><td>The endgame: you write SQL, a shuffle happens somewhere</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Dean and Ghemawat's "MapReduce: Simplified Data Processing on Large Clusters" (OSDI 2004) reported that after the library's introduction, engineers across Google — including those with no distributed-systems experience — were spinning up thousand-machine computations, with the index-building system rewritten as MapReduce phases. Doug Cutting and Mike Cafarella cloned the idea (plus GFS) as Hadoop to power the Nutch crawler; Yahoo bet on it in 2006, and an industry was born from one beautifully scoped paper.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why do map and reduce need to be pure/deterministic for the fault-tolerance story to work?</li><li>What exactly happens during the shuffle, and why is it usually the expensive part?</li><li>What is a combiner, and for which class of reduce functions is it legal?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> HDFS and Object Storage</h2>
+<p><b>MOTTO:</b> A petabyte doesn't fit on a disk, so the filesystem must become a cluster — or a service.</p>
+<h3>The Problem</h3>
+<p>Big-data compute needs somewhere to put petabytes: readable at aggregate gigabytes per second, survivable when disks die daily (at 10,000 disks, failure is a <i>rate</i>, not an event), and cheap. A SAN is a mortgage; a single NFS server is a bottleneck with a blast radius. You need storage that scales horizontally on the same junk hardware the compute runs on — or, in the cloud era, storage that's someone else's fleet entirely.</p>
+<h3>The Concept</h3>
+<p><b>HDFS</b> (from Google's GFS design, 2003): files are split into big <b>blocks</b> (128 MB — big to amortize seeks and keep metadata small), each block replicated on 3 datanodes, with a <b>namenode</b> holding the entire namespace (file → block list → locations) in RAM. Clients ask the namenode <i>where</i>, then stream data directly from datanodes — metadata and data paths are separate, so the namenode isn't a throughput bottleneck. Optimized for huge sequential reads and appends; hostile to small files (each one is namenode RAM) and random writes.</p>
+<p><b>Object storage</b> (S3, 2006) rethinks the interface: no directories-as-real-things, no appends, no POSIX — just PUT/GET whole immutable objects by key over HTTP, with the provider handling replication and durability (S3 famously advertises eleven nines of durability). Compute and storage fully separate: scale, pay, and fail independently.</p>
+<pre><code>  HDFS                                    OBJECT STORE (S3)
+  client -&gt; namenode: &quot;where&#x27;s /f?&quot;       client -&gt; PUT bucket/key (whole object)
+         &lt;- [blk1@dn3,dn7,dn9 ...]               -&gt; GET bucket/key [range]
+  client &lt;-&gt; datanodes (parallel          flat keyspace; &quot;dirs&quot; are prefixes
+             block streams)               no append, no rename-as-move
+  compute colocated w/ data               compute elsewhere; cache to compensate</code></pre>
+<h3>Build It</h3>
+<p>Reasoning through the designs:</p>
+<ol><li>Block size math: 1 PB / 128 MB ≈ 8M blocks ≈ fits in namenode RAM; the same PB in 1 MB files ≈ a billion metadata entries ≈ namenode death. Hence "the small files problem" and its fix: compact into big files (Parquet + compaction, Lesson 12.07 of Phase 11).</li><li>Replica placement: copy 1 local, copy 2 on a <i>different rack</i>, copy 3 elsewhere on that rack — survives a full rack/switch loss without tripling cross-rack write traffic.</li><li>Object-store semantics bite pipelines: no atomic rename or append means "write temp then rename" commit protocols break — table formats (Iceberg/Delta) exist substantially to restore atomic commits on S3. (S3 became strongly consistent read-after-write in Dec 2020, retiring a decade of eventual-consistency workarounds.)</li><li>The economic verdict: elastic compute + pay-per-GB object storage beat colocated HDFS clusters that must be sized for peak; data locality lost the war to disaggregation, patched by caching and fat network pipes.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>HDFS</td><td>Still runs in large on-prem estates; the design everyone learned from</td></tr><tr><td>S3 / GCS / Azure Blob</td><td>Default substrate of modern data platforms</td></tr><tr><td>MinIO</td><td>S3 API, self-hosted</td></tr><tr><td>Alluxio / caching layers</td><td>Re-adds "locality" atop object stores</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The Google File System paper (Ghemawat, Gobioff, Leung — SOSP 2003) opened by declaring component failure "the norm rather than the exception," a sentence that reframed the field's assumptions. Its single-master design was famously pragmatic — and famously a scaling ceiling Google later replaced (Colossus). HDFS inherited both the pragmatism and the ceiling (namenode federation and HA arrived years later), while S3 quietly grew into one of the largest storage systems ever operated, holding hundreds of trillions of objects per AWS's public statements.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why are HDFS blocks 128 MB when filesystem blocks are 4 KB? Name two pressures the size choice balances.</li><li>Explain the rack-aware replica placement policy and the failure it defends against.</li><li>Why did missing atomic rename/append on object stores push the ecosystem toward table formats like Iceberg?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Spark: Memory Beats Disk</h2>
+<p><b>MOTTO:</b> Stop writing every intermediate result to disk; keep the lineage and keep it in RAM.</p>
+<h3>The Problem</h3>
+<p>MapReduce writes intermediate results to disk between <i>every</i> stage. A 10-step pipeline pays 10 rounds of disk I/O and job-launch overhead; iterative algorithms (PageRank, ML training — same dataset, many passes) reread from HDFS every single iteration. The fault-tolerance mechanism (materialize everything) taxes exactly the workloads that were becoming most important.</p>
+<h3>The Concept</h3>
+<p>Spark's founding idea (the RDD paper, 2012): fault tolerance doesn't require materializing data — it requires being able to <i>recompute</i> it. An RDD is an immutable, partitioned dataset defined by its <b>lineage</b>: the recipe of deterministic transformations that produced it from stable input. Cache partitions in RAM for speed; if a machine dies, replay just the lost partitions' recipe. Like a chef who keeps sauces warm on the stove instead of jarring each one — and if a pot spills, re-makes only that pot from the written recipe.</p>
+<pre><code>  textFile ──map──&gt; words ──map──&gt; pairs ──reduceByKey──&gt; counts
+     |__________ narrow deps __________|        ^ wide dep (SHUFFLE)
+                 = STAGE 1                       = stage boundary
+
+  lineage: counts = reduceByKey(map(map(textFile)))
+  worker dies -&gt; recompute only its lost partitions from lineage</code></pre>
+<p>The execution model: transformations are <b>lazy</b> — nothing runs until an action (<code>collect</code>, <code>save</code>) triggers it. The scheduler then builds a DAG, fuses <b>narrow</b> dependencies (map/filter chains — each output partition needs one input partition) into pipelined stages, and breaks stages at <b>wide</b> dependencies (groupBy/join — need data from all partitions), which are shuffles. Shuffles didn't go away; Spark just stopped paying for disk <i>between the shuffles</i>.</p>
+<h3>Build It</h3>
+<ol><li>Express the job in the high-level API (DataFrames/SQL these days); the Catalyst optimizer rewrites your plan (pushes filters down, prunes columns, picks join strategies) before Tungsten generates tight code — you write intent, not execution.</li><li><code>cache()</code> datasets reused across actions or iterations — this is the memory-beats-disk moment; forget it and you recompute lineage from scratch each pass.</li><li>For very long lineages (iterative jobs), <code>checkpoint()</code> to truncate the recipe, or recovery replay grows unbounded.</li><li>Watch the two classic killers: <b>skew</b> (one hot key makes one shuffle partition gigantic — one straggler task while 999 idle; fix with salting or adaptive execution) and <b>memory pressure</b> (executors spill to disk or OOM; RAM is a cache, not a miracle).</li></ol>
+<pre><code># PySpark word count — MapReduce&#x27;s hello world, interactive this time
+counts = (spark.read.text(&quot;s3://corpus/&quot;)
+          .selectExpr(&quot;explode(split(lower(value), &#x27;\\\\s+&#x27;)) AS word&quot;)
+          .groupBy(&quot;word&quot;).count())     # lazy: nothing has run yet
+counts.cache().show(20)                 # action -&gt; DAG -&gt; stages -&gt; shuffle</code></pre>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Apache Spark</td><td>Default heavy-lift batch engine; SQL, Python, streaming, ML in one</td></tr><tr><td>Databricks</td><td>Spark's creators, managed + proprietary engine (Photon)</td></tr><tr><td>Trino/Presto</td><td>Interactive SQL federation — complements Spark rather than replacing it</td></tr><tr><td>Dask / Ray</td><td>Python-native distributed compute for the Spark-averse</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Spark came out of UC Berkeley's AMPLab; Zaharia et al.'s NSDI 2012 RDD paper reported 20x+ speedups over Hadoop on iterative workloads, and in 2014 Spark won the Daytona GraySort benchmark, sorting 100 TB in 23 minutes on 206 machines — beating the previous Hadoop record that had used roughly ten times as many machines, with three times the per-node throughput. The team spun out as Databricks, and "Hadoop job" quietly became "Spark job" across the industry.</p>
+<h3>Checkpoint</h3>
+<ul><li>How does lineage-based recovery differ from replication-based recovery, and what does each cost?</li><li>What distinguishes a narrow dependency from a wide one, and why do wide dependencies force stage boundaries?</li><li>Your 1000-task Spark stage finishes in 2 minutes except one task that takes an hour. What's the likely cause and two fixes?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Stream Processing Fundamentals</h2>
+<p><b>MOTTO:</b> Batch asks "what happened?"; streaming asks "what is happening?" — and never gets to stop.</p>
+<h3>The Problem</h3>
+<p>Batch jobs see a complete, finite input and take minutes-to-hours after the data lands. But fraud detection, live pricing, monitoring, and personalization need answers in seconds — over data that <i>never stops arriving</i>. You can't wait for "all the data" because there's no such thing. Processing an unbounded input demands different primitives: what replaces "read the file"? What replaces "the job finished"?</p>
+<h3>The Concept</h3>
+<p>A stream is an unbounded, ordered sequence of timestamped events; a stream processor is a standing query over it — a <b>dataflow graph</b> of operators (map, filter, keyBy, window, join) that events flow through continuously. Batch is doing the restaurant's books after closing; streaming is a cashier keeping the running total as each customer pays.</p>
+<p>Three load-bearing distinctions:</p>
+<pre><code>  EVENT TIME vs PROCESSING TIME        STATELESS vs STATEFUL ops
+  when it happened | when it arrived   filter/map: no memory
+  (phone offline 2h -&gt; events arrive   counts/windows/joins: MUST
+   late but timestamped correctly)     remember things -&gt; state
+
+  DELIVERY GUARANTEES
+  at-most-once  : may drop      (fast, wrong)
+  at-least-once : may duplicate (fine if consumers idempotent)
+  exactly-once  : effectively-once results (Lesson 05&#x27;s whole topic)</code></pre>
+<p>Because operators hold <b>state</b> (running counts, open windows, join buffers) and run forever, the hard problems are: keeping state safe across crashes, handling events that arrive late or out of order (Lesson 06), and scaling by partitioning streams by key — same hash-partitioning instinct as the shuffle, applied to infinity.</p>
+<h3>Build It</h3>
+<p>The minimal mental machine — a keyed, stateful operator:</p>
+<pre><code>class RunningCount:                      # &quot;SELECT key, COUNT(*) GROUP BY key&quot;
+    def __init__(self):                  # ...but forever
+        self.state = {}                  # key -&gt; count  (must survive crashes!)
+    def on_event(self, event):
+        k = event[&quot;key&quot;]
+        self.state[k] = self.state.get(k, 0) + 1
+        emit(k, self.state[k])           # emits an UPDATE per event</code></pre>
+<p>Scaling and surviving:</p>
+<ol><li>Partition the stream by key (<code>hash(key) % N</code>); each parallel instance owns its keys' state — no shared state, no locks.</li><li>Periodically snapshot state + input position (offset) together; on crash, restore snapshot and replay input from the offset. This needs a <i>replayable</i> source — which is exactly why Kafka's log-not-queue design and stream processing co-evolved.</li><li>Notice the output is now a <b>changelog</b> (updates, not final answers) — consumers must handle "the count for <code>cat</code> is now 7, no wait, 8." Streams and tables are two views of the same thing: a table is a stream compacted; a stream is a table's diff.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Kafka + Flink</td><td>The canonical pairing (Lesson 05)</td></tr><tr><td>Kafka Streams</td><td>Stream processing as a Java library, no cluster</td></tr><tr><td>Spark Structured Streaming</td><td>Micro-batch model; easy if you're already Spark</td></tr><tr><td>ksqlDB / RisingWave / Materialize</td><td>SQL-on-streams</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The field's Rosetta Stone is Tyler Akidau's 2015 essays "Streaming 101/102" and the Google Dataflow paper (VLDB 2015), which unified batch and streaming as one model — bounded data is just a stream that happens to end — and gave the industry its vocabulary of event time, windows, and triggers, distilled from Google's MillWheel and FlumeJava experience. Jay Kreps's 2013 essay "The Log" supplied the other half: a replayable log as the universal source that makes stream state recoverable.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does an unbounded input force windowing or continuous emission — what can a streaming <code>COUNT(*)</code> never do?</li><li>Distinguish event time from processing time and give a scenario where they diverge by hours.</li><li>Why does stateful streaming's crash recovery require a replayable source like Kafka rather than a classic message queue?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Flink and Exactly-Once State</h2>
+<p><b>MOTTO:</b> Exactly-once isn't about delivering messages once; it's about making retries invisible.</p>
+<h3>The Problem</h3>
+<p>Your stream processor crashes mid-flight. Replaying input from the last safe point means some events get processed <i>twice</i> — and a fraud counter that double-counts is a fraud counter that lies. Networks duplicate; retries duplicate; crashes force replay. Physical exactly-once <i>delivery</i> is impossible (you can't know if the crashed process acted before dying). What's achievable is exactly-once <i>state semantics</i>: the final state and outputs are as if each event was processed once.</p>
+<h3>The Concept</h3>
+<p>Flink's answer is <b>distributed snapshots</b> — the Chandy-Lamport algorithm (1985) adapted as "asynchronous barrier snapshotting." The trick: inject <b>checkpoint barriers</b> into the streams, flowing with the data. When a barrier reaches an operator, the operator snapshots its state <i>at exactly that point in the stream</i>; barriers from multiple inputs are aligned first. The result is a globally <i>consistent</i> cut: every operator's state reflects exactly the events before barrier N — no tearing. Like a photo finish in a race: one line, everyone's position captured relative to the same instant, without stopping the race.</p>
+<pre><code>  source ──e5──e4──|BARRIER n|──e3──e2──e1──&gt; [op A] ──&gt; [op B] ──&gt; sink
+                                   on barrier arrival:
+                                   op snapshots state -&gt; durable store,
+                                   forwards barrier downstream
+  CRASH? -&gt; restore ALL ops from snapshot n, rewind source to offset n
+         -&gt; events after the barrier replay; state is consistent</code></pre>
+<p>Replay still reprocesses events — so end-to-end exactly-once needs the <i>sinks</i> to cooperate: either <b>idempotent writes</b> (upsert by key: replays overwrite with same value) or <b>transactional sinks</b> (two-phase commit tied to checkpoints: output for checkpoint N commits only when N completes; e.g., Kafka transactions). Kafka's own transactions + idempotent producers (KIP-98) provide the same guarantee for Kafka-in/Kafka-out pipelines.</p>
+<h3>Build It</h3>
+<ol><li>Sources record their read positions (Kafka offsets) as part of each checkpoint — state and position snapshot <i>together</i> (the atomicity that makes it work).</li><li>Operators keep state in a local store (RocksDB for big state); checkpoints upload asynchronously — incremental uploads ship only changed SST files.</li><li>Barrier alignment: an operator with 2 input streams pauses the fast one after its barrier arrives until the slow one's barrier catches up (backpressure risk; Flink's "unaligned checkpoints" trade snapshot size for alignment stalls).</li><li>On failure: restore every operator's state from the last completed checkpoint, rewind sources, run. Uncommitted transactional output from the doomed epoch is aborted.</li><li><b>Savepoints</b> = manually triggered, portable checkpoints: the operational superpower — stop, upgrade the job or rescale parallelism, restart from the savepoint with state intact.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Exactly-once story</th></tr></thead><tbody><tr><td>Apache Flink</td><td>Barrier snapshots + transactional/idempotent sinks</td></tr><tr><td>Kafka Streams</td><td>Kafka transactions (EOS), Kafka-to-Kafka</td></tr><tr><td>Spark Structured Streaming</td><td>Micro-batch + idempotent/transactional sinks</td></tr><tr><td>Any processor + idempotent sink</td><td>The poor man's exactly-once — often all you need</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The lineage is unusually clean: Chandy &amp; Lamport's 1985 distributed-snapshots paper (Lamport has a habit of appearing in these phases) → Flink's "Lightweight Asynchronous Snapshots for Distributed Dataflows" (Carbone et al., 2015) → Apache Flink, which grew from the Berlin-based Stratosphere research project into the industry's stateful-streaming default, powering pipelines at Alibaba (which acquired the founding company, Ververica, in 2019), Uber, and Netflix at millions of events per second.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is exactly-once <i>delivery</i> physically impossible, and what is guaranteed instead?</li><li>What property makes a barrier-aligned snapshot "consistent," and what could go wrong if operators snapshotted at arbitrary independent moments?</li><li>Your Flink job has exactly-once checkpoints but writes to a plain REST API sink. What does the end-to-end guarantee degrade to, and what are your two repair options?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Windowing and Watermarks</h2>
+<p><b>MOTTO:</b> You can't count "events per minute" until you decide when a minute is allowed to end.</p>
+<h3>The Problem</h3>
+<p>Aggregating an infinite stream requires chopping it into finite pieces — windows. But events arrive out of order: a phone's 12:00:59 event may arrive at 12:03 (dead zone, retries, GC pauses). When can you close the 12:00–12:01 window and emit its count? Close immediately and you undercount; wait forever and you emit nothing. This — not the windowing arithmetic — is the actual hard problem.</p>
+<h3>The Concept</h3>
+<p>Window shapes first:</p>
+<pre><code>  TUMBLING (1 min):  |––A––|––B––|––C––|        fixed, non-overlapping
+  SLIDING (1m/15s):  |––A––|                    fixed, overlapping —
+                        |––B––|                 each event in ~4 windows
+  SESSION (gap 30s): |–user1–|   gap   |–u1–|   dynamic: closes after
+                                                30s of silence per key</code></pre>
+<p>Now the clock problem. A <b>watermark</b> is the system's flowing declaration: "I believe all events with timestamp ≤ T have now arrived." Watermarks advance through the dataflow like a tide line; when the watermark passes a window's end, the window fires. Watermarks are a <i>heuristic bet</i> — typically "max event time seen, minus allowed lateness Δ." Think of a teacher collecting exams: "it's 12:05, I'm confident everyone who took the 12:00 exam has turned it in — grading now." A straggler after that is <b>late data</b>: drop it, or reopen and <i>retract/update</i> the earlier result, or shunt it to a side output for reconciliation. Small Δ = fast results, more late stragglers; big Δ = accurate but laggy, and windows buffer in state longer. There is no free lunch, only a chosen Δ.</p>
+<h3>Build It</h3>
+<ol><li>Assign: each event, by its <i>event timestamp</i>, maps to window(s) — tumbling: <code>start = ts - (ts % size)</code>; sliding: one window per step it overlaps; session: merge-with-neighbors within gap.</li><li>Accumulate: per (key, window), fold the event into state — keep an aggregate (count/sum), not the raw events, when the function allows.</li><li>Advance watermark: <code>W = max_event_ts_seen - Δ</code>. With parallel sources, the operator's watermark is the <i>minimum</i> across inputs — one silent partition stalls everything (the "idle source" trap; fix with idleness timeouts).</li><li>Trigger: when <code>W ≥ window_end</code>, emit result; schedule state cleanup after an additional allowed-lateness grace period.</li><li>Handle stragglers per policy: drop / update-with-retraction / side output. (Full code: Lesson 10.)</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Concern</th><th>Options</th></tr></thead><tbody><tr><td>Window types</td><td>Tumbling, sliding, session in Flink / Beam / Kafka Streams</td></tr><tr><td>Watermark strategy</td><td>Bounded out-of-orderness (fixed Δ) is the workhorse</td></tr><tr><td>Late data</td><td>Flink side outputs; Beam triggers with accumulation modes</td></tr><tr><td>Retractions</td><td>Changelog outputs; sinks must upsert</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The watermark model was hammered out inside Google's MillWheel (VLDB 2013) and generalized in the Dataflow model paper (Akidau et al., VLDB 2015), which posed the field's defining question as a correctness/latency/cost triangle you <i>tune</i> rather than solve — its famous framing: "we can never affordably guarantee correctness of event-time windows, so we offer principled ways to trade." Apache Beam is that paper as an API; Flink is its most faithful open-source executor.</p>
+<h3>Checkpoint</h3>
+<ul><li>Assign event ts=125s to (a) 60s tumbling windows, (b) 60s windows sliding every 15s — which windows, and how many?</li><li>Why must an operator take the minimum watermark across its parallel inputs, and what pathology does an idle partition cause?</li><li>Your Δ is 10s and an event arrives 45s late. Name the three possible fates for it and one cost of each.</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Lambda vs Kappa Architectures</h2>
+<p><b>MOTTO:</b> Running two pipelines to hedge one truth means debugging two lies.</p>
+<h3>The Problem</h3>
+<p>Mid-2010s streaming engines were fast but sloppy (weak exactly-once, primitive windowing), while batch was correct but slow. Teams needed both freshness and accuracy — and got an architecture pattern that institutionalized the compromise: run <i>both</i>, forever. The question this lesson answers: was that ever a good idea, and what replaced it?</p>
+<h3>The Concept</h3>
+<p><b>Lambda architecture</b> (Nathan Marz, ~2011): every event goes down two paths. The <b>batch layer</b> periodically recomputes correct views from the complete raw history; the <b>speed layer</b> streams approximate real-time deltas; the <b>serving layer</b> merges them — accurate-but-stale plus fresh-but-loose. <b>Kappa architecture</b> (Jay Kreps, 2014) counters: if your log retains history and your stream processor is <i>correct</i> (exactly-once state, event-time windows — Lessons 05–06), then batch is redundant: one streaming pipeline handles live data, and "recompute" = replay the log through a new version of the same code.</p>
+<pre><code>  LAMBDA                                KAPPA
+          +-&gt; BATCH (nightly, exact) -+        Kafka (long retention)
+  events -|                           |-&gt; serve       |
+          +-&gt; SPEED (live, approx)  --+          STREAM JOB v1 ──&gt; view v1
+                                                 STREAM JOB v2 (replays
+  2 codebases, 2 semantics,                       history) ──&gt; view v2
+  1 merge headache                               cut over when caught up</code></pre>
+<p>The Lambda tax is concrete: the same business logic implemented twice (say, Spark <i>and</i> Storm), which drift, which double every bug hunt, whose subtle semantic differences surface as "why don't the dashboards agree?"</p>
+<h3>Build It</h3>
+<p>Running a Kappa-style reprocess:</p>
+<ol><li>Retain the source of truth: Kafka with long/infinite retention, or tiered storage, or the log mirrored to the lakehouse (a common hybrid: stream for serving, lake for ad-hoc — but <i>one</i> processing codebase).</li><li>To change logic or fix a bug: deploy job v2 with a new consumer group and <i>new output tables</i>, reading from the beginning (or a savepoint).</li><li>Let v2 chew through history at full throttle — replay is compute-bound, so it catches up much faster than real time.</li><li>Diff v1 vs v2 outputs on overlapping windows (your correctness gate), then atomically switch readers to v2's tables and retire v1.</li><li>Honest caveats: replaying years of events costs real money and time; some logic (calls to external mutable services) isn't replayable; and if you need heavy ad-hoc analytics, you'll have a lake anyway — Kappa is about not duplicating the <i>pipeline logic</i>, not banning batch tools from the building.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Pattern</th><th>When</th></tr></thead><tbody><tr><td>Kappa (Kafka + Flink, replayable)</td><td>Default for event pipelines today</td></tr><tr><td>Lambda</td><td>Legacy estates; or when stream + batch genuinely need different logic</td></tr><tr><td>Hybrid: stream to serve + lakehouse to explore</td><td>Most real companies, in practice</td></tr><tr><td>Streaming-native stores (Materialize, RisingWave)</td><td>Kappa with SQL ergonomics</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The debate happened in public and in print: Marz introduced Lambda around 2011 (later the book <i>Big Data</i>, 2015), born of his work creating Storm at BackType/Twitter; Kreps — co-creator of Kafka at LinkedIn — published "Questioning the Lambda Architecture" on O'Reilly Radar in 2014, coining "Kappa" and arguing that maintaining two systems' worth of the same logic was an operational tax masquerading as rigor. Engines then made his bet good: Flink's checkpointing and event-time model (2015+) removed the accuracy excuse for most workloads.</p>
+<h3>Checkpoint</h3>
+<ul><li>What specific weakness of 2013-era stream processors did the Lambda batch layer compensate for?</li><li>Walk through a Kappa reprocess: how do you deploy fixed logic without corrupting live serving?</li><li>Name two situations where a batch path alongside streaming is still the right call.</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Stream Joins and State Stores</h2>
+<p><b>MOTTO:</b> Joining two infinite tables means deciding how much of each you can afford to remember.</p>
+<h3>The Problem</h3>
+<p>"Join clicks with impressions to attribute ads." In batch, trivial: both tables are complete, hash-join, done. In streaming, neither side is ever complete: when a click arrives, its matching impression may have arrived seconds ago — or may arrive in ten seconds, or never. Someone must <i>buffer</i> candidates, and over an infinite stream an unbounded buffer is a slow-motion OOM. Joins force streaming's state problem to its sharpest point.</p>
+<h3>The Concept</h3>
+<p>Three join shapes, by what's remembered:</p>
+<pre><code>  STREAM-STREAM (windowed):  remember both sides, but only within a
+    clicks ⋈ impressions      time bound: |click.ts - imp.ts| &lt; 1h
+    [state: 1h of each, per key; expired by watermark]
+
+  STREAM-TABLE (enrichment): remember ALL of one side, as a table
+    orders ⋈ user-profiles    (a compacted changelog: latest value per key);
+    [each order joins the CURRENT profile — no windowing]
+
+  TEMPORAL/AS-OF: stream-table, but versioned —
+    trades ⋈ fx-rates AS OF trade.ts (join the rate that was true THEN)</code></pre>
+<p>The time bound is the load-bearing decision: it converts "infinite join" into "join within a business-meaningful horizon" — attribution windows, fraud lookback periods. And all of it lives in the <b>state store</b>: a local, keyed, persistent store (RocksDB, an embedded LSM tree — Phase 4's storage engines cash their sequel check here) that holds join buffers, window accumulators, and table snapshots, backed up via checkpoints or changelog topics.</p>
+<h3>Build It</h3>
+<p>A windowed stream-stream join, mechanically:</p>
+<ol><li>Partition both streams by the join key — co-partitioning ensures matching events meet on the same worker (a shuffle wearing streaming clothes).</li><li>On a left event: probe the right buffer for key matches within the window, emit joined rows; insert self into the left buffer with its timestamp.</li><li>Symmetrically on right events. (This is a symmetric hash join, streamified.)</li><li>When the watermark passes <code>ts + window</code>, expire buffered entries — for <i>outer</i> joins, emit <code>left ⋈ NULL</code> for the unmatched at expiry (you can't know "no match" until time closes the door).</li><li>State store mechanics: RocksDB keyed by <code>(join_key, ts, seq)</code> so expiry is a prefix range-delete; recovery restores the store from checkpoint (Flink) or replays a changelog topic (Kafka Streams).</li></ol>
+<pre><code># left-side handler of a symmetric windowed join (right side mirrors it)
+def on_left(e):
+    for r in right_buf.range(e.key, e.ts - W, e.ts + W):
+        emit(join(e, r))
+    left_buf.put(e.key, e.ts, e)
+def on_watermark(w):
+    left_buf.expire_older_than(w - W); right_buf.expire_older_than(w - W)</code></pre>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>State store story</th></tr></thead><tbody><tr><td>Flink</td><td>RocksDB state backend; interval &amp; temporal joins built in</td></tr><tr><td>Kafka Streams</td><td>RocksDB + changelog topics; KTables for stream-table joins</td></tr><tr><td>ksqlDB / Flink SQL</td><td><code>JOIN ... WITHIN 1 HOUR</code> — the mechanics above, as SQL</td></tr><tr><td>Feature stores (Feast et al.)</td><td>Stream-table enrichment productized for ML</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Kafka Streams' "stream-table duality" — a table is a compacted stream, a stream is a table's changelog — was articulated in LinkedIn/Confluent's work (Kreps's "The Log," 2013, and the Samza project, whose local-RocksDB-plus-changelog state design Kafka Streams inherited). Ad-tech attribution was the crucible: joining click and impression streams within a window at millions of events per second is roughly the industry's shared homework problem, and every streaming engine's join docs quietly assume it.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must a stream-stream join be windowed, and what business input should size the window?</li><li>In a stream-table join of orders against user profiles, why is there no window — and what determines <i>which</i> profile version an order joins?</li><li>Why can a streaming LEFT OUTER join only emit its NULL rows at window expiry, not immediately?</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Schema Registries and Evolution</h2>
+<p><b>MOTTO:</b> A topic without a schema contract is an API where the breaking change arrives at 2 AM as a deserialization error.</p>
+<h3>The Problem</h3>
+<p>Producer and consumer teams share a Kafka topic but deploy independently. Producer v2 renames a field; every consumer crash-loops at once — or worse, silently misparses money amounts. Events also <i>persist</i>: tonight's consumer must read messages written last year, and a replay (Lesson 07!) must read <i>all</i> of history. Data in motion needs what APIs have: a versioned, enforced contract — and unlike an API, old versions never stop existing.</p>
+<h3>The Concept</h3>
+<p>A <b>schema registry</b> is a small service holding versioned schemas per topic. Producers register/fetch a schema ID and embed it in each message (magic byte + 4-byte ID + compact binary payload); consumers resolve the ID and decode. Crucially, the registry <i>rejects</i> registration of schemas that violate the topic's <b>compatibility policy</b> — the breaking change fails in CI, not in production at 2 AM.</p>
+<pre><code>  producer ──register/lookup──&gt; [SCHEMA REGISTRY] &lt;──resolve id── consumer
+     |        &quot;orders-value: v3?&quot;    v1,v2,v3 + policy: BACKWARD      |
+     +── wire: [0][id=3][binary avro bytes] ─── Kafka ────────────────+
+
+  BACKWARD  : new READER reads old data  (consumers upgrade first)
+  FORWARD   : old reader reads NEW data  (producers upgrade first)
+  FULL      : both — evolve fields only in mutually-safe ways</code></pre>
+<p>The compatibility rules fall out of one question per change: <i>can a reader with schema X make sense of data written with schema Y?</i> Adding a field <b>with a default</b> is safe both ways (old data: reader fills the default; new data: old reader ignores it). Removing a field with a default: same. Renaming, retyping, or adding a defaultless required field: breaking. Avro/Protobuf resolve this mechanically — Avro by comparing writer's and reader's schemas at decode time, Protobuf by field-number discipline (never reuse a number).</p>
+<h3>Build It</h3>
+<ol><li>Pick a binary format with evolution semantics: Avro, Protobuf ([field tags]), or JSON Schema (validation without compact encoding). Naked JSON = no contract, no compression, eventual sorrow.</li><li>Set the policy per topic — BACKWARD (default; supports replaying history with the newest reader) and decide the matching <i>deploy order</i> (BACKWARD ⇒ upgrade consumers first).</li><li>Wire CI: producer builds validate proposed schemas against the registry before merge.</li><li>Evolve additively: new optional fields with defaults; deprecate-then-remove over quarters; <i>never</i> reuse a Protobuf field number or change a field's meaning in place.</li><li>For genuinely incompatible changes: new topic (<code>orders.v2</code>), dual-publish during migration, move consumers, retire — an API version bump, in log form.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Tool</th><th>Notes</th></tr></thead><tbody><tr><td>Confluent Schema Registry</td><td>The de facto standard; Avro/Protobuf/JSON Schema</td></tr><tr><td>AWS Glue Schema Registry</td><td>The AWS-native flavor</td></tr><tr><td>Buf (Protobuf)</td><td>Breaking-change detection as CI tooling for proto APIs</td></tr><tr><td>Karapace</td><td>Open-source registry-compatible alternative</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Avro itself was created by Doug Cutting (yes, again — Lucene, Hadoop, and now this) in 2009, partly because Hadoop needed a compact format whose <i>reader/writer schema resolution</i> made stored data evolvable — the writer's schema travels with the data, the reader reconciles. Confluent's Schema Registry (2015) moved that idea onto the wire for Kafka, and "the registry rejected my PR" is now a rite of passage that replaces what used to be a multi-team production incident.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does BACKWARD compatibility imply "upgrade consumers before producers"? Reason it through.</li><li>Adding a required field with no default breaks which direction of compatibility, and why?</li><li>Why is "never reuse a Protobuf field number" an iron law even after the field is deleted?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Build a Stream Processor From Scratch</h2>
+<p><b>MOTTO:</b> Windows, watermarks, and late data stop being abstract the moment your own code has to drop an event.</p>
+<h3>The Problem</h3>
+<p>Time to cash the checks Lessons 04 and 06 wrote: build a working stream processor — event-time tumbling-window word counts, out-of-order input, watermarks, allowed lateness, late-data policy — in dependency-free Python. If you can build this, Flink's docs read like a description of your own code with better engineering.</p>
+<h3>The Concept</h3>
+<p>The machine: events carrying <code>(timestamp, payload)</code> arrive <i>out of order</i> → each is assigned to its tumbling window and folded into per-(window, word) state → a watermark (<code>max_ts_seen - Δ</code>) advances behind the data → when it passes a window's end, the window <b>fires</b> (emit counts) → events arriving for already-fired windows are late: dropped and counted.</p>
+<pre><code>  events (out of order!) ──&gt; assign window ──&gt; accumulate state
+                                                    |
+  watermark = max_ts - Δ  ──(passes window end)──&gt; FIRE window, emit
+  event for a fired window ─────────────────────&gt; LATE: side-output/drop</code></pre>
+<h3>Build It</h3>
+<pre><code>from collections import defaultdict, Counter
+
+class TumblingWordCount:
+    def __init__(self, window_size=60, lateness=10):
+        self.size, self.lateness = window_size, lateness
+        self.state = defaultdict(Counter)   # window_start -&gt; {word: count}
+        self.max_ts = float(&quot;-inf&quot;)         # drives the watermark
+        self.fired = set()                  # windows already emitted
+        self.late_events = []               # side output
+
+    def window_of(self, ts):
+        return ts - (ts % self.size)        # tumbling assignment
+
+    @property
+    def watermark(self):                    # &quot;all events &lt;= this have arrived&quot;
+        return self.max_ts - self.lateness  # ...probably
+
+    def on_event(self, ts, text):
+        win = self.window_of(ts)
+        if win in self.fired:               # door already closed
+            self.late_events.append((ts, text))
+            return
+        for word in text.lower().split():
+            self.state[win][word] += 1      # accumulate
+        self.max_ts = max(self.max_ts, ts)
+        self._advance()
+
+    def _advance(self):                     # fire every complete window
+        for win in sorted(self.state):
+            if win + self.size &lt;= self.watermark and win not in self.fired:
+                print(f&quot;WINDOW [{win},{win+self.size}) -&gt; &quot;
+                      f&quot;{dict(self.state[win].most_common(3))}&quot;)
+                self.fired.add(win)
+                del self.state[win]         # state cleanup: not optional!
+
+# Drive it with disorder and lateness:
+events = [
+    (5,  &quot;cat sat&quot;), (12, &quot;cat ran&quot;),      # window [0,60)
+    (61, &quot;dog ran&quot;), (58, &quot;cat cat&quot;),      # 58 is out of order but IN TIME
+    (75, &quot;dog sat&quot;), (130, &quot;mouse ran&quot;),   # 130 pushes watermark to 120:
+                                           #   fires [0,60) and [60,120)
+    (55, &quot;too late cat&quot;),                  # [0,60) already fired -&gt; LATE
+    (200, &quot;flush&quot;),                        # fires [120,180)
+]
+p = TumblingWordCount(window_size=60, lateness=10)
+for ts, text in events:
+    p.on_event(ts, text)
+print(&quot;late (dropped):&quot;, p.late_events)    # [(55, &#x27;too late cat&#x27;)]</code></pre>
+<p>Trace it by hand once — watch event 58 land safely (out of order ≠ late) while event 55 gets dropped (its window fired). Then extend: (1) keyed parallelism — hash words across N instances; (2) checkpointing — pickle <code>(state, max_ts, fired)</code> plus the input offset, kill the process mid-stream, restore, replay; (3) update-mode late handling — re-fire the window with corrected counts and observe why sinks must then upsert; (4) sliding windows — assign each event to <code>size/step</code> windows.</p>
+<h3>Use It</h3>
+<p>Everything here maps 1:1 onto production APIs: Flink's <code>TumblingEventTimeWindows.of(60s)</code> + <code>forBoundedOutOfOrderness(10s)</code> + side outputs, or Kafka Streams' <code>TimeWindows.ofSizeAndGrace(...)</code>. What production adds is exactly your extension list — keyed distribution, durable RocksDB state, barrier checkpoints (Lesson 05) — industrialized.</p>
+<h3>War Story</h3>
+<p>This toy is a faithful miniature of the Dataflow model (Akidau et al., VLDB 2015): its four questions — <i>what</i> (word counts), <i>where</i> in event time (tumbling windows), <i>when</i> to emit (watermark triggers), <i>how</i> refinements relate (your drop-vs-update policy) — are literally the paper's organizing framework. Google built MillWheel and Dataflow to answer them at scale; you answered them in 40 lines. The gap between the two is engineering, not concept — which is the most encouraging sentence in this phase.</p>
+<h3>Checkpoint</h3>
+<ul><li>In the driver, why is event (58, "cat cat") counted but (55, "too late cat") dropped, when 55 &lt; 58?</li><li>What breaks if <code>_advance</code> never deletes fired windows' state, and what breaks if it deletes them <i>without</i> tracking <code>fired</code>?</li><li>What exactly must be included in a checkpoint of this processor for crash recovery to be correct, and why is the input offset part of it?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="11-search-and-analytics.html">← 🔍 Phase 11</a>
+    <span class="spacer"></span>
+    <a href="13-observability-and-reliability.html">Phase 13 🔭 →</a>
+  </div>
+</div>
+</body>
+</html>

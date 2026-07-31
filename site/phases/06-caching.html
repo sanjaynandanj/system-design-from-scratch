@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caching — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 06</div>
+  <h1><span class="pnum">06</span> ⚡ Caching</h1>
+  <div class="tagline">The two hardest problems: naming, caching, and off-by-one errors.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>Why caching works: locality and the 80/20 rule</a>
+<a href="#lesson-02"><span class="lnum">02</span>Cache patterns: aside, through, back, ahead</a>
+<a href="#lesson-03"><span class="lnum">03</span>Eviction policies: LRU, LFU, and friends</a>
+<a href="#lesson-04"><span class="lnum">04</span>Redis internals</a>
+<a href="#lesson-05"><span class="lnum">05</span>Memcached vs Redis</a>
+<a href="#lesson-06"><span class="lnum">06</span>CDNs: caching at the edge of the world</a>
+<a href="#lesson-07"><span class="lnum">07</span>Cache invalidation (the hard problem)</a>
+<a href="#lesson-08"><span class="lnum">08</span>Thundering herds and cache stampedes</a>
+<a href="#lesson-09"><span class="lnum">09</span>Hot keys and cache skew</a>
+<a href="#lesson-10"><span class="lnum">10</span>Build an LRU cache from scratch</a>
+  </div>
+  <article>
+<blockquote>The two hardest problems: naming, caching, and off-by-one errors.</blockquote>
+<p>Caching is the closest thing systems engineering has to a cheat code: answer the question before doing the work, and suddenly your database sleeps through the traffic spike. But every cache is a copy, and every copy can lie — stale reads, stampedes, and invalidation bugs are the tax on free speed. This phase teaches you to collect the speed and dodge the tax. By the end you'll build an O(1) LRU cache with your own hands and understand why Phil Karlton's joke in the tagline never stops being funny.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> Why caching works: locality and the 80/20 rule</h2>
+<p><b>MOTTO:</b> The future looks suspiciously like the recent past — bet on it.</p>
+<h3>The Problem</h3>
+<p>Your database answers a query in 5ms. At 50,000 requests/sec, that's 250 CPU-seconds of work per wall-clock second — a farm of database servers grinding out answers that are <i>mostly identical</i>. The same hot articles, the same user sessions, the same product pages, recomputed millions of times. Paying full price for repeated questions is the single most common performance sin.</p>
+<h3>The Concept</h3>
+<p>Caching works because access patterns are not uniform — they're wildly, reliably skewed. Two flavors of <b>locality</b> do the heavy lifting: <i>temporal</i> (what was just accessed will be accessed again — today's viral post) and the Zipfian <b>80/20 rule</b> (a tiny fraction of keys gets the vast majority of traffic; in real workloads it's often closer to 90/10). A small, fast copy of the hot set absorbs most requests.</p>
+<pre><code>Requests by key popularity (Zipf):
+#1  ████████████████████████████  ← a few celebrities...
+#2  ██████████████
+#3  █████████
+#10 ███
+#1000 ▏                          ← ...and a long, cold tail
+
+Cache the top 1% of keys → serve ~most of the traffic from RAM.</code></pre>
+<p>The math that governs everything: <code>avg_latency = hit_rate × t_cache + (1 − hit_rate) × t_miss</code>. And the memory hierarchy sets the stakes: L1 ~1ns, RAM ~100ns, SSD ~100µs, cross-datacenter ~ms — each layer is a cache for the one below.</p>
+<h3>Build It</h3>
+<ol><li>Measure before caching: log key frequencies for a day; plot the distribution. No skew → caching won't save you (uniform random access is the cache-killer).</li><li>Size for the <b>working set</b>, not the dataset: the hot 1–5% of keys, not all of them.</li><li>Compute the win: 95% hit rate on a 1ms cache vs 20ms DB = 0.95×1 + 0.05×20 = <b>1.95ms average</b> — a 10× improvement, and the DB sees 20× fewer queries.</li><li>Now compute the fragility: the same math says going from 95%→90% hit rate <i>doubles</i> your database load. Hit rate is a load-bearing number; alert on it.</li><li>Know what you're buying with what: caching trades memory and <i>freshness</i> for latency and origin offload. The freshness bill arrives in Lesson 07.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Layer</th><th>Cache</th><th>Typical latency</th></tr></thead><tbody><tr><td>CPU</td><td>L1/L2/L3</td><td>ns</td></tr><tr><td>App process</td><td>in-memory dict/Caffeine</td><td>~100ns</td></tr><tr><td>Fleet-shared</td><td>Redis/Memcached</td><td>~0.2–1ms</td></tr><tr><td>Edge</td><td>CDN</td><td>~10–50ms to user</td></tr><tr><td>Client</td><td>browser cache</td><td>0 network</td></tr></tbody></table>
+<p>Every layer is the same idea; only the eviction policy and invalidation story change.</p>
+<h3>War Story</h3>
+<p>Facebook's 2013 paper "Scaling Memcache at Facebook" (NSDI) revealed the scale of the bet: billions of requests per second served from memcached fleets, with the databases surviving <i>only because</i> the cache absorbed the overwhelming majority of reads. The paper is this phase's syllabus in field-report form — leases, stampedes, invalidation pipelines — written by the people who hit every failure mode first at world scale.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does a uniform random access pattern make caching nearly useless, regardless of cache size?</li><li>Your cache hit rate drops from 98% to 96%. Why might the database team page you about a 2% change?</li><li>What's the difference between the working set and the dataset, and which one sizes the cache?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Cache patterns: aside, through, back, ahead</h2>
+<p><b>MOTTO:</b> The pattern you pick decides who does the work and who eats the loss.</p>
+<h3>The Problem</h3>
+<p>"Add a cache" is not a design. Who fills the cache — the application or the cache itself? Do writes go to the cache, the database, or both? What happens when the cache dies with un-persisted data inside? Four canonical patterns answer these questions differently, and mixing them up produces either stale data or lost data.</p>
+<h3>The Concept</h3>
+<p>Think of a barista (cache) fronting a slow roastery (database):</p>
+<pre><code>CACHE-ASIDE      app checks shelf; on miss, app fetches from
+ (lazy)          roastery and stocks the shelf itself
+READ-THROUGH     app only ever talks to barista; barista
+                 fetches from roastery on miss
+WRITE-THROUGH    every order written to shelf AND roastery,
+                 synchronously — slow writes, safe data
+WRITE-BACK       write to shelf only; barista batches deliveries
+ (write-behind)  to roastery later — fast writes, risky shelf
+WRITE-AHEAD/     stock the shelf BEFORE the rush (warming,
+ REFRESH-AHEAD   predictive refresh before TTL expiry)</code></pre>
+<h3>Build It</h3>
+<p>Cache-aside, the pattern you'll write 100 times — with its two classic mistakes:</p>
+<ol><li>Read path: <code>get(key)</code> → hit? return. Miss? read DB, <code>set(key, value, ttl)</code>, return.</li><li>Write path: write DB, then <b>delete</b> (don't update!) the cache key. Updating risks writing a stale value computed from a pre-write read; delete forces a fresh reload.</li><li>Mistake #1 — write cache <i>before</i> DB commit: a rollback leaves the cache confidently wrong.</li><li>Mistake #2 — the race: reader misses, reads DB (old value); writer updates DB, deletes cache; reader then sets its stale value with a long TTL. Rare but real; mitigations: short TTLs as a backstop, or versioned/CAS sets.</li><li>Write-back checklist, if you dare: replicate the cache (data exists <i>only</i> there until flush), bound the flush lag, and answer "what breaks if this buffer dies?" before enabling it. This is how CPU caches and many storage engines work — with battery-backed rigor.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Pattern</th><th>Best for</th><th>Failure cost</th></tr></thead><tbody><tr><td>Cache-aside</td><td>general reads (the default)</td><td>stale window, miss latency</td></tr><tr><td>Read-through</td><td>uniform access, simpler apps</td><td>library/provider coupling</td></tr><tr><td>Write-through</td><td>read-heavy, must-be-fresh reads</td><td>slower writes</td></tr><tr><td>Write-back</td><td>write-heavy bursts (counters, metrics)</td><td><b>data loss</b> on cache death</td></tr><tr><td>Refresh-ahead</td><td>predictable hot keys, TTL cliffs</td><td>wasted refreshes if predictions miss</td></tr></tbody></table>
+<p>DAX (DynamoDB Accelerator) is read-through/write-through as a product; Redis with app logic is usually cache-aside; CPU L1/L2 are write-back with hardware guarantees.</p>
+<h3>War Story</h3>
+<p>The delete-vs-update subtlety is a rite of passage: a fintech startup once cached account balances with update-on-write, and a rollback-after-cache-update plus a race under load left customers staring at money that didn't exist — the incident review's one-line fix was "write DB first, then <i>invalidate</i>." The pattern is folklore because nearly every team has a version of this story.</p>
+<h3>Checkpoint</h3>
+<ul><li>In cache-aside, why is delete-on-write safer than update-on-write?</li><li>Which pattern can lose committed-from-the-user's-perspective data, and what two safeguards make it tolerable?</li><li>Trace the stale-set race in cache-aside: what interleaving of reader and writer produces a long-lived stale entry?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Eviction policies: LRU, LFU, and friends</h2>
+<p><b>MOTTO:</b> A cache is defined less by what it keeps than by what it dares to throw away.</p>
+<h3>The Problem</h3>
+<p>The cache is full — it's <i>supposed</i> to be full; empty cache RAM is wasted RAM. Every new entry now requires evicting an old one, and the choice is a prophecy: evict something needed in 10ms and you bought a miss; evict something never needed again and it was free. Picking the victim well is the entire intellectual content of caching's second half.</p>
+<h3>The Concept</h3>
+<p>The theoretical optimum (Bélády's algorithm, 1966): evict the entry whose next use is <i>farthest in the future</i>. It requires clairvoyance, so real policies are bets on different prophecies:</p>
+<pre><code>LRU   &quot;longest unused → least likely needed&quot;   recency bet
+LFU   &quot;rarely used → rarely needed&quot;            frequency bet
+FIFO  &quot;oldest → stalest&quot;                       no bet, cheap
+Random &quot;¯\_(ツ)_/¯&quot;                            shockingly OK
+
+LRU&#x27;s nightmare — the sequential scan:
+  cache size 3, access A B C D A B C D ...
+  every access evicts exactly what&#x27;s needed next. 0% hits.
+  (One nightly batch job table-scans → wipes your hot set.)</code></pre>
+<p>LFU's nightmare is the opposite: yesterday's viral post has a huge count and squats in the cache forever ("cache pollution") unless frequency <i>ages</i> (decays over time).</p>
+<h3>Build It</h3>
+<ol><li><b>LRU:</b> hash map + doubly linked list; move-to-front on access, evict the tail. O(1) everything. (You'll build it in Lesson 10.)</li><li><b>LRU-K / segmented LRU:</b> demand <i>two</i> touches before an entry earns protected status — one-hit-wonders (scans!) die in the probation segment. This one tweak fixes most of LRU's nightmare.</li><li><b>LFU with aging:</b> counters that halve periodically, so old fame decays.</li><li><b>TinyLFU / W-TinyLFU (Caffeine):</b> keep approximate frequency in a Count-Min Sketch (tiny memory); on admission, the <i>candidate must beat the victim's</i> frequency to get in at all — an admission policy, not just eviction. Near-optimal hit rates in practice.</li><li><b>Redis's trick:</b> true LRU needs a global list; Redis instead <i>samples</i> N random keys (default 5) and evicts the least-recent among them — approximate LRU at a fraction of the bookkeeping, and the paper-worthy insight is that it's nearly as good.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Policy</th><th>Used by</th><th>Watch out</th></tr></thead><tbody><tr><td>LRU (approx)</td><td>Redis, page caches, browsers</td><td>scan pollution</td></tr><tr><td>W-TinyLFU</td><td>Caffeine (JVM)</td><td>complexity</td></tr><tr><td>SLRU / segmented</td><td>memcached, many CDNs</td><td>tuning segment sizes</td></tr><tr><td>TTL + LRU hybrid</td><td>almost everyone</td><td>TTL ≠ eviction (freshness vs space — different jobs!)</td></tr></tbody></table>
+<p>Redis exposes the menu directly: <code>maxmemory-policy allkeys-lru | allkeys-lfu | volatile-ttl | allkeys-random ...</code> — a config line that is secretly this whole lesson.</p>
+<h3>War Story</h3>
+<p>Bélády's 1966 IBM paper proved the clairvoyant optimum that every real policy is measured against — and decades of research later, the ARC paper (IBM, 2003) and W-TinyLFU (2015) were still finding meaningful hit-rate wins over plain LRU, which is why your JVM's Caffeine cache outperforms the LinkedHashMap you almost used. Sixty years on, "what to evict" remains a live research area.</p>
+<h3>Checkpoint</h3>
+<ul><li>Construct the smallest access pattern where LRU achieves 0% hits but LFU does well.</li><li>What is cache pollution under LFU, and what mechanism cures it?</li><li>Why does Redis's sampled eviction exist, and what does true LRU cost that Redis refuses to pay?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Redis internals</h2>
+<p><b>MOTTO:</b> One thread, in-memory data structures, and the audacity to be enough.</p>
+<h3>The Problem</h3>
+<p>You know Redis as "the cache." But treating it as a dumb key-value shelf wastes the interesting 80%: why is a (mostly) single-threaded server serving hundreds of thousands of ops/sec? How does in-memory data survive restarts? What actually happens when memory runs out mid-write? Using Redis well requires knowing what it is under the hood.</p>
+<h3>The Concept</h3>
+<p>Redis is a data-structure server: not <code>get/set</code> on strings, but lists, hashes, sets, sorted sets, streams, bitmaps, HyperLogLogs — served from RAM by an <b>event loop</b>. Single-threading is a feature: no locks, no races, every command atomic by construction. Commands are so fast (RAM + O(1)/O(log N) structures) that one core saturates the network before it saturates itself.</p>
+<pre><code>clients ──&gt; epoll event loop ──&gt; execute command (atomic, alone)
+                                   │
+     ┌─ persistence ───────────────┤
+     │  RDB: periodic fork() → child snapshots (copy-on-write)
+     │  AOF: append every write command; fsync per policy
+     └─ replication: async stream of the write commands</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Event loop:</b> one thread multiplexes all sockets (epoll/kqueue); each command runs to completion. Corollary: one slow command (<code>KEYS <i></code>, <code>SMEMBERS</code> on 10M items) blocks </i>everyone* — Redis's famous foot-gun. (Redis 6+ moved I/O to helper threads; command execution stays single-threaded.)</li><li><b>Encodings:</b> small collections are stored as packed arrays (listpack/ziplist) and silently upgrade to hash tables/skip lists as they grow — memory frugality via adaptive representation. Sorted sets = skip list + hash map.</li><li><b>Persistence:</b> RDB snapshots via <code>fork()</code> — copy-on-write means the child sees a frozen image while the parent keeps serving (cost: memory spikes under heavy writes). AOF logs every write command — Phase 4's WAL wearing a Redis costume; <code>appendfsync everysec</code> is the popular durability/speed compromise. Rewrites compact the AOF.</li><li><b>Expiry:</b> lazy (checked on access) + active (periodic random sampling of keys with TTLs) — expired keys can linger invisibly.</li><li><b>Memory pressure:</b> at <code>maxmemory</code>, the Lesson-03 eviction policies engage — or with <code>noeviction</code>, writes fail. Know which one you configured <i>before</i> the incident.</li><li><b>Cluster:</b> 16384 hash slots, keys routed by CRC16(key) mod 16384, resharding moves whole slots (Phase 5, Lesson 06 in miniature).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Capability</th><th>Structure</th></tr></thead><tbody><tr><td>Leaderboards</td><td>sorted sets (ZADD/ZRANGE)</td></tr><tr><td>Rate limiting</td><td>INCR + EXPIRE, or Lua for atomicity</td></tr><tr><td>Distributed locks</td><td>SET NX EX (+ caveats; Redlock debates)</td></tr><tr><td>Queues/streams</td><td>lists (BRPOP), Streams (consumer groups)</td></tr><tr><td>Unique counts at scale</td><td>HyperLogLog (~12KB for ~1% error)</td></tr></tbody></table>
+<p>Rule: if you're storing JSON blobs and parsing them client-side to update one field, you wanted a hash. Use the structures.</p>
+<h3>War Story</h3>
+<p>Salvatore Sanfilippo ("antirez") wrote Redis in 2009 to speed up a startup's real-time analytics and ran the project largely as a solo maintainer for a decade — an entire industry's cache layer resting on one person's C code and famously readable comments. He stepped down from maintainership in 2020; the subsequent licensing turbulence (and the Valkey fork in 2024, backed by the Linux Foundation) made Redis a case study in open-source governance as well as engineering.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does single-threaded execution make every Redis command atomic, and what's the dark side of that design?</li><li>Contrast RDB and AOF: what can each lose, and what does each cost at runtime?</li><li>Why is <code>KEYS *</code> in production a career-limiting command, and what should be used instead?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> Memcached vs Redis</h2>
+<p><b>MOTTO:</b> One is a Swiss Army knife; the other is a single, perfect blade.</p>
+<h3>The Problem</h3>
+<p>Two mature, battle-proven in-memory caches; every architecture review asks which. The lazy answer is "Redis, it does more." But "does more" is not "is better for this job" — Memcached's ruthless minimalism buys real advantages (simplicity, multithreading, flat predictable memory), and knowing when those matter is the actual skill.</p>
+<h3>The Concept</h3>
+<p>Memcached is a valet stand: tickets in, coats out, blazing fast, zero opinions — and it does nothing else, by design (that's the philosophy, stated in its own docs since 2003). Redis is a workshop: structures, persistence, replication, scripting — a toolbox that can <i>also</i> hang coats.</p>
+<pre><code>                Memcached            Redis
+Threads         multithreaded        single-threaded core
+Values          opaque blobs         rich data structures
+Persistence     none, ever           RDB / AOF optional
+Replication     none built in        built in (+ Sentinel/Cluster)
+Memory          slab allocator,      per-structure encodings,
+                low overhead, flat   fragmentation possible
+Scale-out       client-side hashing  Redis Cluster (16384 slots)
+                (ketama rings!)
+Eviction        LRU per slab class   pluggable policies</code></pre>
+<h3>Build It</h3>
+<p>Decide like an engineer — walk the checklist:</p>
+<ol><li><b>Pure ephemeral cache</b> (HTML fragments, DB rows, sessions-you-can-lose)? Memcached's multithreading exploits big multi-core boxes with zero tuning; a restart just means a cold cache. Its slab allocator (fixed-size chunk classes) trades some memory to <i>eliminate</i> fragmentation surprises.</li><li><b>Need any structure</b> — counters with expiry, leaderboards, queues, pub/sub, atomic multi-step ops (Lua)? Redis, no contest.</li><li><b>Cache warm-up is expensive</b> (cold cache = database meltdown)? Redis persistence/replication turns restarts from incidents into non-events. Memcached's answer is "don't restart everything at once."</li><li><b>Very large values / very high throughput on one box?</b> Memcached's threading historically wins raw multi-core throughput; Redis answers with multiple instances per host or Cluster.</li><li>Either way, client-side consistent hashing (Phase 5, Lesson 05!) across N nodes is how Memcached fleets scale — the ring you built is literally this.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Scenario</th><th>Pick</th></tr></thead><tbody><tr><td>Session cache behind stateless web tier</td><td>either; Memcached if truly disposable</td></tr><tr><td>Rate limiter, leaderboard, locks</td><td>Redis</td></tr><tr><td>Massive flat lookaside cache (FB-style)</td><td>Memcached</td></tr><tr><td>Cache that must survive restart</td><td>Redis</td></tr><tr><td>"We might need queues later"</td><td>Redis (resist using it as your only queue)</td></tr></tbody></table>
+<p>Reality check: many shops run Redis for everything simply to operate one system — a legitimate ops-simplicity argument that beats micro-benchmarks.</p>
+<h3>War Story</h3>
+<p>Memcached was created in 2003 by Brad Fitzpatrick to keep LiveJournal's databases alive, and its greatest testimonial is Facebook's memcached fleet (the NSDI 2013 paper from Lesson 01) — arguably the largest cache deployment ever described publicly, built on the "simple opaque blobs, client-side smarts" philosophy. Redis, six years younger, won the default-choice crown; Memcached still quietly serves a staggering share of the web's lookaside traffic.</p>
+<h3>Checkpoint</h3>
+<ul><li>Name two concrete workloads where Memcached is the <i>stronger</i> choice, and why.</li><li>How does each system approach multi-node scale-out, and where does the intelligence live in each?</li><li>Why can "no persistence" be an availability <i>risk</i> for a cache, not just a durability footnote?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> CDNs: caching at the edge of the world</h2>
+<p><b>MOTTO:</b> The fastest request is the one that never crosses an ocean.</p>
+<h3>The Problem</h3>
+<p>Your servers are in Virginia. Your user is in Jakarta. Every image, script, and video chunk pays a ~200ms+ round trip — and no amount of server tuning fixes the speed of light. Worse, a viral moment sends a million users after the same files, and your origin melts serving identical bytes. Both problems have one answer: put copies <i>near the users</i>.</p>
+<h3>The Concept</h3>
+<p>A CDN is a chain of convenience stores fronting one distant warehouse. Each store (edge PoP — point of presence) stocks whatever locals actually buy; only a stock-out (cache miss) triggers a warehouse trip. Users are steered to the nearest store automatically — via anycast (one IP, BGP routes you to the closest PoP) or DNS-based mapping.</p>
+<pre><code>user (Jakarta) ─5ms─&gt; edge PoP Jakarta ──miss?──&gt; regional/shield PoP
+                        │ hit: done                    │ miss?
+                        v                              v
+                     cached copy               origin (Virginia)
+
+Tiered caching: N edges collapse onto 1 shield → origin sees ~1 miss,
+not N. (Request coalescing at the shield — Lesson 08 foreshadowed.)</code></pre>
+<p>The control knobs are HTTP itself: <code>Cache-Control: max-age</code>, <code>s-maxage</code>, <code>ETag</code>/revalidation, <code>Vary</code>, and <code>stale-while-revalidate</code>.</p>
+<h3>Build It</h3>
+<ol><li><b>Cache key</b> = URL (+ selected headers via <code>Vary</code>). Corollary: cache-bust by <i>changing the URL</i> — <code>app.a1b2c3.js</code> with <code>max-age=31536000, immutable</code> — deploys become instant and invalidation-free.</li><li><b>HTML/API</b> gets the opposite treatment: short TTLs or <code>no-cache</code> + ETag revalidation (a 304 is cheap), because it changes and personalizes.</li><li><b><code>stale-while-revalidate</code>:</b> serve the stale copy instantly, refresh in the background — users never wait on a revalidation. <b><code>stale-if-error</code>:</b> a stale page beats an error page when the origin is down; the CDN becomes an availability layer, not just a speed layer.</li><li><b>Tiered/shield caching:</b> point edges at a designated shield PoP near the origin, collapsing global miss traffic to ~one origin fetch per object.</li><li><b>Purge paths:</b> modern CDNs offer fast tag-based purges ("purge everything tagged product-123") — design your tags before you need them.</li><li>Never cache without <code>Vary</code>-discipline: caching a page that varied by <code>Cookie</code> without saying so = serving one user's private page to another. This exact class of bug has caused real-world data leaks.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Provider</th><th>Notes</th></tr></thead><tbody><tr><td>Cloudflare</td><td>anycast everywhere, generous free tier, workers at edge</td></tr><tr><td>Akamai</td><td>the original (1998), enormous enterprise footprint</td></tr><tr><td>Fastly</td><td>instant purge (~150ms global), VCL programmability</td></tr><tr><td>CloudFront</td><td>AWS-native, origin shield option</td></tr></tbody></table>
+<p>Modern CDNs also run code at the edge (Workers, Lambda@Edge) — caching's endgame is moving <i>compute</i> to the data's copy.</p>
+<h3>War Story</h3>
+<p>Akamai was founded in 1998 out of MIT — directly commercializing the consistent-hashing research from Phase 5, Lesson 05 — after the web's early "flash crowd" events made it obvious origins couldn't survive their own popularity. The modern mirror image: on June 8, 2021, a Fastly configuration bug triggered by a single customer's valid change briefly took down enormous swaths of the internet (Reddit, Amazon, gov.uk, major news sites) — a reminder that the edge is now load-bearing infrastructure, and its blast radius is the whole web.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does content-hashed-filename + immutable caching eliminate the invalidation problem for static assets?</li><li>What do <code>stale-while-revalidate</code> and <code>stale-if-error</code> each optimize for?</li><li>Explain how a missing <code>Vary</code> header can leak one user's data to another through a CDN.</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Cache invalidation (the hard problem)</h2>
+<p><b>MOTTO:</b> Every cached value is a promise; invalidation is keeping it.</p>
+<h3>The Problem</h3>
+<p>The data changed. Somewhere, copies of the old value are still being served — in Redis, in a CDN PoP, in a process-local dict, in a user's browser. "There are only two hard things in computer science: cache invalidation and naming things" (Phil Karlton) is funny because it's true: invalidation is a <i>distributed consistency</i> problem wearing a performance optimization's clothes. Every copy you made in Lessons 01–06 is now your liability.</p>
+<h3>The Concept</h3>
+<p>A cached value is a printed newspaper: correct at press time, aging ever since. You have exactly three honest strategies, and every real system is a blend:</p>
+<pre><code>1. EXPIRE   (TTL)      &quot;trust it for 60s, then re-check&quot;
+                        → bounded staleness, zero coordination
+2. INVALIDATE (purge)   &quot;when truth changes, hunt down copies&quot;
+                        → fresh, but you must find EVERY copy,
+                          and delivery of the purge can fail
+3. VERSION  (new key)   &quot;never change a value; change its NAME&quot;
+                        → old copies become irrelevant, not wrong
+                          (the CDN asset-hash trick, generalized)</code></pre>
+<p>The failure taxonomy: missed invalidation (stale forever), reordered invalidation (purge arrives before the write is visible → recache stale), and the Lesson-02 race (read-then-set interleaves with write-then-delete).</p>
+<h3>Build It</h3>
+<ol><li><b>Layer TTLs as a backstop under everything</b> — even "we purge on write" systems. A TTL converts every invalidation bug from "stale forever" to "stale for ≤N seconds." Choose N per key class from a business question: "how stale is acceptable?" is a product decision, not an infra one.</li><li><b>Purge from the source of truth, not the app:</b> subscribe to the database's change stream (CDC — Debezium reading the WAL/binlog) and invalidate from there. Apps forget code paths; the WAL doesn't lie. This closes the "some other service wrote the DB directly" hole.</li><li><b>Version where possible:</b> key = <code>user:42:v{version}</code> with the version stored (and bumped) transactionally with the data; readers fetch version, then value. Stale <i>values</i> can't be served because they're never looked up — you traded invalidation for one extra (cacheable, short-TTL) version lookup.</li><li><b>Order matters:</b> write DB → then invalidate. And handle the recache race with short TTLs, CAS/lease tokens (Lesson 08's leases fix this too), or tolerate-and-bound.</li><li><b>Multi-layer:</b> invalidation must cascade (DB → Redis → CDN tag purge → <code>Cache-Control</code> for browsers). Design the cascade explicitly; the layer you forget is the layer users screenshot.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Strategy</th><th>Exemplars</th></tr></thead><tbody><tr><td>TTL everywhere</td><td>DNS (the original TTL system), most Redis usage</td></tr><tr><td>CDC-driven purge</td><td>Facebook's memcached invalidation pipeline (McSqueal), Debezium consumers</td></tr><tr><td>Versioned keys</td><td>CDN asset hashing, generation-numbered cache keys</td></tr><tr><td>Tag-based purge</td><td>Fastly surrogate keys, Cloudflare cache tags</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Facebook's memcache papers describe invalidation as a first-class pipeline: a daemon tails MySQL commit logs and fans out deletes to the caching tier, because relying on application code to remember every invalidation had already failed at their scale. And the quip itself is real lineage: Phil Karlton was a Netscape/SGI engineer, and colleagues have confirmed the quote's attribution — the industry's most-cited joke is also its most accurate architecture review.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why should a TTL back even a "we always purge on write" design?</li><li>What problem does CDC-driven invalidation solve that app-driven invalidation structurally cannot?</li><li>How does key versioning sidestep the purge-delivery problem entirely, and what new lookup does it introduce?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> Thundering herds and cache stampedes</h2>
+<p><b>MOTTO:</b> One key expires; a thousand requests sprint to ask the database the same question.</p>
+<h3>The Problem</h3>
+<p>Your homepage data is cached with a 60s TTL and served 10,000 times per second. The TTL expires. In the next 50ms, five hundred requests all miss, and <i>all five hundred</i> independently run the expensive query — the database, sized for a world where this query runs once a minute, gets it five hundred times in one breath. This is a cache stampede, and it can take down a system that was "fine" seconds earlier. The cruel part: the more popular the key, the worse the herd.</p>
+<h3>The Concept</h3>
+<p>A pot of coffee empties in a busy office. Sane behavior: one person brews while everyone else waits by the machine (or sips their existing dregs). Stampede behavior: all thirty people independently drive to the store to buy beans. The fixes are all variations on "elect one brewer":</p>
+<pre><code>t=59.9s  cache hit, hit, hit...          (10k rps, all happy)
+t=60.0s  KEY EXPIRES
+t=60.0s  MISS ×500 ─────────────&gt; DB ×500   💥 the herd
+                     vs.
+t=60.0s  MISS ×500 → 1 acquires lock → 1 DB query
+                   → 499 wait (or get stale value) → all served</code></pre>
+<h3>Build It</h3>
+<p>Four compatible mechanisms — production systems stack them:</p>
+<ol><li><b>Request coalescing / single-flight:</b> dedupe concurrent identical misses; one flies, the rest await its result. (Go's <code>singleflight</code> package; CDNs do this per-PoP as "request collapsing.")</li><li><b>Lock-and-stale:</b> on miss, <code>SET lock:key NX EX 10</code>; the winner recomputes, losers serve the <i>stale</i> value (keep it soft-expired rather than deleted) or briefly wait. Nobody piles onto the DB.</li><li><b>Probabilistic early expiration (XFetch):</b> each reader independently decides, with probability increasing as expiry approaches (scaled by recompute cost: <code>now − β·Δ·ln(rand()) ≥ expiry</code>), to refresh <i>early</i>. Statistically one refresher, no lock, no synchronized cliff. (Vattani, Chierichetti &amp; Lowenstein, "Optimal Probabilistic Cache Stampede Prevention," VLDB 2015.)</li><li><b>TTL jitter:</b> never give a cohort of keys the same lifetime — <code>ttl = base + rand(0, 10%)</code> — or keys cached together (deploy! cache flush!) expire together forever, a synchronized mass herd. Corollary: never mass-flush a hot cache; warm it first.</li><li><b>Facebook's leases:</b> on a miss, memcached hands the <i>first</i> client a lease token; only the token-holder may set the value, others briefly wait/reuse stale. Bonus: leases also serialize the Lesson-02/07 stale-set race. One mechanism, two bugs dead.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Mechanism</th><th>Where you'll meet it</th></tr></thead><tbody><tr><td>Single-flight</td><td>Go <code>singleflight</code>, GraphQL dataloaders</td></tr><tr><td>Request collapsing</td><td>Varnish (<code>req.hash_ignore_busy</code>), Fastly, Nginx <code>proxy_cache_lock</code></td></tr><tr><td>Leases</td><td>Facebook memcache (NSDI '13)</td></tr><tr><td>stale-while-revalidate</td><td>CDNs, HTTP RFC 5861 — herd prevention as a header</td></tr><tr><td>Jitter</td><td>every well-run TTL scheme, and (same idea) retry backoff</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The Facebook memcache paper (NSDI 2013) reports that leases were introduced precisely because popular keys' misses produced database-crushing herds, and that the technique cut peak DB query rates dramatically during hot-key churn. The same paper's "thundering herd" section is why every caching library written since ships a single-flight primitive — one company's incident review became everyone's default.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why do stampedes hit the <i>most popular</i> keys hardest, and why does that make them a stability (not just latency) problem?</li><li>How does probabilistic early expiration prevent a herd with no locks and no coordination?</li><li>Your deploy script flushes the cache, and every deploy causes a five-minute brownout. Name two fixes from this lesson.</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Hot keys and cache skew</h2>
+<p><b>MOTTO:</b> When one key gets famous, one server does all the work.</p>
+<h3>The Problem</h3>
+<p>Consistent hashing spread your keys beautifully — but it spreads <i>keys</i>, not <i>traffic</i>. A celebrity posts; one cache key now receives a million reads per second, and the single shard that owns it saturates its NIC and CPU while its nine siblings nap. Sharding cannot help, because you cannot shard <i>one key</i>. This is the hot-key problem, and it's Zipf's law (Lesson 01) turning on its creator: the same skew that makes caching work makes one server suffer.</p>
+<h3>The Concept</h3>
+<p>One bank teller happens to hold the only copy of a form everyone suddenly needs. Adding more tellers does nothing — the queue is at <i>that</i> window. Fixes: photocopy the form to every window (replicate), hand copies out in the lobby before people reach a window (local cache), or split the crowd by last digit of their ID into ten lines that each get a copy (key splitting).</p>
+<pre><code>hash ring, 10 nodes, uniform keys... except one:
+node1 ▓▓            node2 ▓▓▓        node3 ▓▓
+node4 ██████████████████████████████ ← owns &quot;post:viral123&quot;
+node5 ▓▓            ...              node10 ▓▓
+
+Splitting:  post:viral123#0 ... post:viral123#9
+            readers pick a random replica → load ÷ 10
+            writers must update all 10 (fine: reads ≫ writes)</code></pre>
+<h3>Build It</h3>
+<ol><li><b>Detect first:</b> you can't fix what you can't see. Sample key frequencies (count-min sketch, or <code>redis-cli --hotkeys</code>), alert on per-shard QPS/bandwidth skew, and log top-N keys per minute.</li><li><b>L1 local cache:</b> a tiny in-process cache (even 1–5s TTL) in front of the shared tier absorbs <i>most</i> of a hot key's reads — a 1s TTL caps each app instance at 1 read/sec/key regardless of popularity. Cost: up to 1s staleness and per-instance memory. This is the highest-leverage fix and usually the first.</li><li><b>Key replication/splitting:</b> write <code>key#0..key#N−1</code>; readers pick <code>key#rand(N)</code>. Reads divide by N; writes multiply by N — perfect for read-hot, wrong for write-hot.</li><li><b>Write-hot keys</b> (a viral post's like-counter) need a different trick: shard the <i>counter</i> into N sub-counters, increment one at random, sum on read — or batch increments in-process and flush periodically.</li><li><b>Bound the blast radius:</b> per-key rate limits / load shedding so one famous key degrades <i>its</i> endpoint, not the whole cache tier. (This mirrors Phase 5, Lesson 04's celebrity problem — same disease, cache-tier symptoms.)</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Mitigation</th><th>Embodiment</th></tr></thead><tbody><tr><td>L1 + L2 tiers</td><td>in-process Caffeine/dict over Redis — near-universal at scale</td></tr><tr><td>Client-side hot replication</td><td>DynamoDB adaptive capacity (automatic), Twitter/X-style hot key handling in cache clients</td></tr><tr><td>Sharded counters</td><td>classic pattern in Bigtable/Datastore docs since the 2000s</td></tr><tr><td>Hot-key detection</td><td><code>redis-cli --hotkeys</code>, sampling sketches in proxy layers</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Hot keys are a hardy perennial of large-site postmortems: a celebrity death, a world-cup goal, or one viral tweet concentrates the planet's attention on a handful of cache keys within seconds, and engineering blogs from major social platforms describe layering exactly these defenses — local caches, key replication, and sharded counters — after single cache shards were overwhelmed by traffic no rebalancer could redistribute. The load balancer's blind spot is always the same: you can't rebalance one key.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does adding cache servers do nothing for a single hot key?</li><li>A 1-second in-process cache seems trivially small — why is it devastatingly effective against hot keys?</li><li>Read-hot and write-hot keys need different fixes. Give the fix for each and say why they don't interchange.</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Build an LRU cache from scratch</h2>
+<p><b>MOTTO:</b> A dict for finding, a linked list for forgetting — O(1) both ways.</p>
+<h3>The Problem</h3>
+<p>The classic closing exercise, and the most-asked systems interview question in existence: a fixed-capacity cache where <code>get</code> and <code>put</code> both run in O(1), evicting the least-recently-used entry when full. The tension: a hash map finds in O(1) but has no order; a list keeps order but finds in O(N). The answer is to run both, pointing at the same nodes.</p>
+<h3>The Concept</h3>
+<p>A librarian's returns cart with a strict rule: any book touched goes to the front; when the cart is full, the book at the back — untouched the longest — goes to storage. The dict is the catalog saying exactly where each book sits (no searching); the doubly linked list <i>is</i> the cart (O(1) to unhook a book from anywhere and re-hang it at the front — that's why it must be <i>doubly</i> linked: unhooking needs the neighbor on each side).</p>
+<pre><code> head (MRU)                                  tail (LRU)
+  ┌───┐   ┌───┐   ┌───┐   ┌───┐
+  │ D │◄─►│ A │◄─►│ C │◄─►│ B │   ← evict B when full
+  └───┘   └───┘   └───┘   └───┘
+    ▲       ▲       ▲       ▲
+  dict: { D:•,    A:•,    C:•,    B:• }   (key → node, O(1))
+
+get(A): unhook A, re-hang at head. Two pointer surgeries. O(1).</code></pre>
+<h3>Build It</h3>
+<pre><code>class Node:
+    __slots__ = (&quot;key&quot;, &quot;val&quot;, &quot;prev&quot;, &quot;next&quot;)
+    def __init__(self, key=None, val=None):
+        self.key, self.val, self.prev, self.next = key, val, None, None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.cap, self.map = capacity, {}
+        self.head, self.tail = Node(), Node()     # sentinels: no edge cases
+        self.head.next, self.tail.prev = self.tail, self.head
+
+    def _unlink(self, n):
+        n.prev.next, n.next.prev = n.next, n.prev
+
+    def _push_front(self, n):
+        n.prev, n.next = self.head, self.head.next
+        self.head.next.prev = n
+        self.head.next = n
+
+    def get(self, key):
+        if key not in self.map: return None
+        n = self.map[key]
+        self._unlink(n); self._push_front(n)      # touch = move to front
+        return n.val
+
+    def put(self, key, val):
+        if key in self.map:
+            n = self.map[key]; n.val = val
+            self._unlink(n); self._push_front(n)
+            return
+        if len(self.map) &gt;= self.cap:             # evict LRU
+            lru = self.tail.prev
+            self._unlink(lru); del self.map[lru.key]
+        n = Node(key, val)
+        self.map[key] = n; self._push_front(n)
+
+c = LRUCache(2)
+c.put(&quot;a&quot;, 1); c.put(&quot;b&quot;, 2); c.get(&quot;a&quot;)   # touch a → b is now LRU
+c.put(&quot;c&quot;, 3)                               # evicts b
+assert c.get(&quot;b&quot;) is None and c.get(&quot;a&quot;) == 1 and c.get(&quot;c&quot;) == 3</code></pre>
+<p>Design notes worth internalizing: <b>sentinel head/tail nodes</b> delete every empty/one-element edge case; the node must store its own <code>key</code> so eviction can clean the dict; <code>__slots__</code> cuts per-node memory. Extensions: add TTL per node (check-on-get + lazy purge — Lesson 04's Redis expiry in miniature), thread safety (one lock around both structures; note Python's <code>OrderedDict.move_to_end</code> and <code>functools.lru_cache</code> ship this whole lesson in the standard library), and upgrade the eviction to segmented-LRU from Lesson 03.</p>
+<h3>Use It</h3>
+<p>You have now built, in miniature, the exact mechanism inside <code>functools.lru_cache</code>, Java's <code>LinkedHashMap</code> access-order mode, browser caches, database buffer pools (Phase 4, Lesson 01 — the buffer pool's eviction is this code with pages for values), and — modulo the sampling trick you now understand from Lesson 04 — Redis itself. One dict, one list, the whole industry.</p>
+<h3>War Story</h3>
+<p>"Design an LRU cache" (LeetCode 146) is possibly the most-asked data-structure design question in tech interviewing history — and unusually for interview trivia, it's <i>earned</i>: this exact structure runs in essentially every OS page cache, JVM, browser, and cache server on the planet. Bélády studied eviction at IBM in 1966; sixty years later, candidates whiteboard his problem's most practical answer several thousand times a day.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must the linked list be doubly linked — exactly which operation breaks with a singly linked list?</li><li>Why does each node store its key, and what specifically goes wrong at eviction time without it?</li><li>Your <code>get</code> is O(1) but a teammate's version using a Python list + <code>remove()</code> "also works." What's its true complexity and why?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="05-distributed-data.html">← 🗄️ Phase 05</a>
+    <span class="spacer"></span>
+    <a href="07-messaging-and-async.html">Phase 07 📬 →</a>
+  </div>
+</div>
+</body>
+</html>

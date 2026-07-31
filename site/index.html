@@ -101,8 +101,10 @@
   .lesson:hover { background: var(--bg-alt); }
   .lesson input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
   .lesson .lnum { font-family: var(--mono); color: var(--muted); font-size: 0.78rem; width: 24px; flex-shrink: 0; }
-  .lesson.done label { color: var(--muted); text-decoration: line-through; }
-  .lesson label { cursor: pointer; }
+  .lesson.done a.ltitle { color: var(--muted); text-decoration: line-through; }
+  .lesson a.ltitle { color: var(--text); }
+  .lesson a.ltitle:hover { color: var(--accent); text-decoration: underline; }
+  .read-link { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); white-space: nowrap; margin-right: 0.3rem; }
   .expand-all { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; margin-bottom: 1rem; }
   .expand-all:hover { color: var(--text); }
 
@@ -280,6 +282,7 @@
           <div class="pname"><span class="pnum">${String(ph.id).padStart(2,"0")}</span>${ph.name}</div>
           <div class="ptag">${ph.tagline}</div>
         </div>
+        <a class="read-link" href="phases/${ph.slug}.html" onclick="event.stopPropagation()">read →</a>
         <div class="pmeta">
           <div class="pcount" id="pcount-${ph.id}">0 / ${ph.lessons.length}</div>
           <div class="mini-bar"><div id="pbar-${ph.id}"></div></div>
@@ -289,10 +292,11 @@
       <div class="lessons">
         ${ph.lessons.map((l, i) => {
           const id = `p${ph.id}-l${i}`;
+          const anchor = `phases/${ph.slug}.html#lesson-${String(i+1).padStart(2,"0")}`;
           return `<div class="lesson" id="row-${id}">
             <span class="lnum">${String(i+1).padStart(2,"0")}</span>
             <input type="checkbox" id="${id}" data-phase="${ph.id}">
-            <label for="${id}">${l}</label>
+            <a class="ltitle" href="${anchor}">${l}</a>
           </div>`;
         }).join("")}
       </div>`;

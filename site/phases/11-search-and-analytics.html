@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search & Analytics — System Design From Scratch</title>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-alt: #11151f; --card: #151a26; --border: #232a3b;
+    --text: #d8dee9; --muted: #8892a6; --accent: #4fd6be; --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  nav {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem; background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .crumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; margin-bottom: 0.4rem; }
+  h1 .pnum { color: var(--accent); font-family: var(--mono); }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2.5rem; }
+  .toc .toc-title { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .toc a { display: block; padding: 0.15rem 0; font-size: 0.92rem; }
+  .toc a .lnum { font-family: var(--mono); color: var(--muted); margin-right: 0.5rem; font-size: 0.8rem; }
+  article h2 { font-size: 1.5rem; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 70px; }
+  article h2 .lnum { font-family: var(--mono); color: var(--accent); font-size: 1.1rem; }
+  article h3 { font-size: 1.05rem; margin: 1.6rem 0 0.5rem; color: var(--warn); font-family: var(--mono); }
+  article p { margin: 0.8rem 0; }
+  article blockquote { border-left: 3px solid var(--accent); padding: 0.4rem 1rem; margin: 1rem 0; color: var(--muted); background: var(--bg-alt); border-radius: 0 8px 8px 0; }
+  article ul, article ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+  article li { margin: 0.3rem 0; }
+  article code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.35em; color: var(--warn); }
+  article pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  article pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 0.82rem; line-height: 1.5; }
+  article table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; text-align: left; }
+  article th { background: var(--card); font-family: var(--mono); font-size: 0.8rem; }
+  article tr:nth-child(even) td { background: var(--bg-alt); }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 0.88rem; }
+  .pager a { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.2rem; }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="../index.html">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="../index.html#curriculum">Curriculum</a>
+  <a href="../index.html#glossary">Glossary</a>
+</nav>
+<div class="wrap">
+  <div class="crumb"><a href="../index.html#curriculum">curriculum</a> / phase 11</div>
+  <h1><span class="pnum">11</span> 🔍 Search &amp; Analytics</h1>
+  <div class="tagline">Finding needles in exabyte haystacks.</div>
+  <div class="toc">
+    <div class="toc-title">Lessons in this phase</div>
+    <a href="#lesson-01"><span class="lnum">01</span>Inverted indexes: how search works</a>
+<a href="#lesson-02"><span class="lnum">02</span>Tokenization, TF-IDF, and BM25</a>
+<a href="#lesson-03"><span class="lnum">03</span>Elasticsearch architecture</a>
+<a href="#lesson-04"><span class="lnum">04</span>Vector search and embeddings</a>
+<a href="#lesson-05"><span class="lnum">05</span>OLTP vs OLAP</a>
+<a href="#lesson-06"><span class="lnum">06</span>Columnar storage: why analytics is sideways</a>
+<a href="#lesson-07"><span class="lnum">07</span>Warehouses, lakes, and lakehouses</a>
+<a href="#lesson-08"><span class="lnum">08</span>ETL vs ELT</a>
+<a href="#lesson-09"><span class="lnum">09</span>Real-time analytics</a>
+<a href="#lesson-10"><span class="lnum">10</span>Build a search engine from scratch</a>
+  </div>
+  <article>
+<blockquote>Finding needles in exabyte haystacks.</blockquote>
+<p>Your database can find a row by ID in microseconds, but ask it "which documents mention 'distributed consensus'?" or "what was revenue by region for the last five years?" and it starts sweating. Search and analytics are the two great specializations of data retrieval — one optimizes for <i>relevance over text</i>, the other for <i>aggregation over history</i> — and both got there by throwing out the row-store playbook. This phase builds the inverted index, the ranking math, and the columnar engine from scratch, then maps the modern ecosystem: Elasticsearch, vector databases, warehouses, lakes, and the lakehouse peace treaty. It ends with you writing a real search engine in Python, because nothing demystifies BM25 like implementing it.</p>
+<h2 id="lesson-01"><span class="lnum">01</span> Inverted Indexes: How Search Works</h2>
+<p><b>MOTTO:</b> Don't scan documents for words; keep a list of documents per word.</p>
+<h3>The Problem</h3>
+<p>Naive text search — <code>SELECT <i> FROM docs WHERE body LIKE '%consensus%'</code> — scans every byte of every document per query. At a million documents that's seconds; at web scale it's absurd. A B-tree doesn't save you: it indexes whole values from the </i>start<i>, and words live in the middle of documents. You need a structure where lookup cost scales with the </i>result*, not the corpus.</p>
+<h3>The Concept</h3>
+<p>Flip the mapping. Instead of document → words (the "forward" direction), precompute word → documents. That's exactly the index at the back of a textbook: you don't reread the book to find "entropy"; you look up "entropy" and get page numbers. Each word (<b>term</b>) maps to a <b>postings list</b> of document IDs — plus, optionally, positions and frequencies for phrase queries and ranking.</p>
+<pre><code>  Doc1: &quot;the cat sat&quot;        INVERTED INDEX
+  Doc2: &quot;the cat ran&quot;        term   -&gt; postings (doc: positions)
+  Doc3: &quot;a dog ran&quot;          -----------------------------------
+                             cat    -&gt; D1:[1], D2:[1]
+  Query: cat AND ran         dog    -&gt; D3:[1]
+    postings(cat) = {1,2}    ran    -&gt; D2:[2], D3:[2]
+    postings(ran) = {2,3}    sat    -&gt; D1:[2]
+    intersect     = {2}  ✓   the    -&gt; D1:[0], D2:[0]</code></pre>
+<p>Boolean queries become set operations on postings lists: AND = intersect, OR = union, NOT = difference. Phrase queries ("cat ran") intersect postings <i>and</i> check adjacent positions.</p>
+<h3>Build It</h3>
+<pre><code>from collections import defaultdict
+
+index = defaultdict(dict)               # term -&gt; {doc_id: [positions]}
+def add(doc_id, text):
+    for pos, term in enumerate(text.lower().split()):
+        index[term].setdefault(doc_id, []).append(pos)
+
+def search_and(*terms):                 # AND query = intersect postings
+    postings = [set(index.get(t, {})) for t in terms]
+    return set.intersection(*postings) if postings else set()</code></pre>
+<p>Production concerns the toy skips: postings lists are kept <b>sorted</b> so intersection is a linear merge (walk both lists in lockstep, or skip-lists/galloping to leapfrog); doc IDs are <b>delta-encoded and compressed</b> (gaps are small numbers — varint or bit-packing shrinks them dramatically); and writes are batched into immutable <b>segments</b> that are merged in the background (an LSM-shaped design — updating postings lists in place is brutal).</p>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Lucene</td><td>The reference implementation; powers Elasticsearch &amp; Solr</td></tr><tr><td>Tantivy</td><td>Lucene's design in Rust</td></tr><tr><td>PostgreSQL GIN + tsvector</td><td>Solid full-text search without new infrastructure</td></tr><tr><td>SQLite FTS5</td><td>Inverted index in your pocket</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The inverted index predates computers (concordances of the Bible were compiled by hand in the 13th century), but its web-scale moment was the 1998 Brin &amp; Page paper "The Anatomy of a Large-Scale Hypertextual Web Search Engine," describing Google's early index: barrels of compressed postings with positional "hits," built by crawling tens of millions of pages on commodity hardware. The core structure in that paper is still recognizably what Lucene builds today.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is <code>LIKE '%term%'</code> fundamentally unindexable by a standard B-tree?</li><li>How does a phrase query use positional postings? Walk through "cat ran" on the example index.</li><li>Why are postings lists stored sorted by document ID, and what does that enable during intersection?</li></ul>
+<h2 id="lesson-02"><span class="lnum">02</span> Tokenization, TF-IDF, and BM25</h2>
+<p><b>MOTTO:</b> Matching finds the haystack's needles; ranking decides which needle you actually wanted.</p>
+<h3>The Problem</h3>
+<p>A query for "database replication" might match 50,000 documents. Boolean retrieval treats them all as equal, which is useless — humans read ten results. You need a <i>score</i>: which documents are most about these terms? And before any of that, you must decide what a "term" even is — is "Databases" the same as "database"? Is "state-of-the-art" one token or four?</p>
+<h3>The Concept</h3>
+<p><b>Tokenization</b> is the analysis pipeline: split text into tokens, lowercase, maybe strip stopwords ("the", "of"), maybe <b>stem</b> ("running" → "run"). Crucially, queries and documents must pass through the <i>same</i> pipeline or they'll never meet.</p>
+<p>Ranking rests on two intuitions. <b>TF</b> (term frequency): a document that says "replication" ten times is more about replication than one that says it once. <b>IDF</b> (inverse document frequency): rare terms carry more signal — matching "paxos" means more than matching "system", because everything matches "system". TF-IDF multiplies them. <b>BM25</b> (the modern standard) refines TF-IDF with two fixes: term frequency <b>saturates</b> (the 50th occurrence adds almost nothing — controlled by k1) and scores are <b>normalized by document length</b> (long documents shouldn't win just by being long — controlled by b).</p>
+<pre><code>                       TF-IDF: score grows forever with TF
+  score                     /
+    |        ______________/____ BM25: saturates (k1)
+    |       /
+    |      /
+    |_____/________________________ term frequency
+         BM25 formula per term t, doc d:
+         IDF(t) * TF(t,d)*(k1+1) / (TF(t,d) + k1*(1 - b + b*|d|/avgdl))</code></pre>
+<h3>Build It</h3>
+<ol><li>Analyze: <code>tokens = stem(lower(split(text)))</code> — identically for docs and queries.</li><li>At index time, store TF per (term, doc), document lengths, and average doc length.</li><li>IDF per term: <code>log(1 + (N - df + 0.5) / (df + 0.5))</code> where N = total docs, df = docs containing the term. (This BM25 variant stays positive.)</li><li>Score a doc = sum of per-term BM25 contributions for query terms it contains; defaults k1 ≈ 1.2, b ≈ 0.75.</li><li>Rank with a heap: scan postings for query terms, accumulate scores per doc, return top-k. (Full code in Lesson 10.)</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Choice</th><th>Tradeoff</th></tr></thead><tbody><tr><td>Stemming (Porter/Snowball)</td><td>More recall ("runs"→"run"), occasional weirdness ("universal"→"univers")</td></tr><tr><td>Stopword removal</td><td>Smaller index; breaks phrases like "to be or not to be"</td></tr><tr><td>BM25 (Lucene default since 6.0)</td><td>Robust across corpora; two knobs, rarely needs tuning</td></tr><tr><td>Learning-to-rank on top</td><td>Better relevance; needs click data and ML ops</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>BM25 comes from the Okapi information-retrieval system at London's City University, developed by Stephen Robertson and Karen Spärck Jones's lineage of probabilistic retrieval work, and battle-tested through the TREC evaluation conferences of the 1990s. Spärck Jones had introduced IDF back in 1972 as "term specificity." Fifty years later, BM25 remains the baseline that embedding models are still measured against — and it still wins on plenty of keyword-heavy workloads.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why must documents and queries go through the identical analysis pipeline?</li><li>What problem does IDF solve that raw term frequency alone cannot?</li><li>What do BM25's k1 and b parameters each control, and what failure mode of TF-IDF does each address?</li></ul>
+<h2 id="lesson-03"><span class="lnum">03</span> Elasticsearch Architecture</h2>
+<p><b>MOTTO:</b> Elasticsearch is Lucene with a distributed systems degree and an HTTP habit.</p>
+<h3>The Problem</h3>
+<p>Lucene gives you a world-class inverted index — on one machine, embedded in one JVM. Real corpora exceed one machine; real query loads exceed one machine's CPU; real ops require replication, JSON APIs, and rolling restarts. Someone has to shard the index, route the queries, replicate the segments, and referee cluster membership. That someone is Elasticsearch (and OpenSearch, its fork).</p>
+<h3>The Concept</h3>
+<p>An Elasticsearch <b>index</b> is split into <b>shards</b>; each shard is a full Lucene index holding a slice of documents (routed by hash of doc ID). Each shard has <b>replicas</b> on other nodes for durability and read throughput. Queries <b>scatter</b> to one copy of every shard and <b>gather</b> top-k results at a coordinating node.</p>
+<pre><code>  index &quot;logs&quot; (3 primaries, 1 replica each)
+     node1         node2         node3
+   [ P0 | R2 ]   [ P1 | R0 ]   [ P2 | R1 ]
+        ^\            ^             ^
+  query  \-- scatter to P0,P1,P2 (or replicas)
+          -- each shard returns local top-k
+          -- coordinator merges -&gt; global top-k</code></pre>
+<p>Two more load-bearing facts. <b>Near-real-time search</b>: writes land in memory + translog, and become searchable at the next <b>refresh</b> (default every 1s) when a new in-memory segment opens — this is why a doc isn't findable the same millisecond you index it. <b>Segments are immutable</b>: deletes are tombstones, updates are delete+reinsert, and background merges compact segments (Lucene's LSM-ish heart, straight from Lesson 01).</p>
+<h3>Build It</h3>
+<p>Operating it well means respecting its physics:</p>
+<ol><li>Shard count is fixed at index creation (resharding = reindex), so plan: aim for shards of ~10–50 GB; avoid thousands of tiny shards (each has fixed overhead in heap and file handles).</li><li>Time-series data: use time-based indices (<code>logs-2026.07.31</code>) with ILM rollover — deleting old data becomes dropping whole indices, which is instant, instead of tombstoning billions of docs.</li><li>Mappings are schema: decide analyzed <code>text</code> vs exact-match <code>keyword</code> per field up front; changing analysis means reindexing.</li><li>Aggregations run distributed too — each shard aggregates locally, the coordinator merges. Some (like distinct counts) are approximate by design (HyperLogLog).</li><li>Cluster coordination: master-eligible nodes elect a leader via quorum — always run an odd number (typically 3) to survive partitions without split-brain.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Elasticsearch</td><td>The default; huge ecosystem (Kibana, Beats, Logstash)</td></tr><tr><td>OpenSearch</td><td>AWS-led fork (2021) after Elastic's license change</td></tr><tr><td>Solr</td><td>Same Lucene core, older ecosystem</td></tr><tr><td>Meilisearch / Typesense</td><td>Simpler, instant-search focused, single-purpose</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Elasticsearch's early years featured genuinely scary split-brain and data-loss bugs, publicly tracked by the Jepsen distributed-systems tests (Kyle Kingsbury's 2014–2015 analyses found lost writes during partitions). Elastic responded with a multi-year overhaul culminating in a new cluster-coordination layer in Elasticsearch 7 (2019), built on a formally modeled algorithm. It's one of the field's best public case studies of a database growing real consensus underneath an already-huge install base.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why is a newly indexed document not immediately searchable, and which setting controls the delay?</li><li>Why do time-based indices make retention cheap compared to deleting documents in place?</li><li>What goes wrong with (a) far too few shards and (b) far too many?</li></ul>
+<h2 id="lesson-04"><span class="lnum">04</span> Vector Search and Embeddings</h2>
+<p><b>MOTTO:</b> Keyword search finds what you said; vector search finds what you meant.</p>
+<h3>The Problem</h3>
+<p>BM25 matches tokens. Query "how do I make my laptop faster" and a document titled "speeding up your notebook computer" scores zero — no shared terms. Synonymy, paraphrase, cross-lingual queries, and image search all break lexical retrieval. You need to match by <i>meaning</i>, which means you need a numerical representation where "laptop" and "notebook computer" land near each other.</p>
+<h3>The Concept</h3>
+<p>An <b>embedding model</b> (a neural network) maps text/images to dense vectors — say 768 floats — such that semantic similarity becomes geometric proximity (usually cosine similarity). Search becomes <b>nearest-neighbor lookup</b>: embed the query, find the closest document vectors. The catch: exact nearest-neighbor over millions of high-dimensional vectors means comparing against everything. So we use <b>ANN</b> (approximate nearest neighbor) indexes, trading a sliver of recall for orders-of-magnitude speed. The workhorse is <b>HNSW</b>: a multi-layer navigable graph — top layers are sparse "highways" for coarse hops, bottom layers dense "streets" for precision, like zooming from a country map to a city map.</p>
+<pre><code>  HNSW search for query q:
+  L2 (sparse):   A ────────&gt; F              greedy: hop to whichever
+  L1:            A ──&gt; C ──&gt; F ──&gt; H        neighbor is closest to q,
+  L0 (all pts):  A─B─C─D─E─F─G─H─I         descend a layer, repeat
+                              ^ nearest found at L0</code></pre>
+<h3>Build It</h3>
+<ol><li>Brute force first (and honestly — it's fine to ~1M vectors with numpy/BLAS):</li></ol>
+<pre><code>import numpy as np
+def top_k(query, doc_matrix, k=10):        # rows are L2-normalized
+    sims = doc_matrix @ query              # cosine == dot product
+    return np.argsort(-sims)[:k]</code></pre>
+<ol><li>To scale: build an ANN index — HNSW (graph, great recall/latency, RAM-hungry) or IVF (cluster vectors, search only the nearest few clusters), optionally with <b>product quantization</b> to compress vectors 10–30x at some recall cost.</li><li>Recall@k vs latency is <i>the</i> tuning axis (HNSW's <code>efSearch</code>, IVF's <code>nprobe</code>).</li><li>In practice, run <b>hybrid search</b>: BM25 + vector retrieval, fused (e.g., reciprocal rank fusion) — lexical still wins on IDs, names, and rare exact terms; vectors win on paraphrase. Then optionally <b>rerank</b> the top ~100 with a heavier cross-encoder model.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>FAISS / hnswlib</td><td>Libraries; you bring the serving layer</td></tr><tr><td>pgvector</td><td>Vectors inside Postgres; one less system</td></tr><tr><td>Qdrant / Weaviate / Milvus</td><td>Dedicated vector DBs: filters + vectors</td></tr><tr><td>Elasticsearch / OpenSearch kNN</td><td>HNSW bolted onto the lexical champion — easy hybrid</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The 2019 wave started when embedding models became broadly usable and Facebook AI Research's FAISS library (open-sourced 2017, with the 2017 Johnson, Douze, Jégou "Billion-scale similarity search with GPUs" paper) proved billion-vector search practical. HNSW itself comes from Malkov &amp; Yashunin's 2016 paper. By the LLM/RAG boom of 2023, "vector database" was a funded product category — and practitioners promptly rediscovered why hybrid lexical+vector beats either alone, with BM25 the fifty-year-old comeback kid.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does BM25 fail on the query "make my laptop faster" against "speeding up your notebook computer"?</li><li>What does "approximate" mean in ANN search, and which knob trades recall for latency in HNSW?</li><li>Why do production systems run hybrid lexical + vector retrieval instead of vectors alone?</li></ul>
+<h2 id="lesson-05"><span class="lnum">05</span> OLTP vs OLAP</h2>
+<p><b>MOTTO:</b> One database serves the checkout line; the other serves the boardroom. Don't seat them together.</p>
+<h3>The Problem</h3>
+<p>Your Postgres happily handles orders — until an analyst runs "total revenue by region by month, last 3 years." That query scans a hundred million rows, evicts the hot working set from cache, and checkout latency spikes during it. Transactions want tiny, indexed, concurrent reads/writes of <i>current</i> data; analytics wants giant scans and aggregations over <i>historical</i> data. One engine, two irreconcilable access patterns.</p>
+<h3>The Concept</h3>
+<p><b>OLTP</b> (online transaction processing): many small operations — "insert this order," "read this user" — needing millisecond latency, high concurrency, and strong consistency. <b>OLAP</b> (online analytical processing): few huge queries — "aggregate a year of orders" — needing throughput over columns, not point lookups. The metaphor: OLTP is a bank teller handling one customer's transaction precisely and fast; OLAP is an auditor reading the entire ledger to draw charts. Same ledger, opposite motions.</p>
+<pre><code>                 OLTP                    OLAP
+  op shape   read/write 1-10 rows    scan 10^8 rows, few cols
+  latency    ~1 ms                   seconds-minutes OK
+  users      thousands concurrent    a handful of analysts/dashboards
+  data       current state           full history
+  layout     row store + B-trees     column store + compression
+  schema     normalized (3NF)        denormalized (star schema)</code></pre>
+<p>The classic bridge: replicate OLTP data into a dedicated analytical store, modeled as a <b>star schema</b> — a central fact table (order line items: amounts, foreign keys) surrounded by dimension tables (customer, product, date) — denormalized for scan-friendly joins and readable BI queries.</p>
+<h3>Build It</h3>
+<p>Separating them, step by step:</p>
+<ol><li>Keep the OLTP schema normalized and indexed for the app's access paths. No analyst logins on the primary.</li><li>Ship changes out: nightly batch extracts (simple, stale) or change-data-capture streaming (fresh, more moving parts) into the analytical store.</li><li>Remodel on arrival: facts + dimensions. An OLTP <code>orders</code>/<code>order_items</code>/<code>addresses</code> web becomes one wide fact table plus a handful of dimensions.</li><li>Point dashboards and analysts exclusively at the OLAP side; the checkout line never waits for the boardroom again.</li><li>Know the counter-trend: "HTAP" systems (SingleStore, TiDB, AlloyDB) run both workloads by keeping a row store and a column replica in one system — genuinely useful, still governed by the same physics.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Side</th><th>Systems</th></tr></thead><tbody><tr><td>OLTP</td><td>PostgreSQL, MySQL, DynamoDB, Spanner</td></tr><tr><td>OLAP</td><td>Snowflake, BigQuery, Redshift, ClickHouse, DuckDB</td></tr><tr><td>Bridge</td><td>Debezium/CDC, Fivetran, Airbyte</td></tr><tr><td>HTAP</td><td>TiDB (TiFlash), SingleStore, AlloyDB columnar engine</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The terms crystallized in the early 1990s: Edgar Codd (of relational-model fame) coined "OLAP" in a 1993 paper, and Ralph Kimball's <i>The Data Warehouse Toolkit</i> (1996) canonized the star schema, opposite Bill Inmon's top-down normalized-warehouse school — a Kimball-vs-Inmon debate that data teams reenact to this day. The one-liner that survives every fashion cycle: analysts and transactions sharing a database is how you page the on-call with a BI query.</p>
+<h3>Checkpoint</h3>
+<ul><li>List three dimensions along which OLTP and OLAP workloads differ.</li><li>What is a star schema, and why is denormalization acceptable there when it's a sin in OLTP?</li><li>Why does one big analytical scan degrade OLTP latency even if it's read-only?</li></ul>
+<h2 id="lesson-06"><span class="lnum">06</span> Columnar Storage: Why Analytics Is Sideways</h2>
+<p><b>MOTTO:</b> If you only ever read two columns, why are you paying to read all forty?</p>
+<h3>The Problem</h3>
+<p><code>SELECT region, SUM(amount) FROM orders GROUP BY region</code> touches two columns. In a row store, those two columns are interleaved with 38 others on every page, so the engine reads ~all of the table's bytes to use ~5% of them. At a billion rows, you're paying 20x in I/O for data you instantly discard. Row layout is optimized for "give me this whole record" — exactly what analytics never asks.</p>
+<h3>The Concept</h3>
+<p>Store the table sideways: all values of <code>region</code> contiguously, then all values of <code>amount</code>, and so on. A query reads <i>only the columns it names</i>. The bonus is compression: a column is a run of same-typed, similar values — <code>region</code> might be ten distinct strings repeated a billion times — which compresses savagely (dictionary + run-length encoding), often 10x+. Less data on disk, less I/O, better cache behavior, and same-typed arrays unlock <b>vectorized execution</b> (SIMD: sum eight values per CPU instruction).</p>
+<pre><code>  Row store (pages of whole rows):        Column store:
+  [id,region,amount,date,...38 more]      id:     [1,2,3,4, ...]
+  [id,region,amount,date,...38 more]      region: [W,W,W,E, ...] -&gt; dict+RLE: tiny
+  [id,region,amount,date,...38 more]      amount: [9.5,3.2, ...] -&gt; delta-packed
+     read EVERYTHING for 2 columns        date:   [...]
+                                             read ONLY region + amount</code></pre>
+<p>The price: reassembling one full row means one fetch <i>per column</i> (terrible point reads), and single-row inserts/updates touch every column file (terrible OLTP writes). Hence columnar systems ingest in large batches and pair with a row-store OLTP side (Lesson 05).</p>
+<h3>Build It</h3>
+<p>Anatomy of a Parquet-style columnar file:</p>
+<ol><li>Partition rows into <b>row groups</b> (e.g., 128 MB); within each, store one compressed <b>column chunk</b> per column.</li><li>Encode per column: dictionary encoding for low-cardinality strings, run-length for repeats, delta + bit-packing for sorted ints; then general compression (ZSTD) on top.</li><li>Keep <b>zone maps</b>: min/max (and null counts) per chunk in the footer. <code>WHERE date &gt;= '2026-07-01'</code> skips every chunk whose max date is June — predicate pushdown means most of the file is never read.</li><li>Execute vectorized: operators process batches of ~1000 values in tight loops over arrays, not row-at-a-time function calls.</li><li>Sort order matters: sorting the table by a common filter column (say, date) makes zone maps surgical. Choosing the sort key is the columnar analog of choosing an index.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Thing</th><th>Role</th></tr></thead><tbody><tr><td>Parquet / ORC</td><td>Columnar <i>file formats</i> — the lingua franca of data lakes</td></tr><tr><td>ClickHouse</td><td>Columnar engine famous for raw speed</td></tr><tr><td>DuckDB</td><td>In-process columnar OLAP — "SQLite for analytics"</td></tr><tr><td>Arrow</td><td>Columnar <i>in-memory</i> format for zero-copy interchange</td></tr><tr><td>Snowflake/BigQuery/Redshift</td><td>Warehouses; columnar inside</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The academic shot was the C-Store paper (Stonebraker et al., VLDB 2005), which argued row stores were "one size fits all" relics for analytics and demonstrated order-of-magnitude wins; it commercialized as Vertica. Google's Dremel paper (2010) showed columnar storage over nested data at web scale, later surfacing publicly as BigQuery — and Dremel's record-shredding format directly inspired Parquet (Twitter + Cloudera, 2013), now the default answer to "what format is the data lake in?"</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does columnar layout compress so much better than row layout?</li><li>What is a zone map, and how does it let a query skip most of a file?</li><li>Why are single-row updates painful in a columnar store, and how do real systems cope?</li></ul>
+<h2 id="lesson-07"><span class="lnum">07</span> Warehouses, Lakes, and Lakehouses</h2>
+<p><b>MOTTO:</b> The warehouse is a curated library; the lake is a garage full of boxes; the lakehouse is the garage after you installed shelves and a card catalog.</p>
+<h3>The Problem</h3>
+<p>The classic warehouse wants structured, modeled, schema-on-write data — but half your data is JSON logs, clickstreams, and images that don't fit neatly, and warehouse storage used to be expensive enough that teams threw raw data away. The lake said "dump everything cheap in object storage, decide later" — and without transactions or enforcement, many lakes rotted into swamps: undocumented files, partial writes, no idea what's current. You want warehouse <i>reliability</i> on lake <i>economics</i>.</p>
+<h3>The Concept</h3>
+<p>Three generations:</p>
+<pre><code>  WAREHOUSE                 LAKE                      LAKEHOUSE
+  schema-on-write           schema-on-read            lake + table format layer
+  SQL, ACID, BI-ready       any format, any tool      Parquet + txn log =
+  $$$/TB (historically)     $/TB (S3/GCS)             ACID tables on S3
+  structured only           structure optional        SQL + ML on one copy
+  Snowflake/BigQuery        S3 + Parquet + Spark      Delta Lake/Iceberg/Hudi</code></pre>
+<p>The lakehouse's trick is a <b>table format</b>: a transaction log (a sequence of JSON/Avro manifest files in the object store) that records exactly which Parquet files constitute the table at each version. Writers commit atomically by adding a new log entry; readers see consistent snapshots; old versions remain queryable (time travel). It's MVCC, rebuilt on top of a dumb file store.</p>
+<h3>Build It</h3>
+<p>How a lakehouse commit works (Iceberg/Delta style):</p>
+<ol><li>Table state = the latest committed metadata: a manifest listing data files, schema, and partition info.</li><li>A writer writes <i>new</i> Parquet files (never mutating old ones), then attempts to commit metadata version N+1 via an atomic operation (conditional put / metastore swap).</li><li>Two concurrent writers: one wins the atomic commit; the loser sees the new version and retries — optimistic concurrency, with conflict checks (did the winner touch my files?).</li><li>Readers pin a snapshot version for the whole query: consistent reads with zero locks.</li><li>Housekeeping is real work: compact small files (streaming writers produce confetti), expire old snapshots, and cluster/sort data for zone-map pruning.</li></ol>
+<p>Organizationally, lakes/lakehouses are commonly layered bronze → silver → gold (raw → cleaned → business-ready) so consumers know what they're drinking.</p>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Snowflake / BigQuery</td><td>Warehouses (both now also read table formats — lines are blurring)</td></tr><tr><td>Delta Lake</td><td>Databricks' table format; tightest Spark integration</td></tr><tr><td>Apache Iceberg</td><td>Vendor-neutral table format; broad engine support — current momentum leader</td></tr><tr><td>Apache Hudi</td><td>Table format with strong upsert/incremental focus</td></tr><tr><td>Trino / Spark / DuckDB</td><td>Engines that query lakehouse tables directly</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>The pendulum swung in public: Hadoop-era lakes (2010s) earned the "data swamp" epithet in countless retrospectives; Snowflake's 2020 IPO — among the largest software IPOs ever — proved the cloud warehouse thesis; and Databricks answered with the "lakehouse" term and the CIDR 2021 lakehouse paper (Armbrust et al.), having open-sourced Delta Lake in 2019. Netflix, meanwhile, built Iceberg to fix Hive-table correctness at petabyte scale and donated it to Apache in 2018 — and by the mid-2020s even Snowflake and BigQuery were racing to speak Iceberg.</p>
+<h3>Checkpoint</h3>
+<ul><li>What's the difference between schema-on-write and schema-on-read, and what failure mode does each risk?</li><li>How does a table format achieve ACID commits on an object store that only offers atomic single-object operations?</li><li>Why do streaming writers create a "small files problem" for lakehouses, and what's the remedy?</li></ul>
+<h2 id="lesson-08"><span class="lnum">08</span> ETL vs ELT</h2>
+<p><b>MOTTO:</b> ETL cooks in a cramped kitchen before the party; ELT brings groceries and cooks in the warehouse's industrial kitchen.</p>
+<h3>The Problem</h3>
+<p>Data must travel from source systems (OLTP DBs, SaaS APIs, event streams) into analytical stores — and it never arrives analysis-ready. The old constraint: warehouses were expensive and weak, so you transformed data <i>before</i> loading, in external processing servers. That put business logic in opaque pipeline code, forced you to decide what to keep upfront, and meant every new question required replumbing. Cloud warehouses removed the constraint; the workflow needed to notice.</p>
+<h3>The Concept</h3>
+<p><b>ETL</b>: Extract → Transform (in a middle tier: Informatica, custom Spark) → Load only the polished result. <b>ELT</b>: Extract → Load <i>raw</i> into cheap warehouse/lake storage → Transform inside the warehouse with SQL, as many times as you like. The pivot is economics: when storage is cheap and the warehouse's engine is the most powerful compute you own, transforming <i>after</i> loading means you keep raw history forever and can re-derive any table when logic changes — instead of discovering that the data you now need was filtered out in 2023 by a Perl script nobody can read.</p>
+<pre><code>  ETL:  sources -&gt; [transform server] -&gt; warehouse (curated only)
+                        ^ logic hidden here; raw data discarded
+
+  ELT:  sources -&gt; warehouse RAW layer -&gt; SQL models -&gt; STAGING -&gt; MARTS
+                     keep forever         (dbt: versioned,   BI-ready
+                                           tested, rerunnable)</code></pre>
+<h3>Build It</h3>
+<p>The modern ELT workflow:</p>
+<ol><li>Extract &amp; load with dumb-on-purpose connectors (Fivetran/Airbyte or CDC): land source tables raw, append-only, into a <code>raw</code> schema.</li><li>Transform as layered SQL models: staging (rename/cast/dedupe) → intermediate (joins, business logic) → marts (facts &amp; dimensions for BI). Each model is a <code>SELECT</code> materialized as a table/view.</li><li>Everything in git: transformations are code-reviewed, tested (uniqueness, non-null, referential integrity checks), and documented with lineage — this is dbt's whole pitch.</li><li>Rebuild is cheap: logic change? Rerun the DAG from raw. Incremental models process only new partitions when full rebuilds get pricey.</li><li>Watch the two failure modes: warehouse compute bills (transformation isn't free, it's just elsewhere) and the temptation to let "load raw" mean "govern nothing" — PII must still be handled at ingestion.</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>Stage</th><th>Tools</th></tr></thead><tbody><tr><td>Extract/Load</td><td>Fivetran, Airbyte, Debezium, Kafka Connect</td></tr><tr><td>Transform-in-warehouse</td><td>dbt, Dataform, plain SQL + orchestration</td></tr><tr><td>Orchestration</td><td>Airflow, Dagster, Prefect</td></tr><tr><td>Classic ETL</td><td>Informatica, Talend, SSIS, custom Spark jobs (still fine for heavy non-SQL transforms)</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>dbt began in 2016 as an open-source tool from Fishtown Analytics (later dbt Labs) and became the center of the self-described "modern data stack," turning warehouse transformation into a software-engineering discipline — version control, tests, CI — and coining "analytics engineer" as a job title. The broader lesson echoes MapReduce's (see Phase 12): when compute moves next to the data, whole toolchains and job descriptions reorganize around it.</p>
+<h3>Checkpoint</h3>
+<ul><li>What economic shift made ELT rational when it would have been wasteful in 2005?</li><li>Why does keeping raw data loaded (not just transformed outputs) make logic changes cheap?</li><li>Name a workload where classic ETL / external transformation still beats in-warehouse SQL.</li></ul>
+<h2 id="lesson-09"><span class="lnum">09</span> Real-Time Analytics</h2>
+<p><b>MOTTO:</b> Yesterday's dashboard is a history lesson; some decisions need the last ten seconds.</p>
+<h3>The Problem</h3>
+<p>The warehouse answers "how did we do last quarter?" superbly — via batch loads, hours after the fact. But fraud scoring, ops dashboards during an incident, live A/B monitoring, and "is the checkout broken <i>right now</i>?" need query results over data that's seconds old, at sub-second query latency, often for many concurrent users. Batch warehouses fail the freshness bar; OLTP databases fail the aggregation-scan bar. This is a third workload.</p>
+<h3>The Concept</h3>
+<p>Real-time analytics systems sit at the awkward intersection: <b>streaming ingest</b> (from Kafka, visible in ~seconds) + <b>columnar/OLAP query shapes</b> (aggregations over millions of rows) + <b>interactive latency</b> (sub-second, high QPS). The trick is an LSM-flavored columnar design: events land in a write-optimized in-memory segment that is immediately queryable, then get flushed and compacted into immutable columnar segments — queries transparently merge "the hot last few minutes" with "the cold compressed past."</p>
+<pre><code>  Kafka ──&gt; [ in-memory segment ]  &lt;── queries see BOTH, merged
+                   | flush (seconds-minutes)
+                   v
+            [ immutable columnar segments ] ── background compaction
+  freshness: seconds        query latency: &lt;1s        history: months</code></pre>
+<p>Complementary trick: <b>streaming materialized views</b> — precompute the aggregation continuously (e.g., orders-per-minute per region) as events arrive, so the dashboard reads a tiny, always-current result instead of re-scanning (the stream-processing world of Phase 12 meets the serving world here).</p>
+<h3>Build It</h3>
+<p>Designing a real-time metrics pipeline:</p>
+<ol><li>Events flow through Kafka; the analytics store ingests continuously (per-second visibility).</li><li>Pre-aggregate what you can: if dashboards only ever show per-minute rollups, ingest or materialize minute buckets — 100x less data to scan.</li><li>Partition segments by time; retention drops old segments wholesale (rhymes with Lesson 03's time-based indices).</li><li>Handle late/duplicate events: at-least-once ingest plus idempotent upserts or dedup keys, or accept small error on counters.</li><li>Serve dashboards with denormalized, purpose-shaped tables — real-time stores hate big joins at query time; join upstream (in the stream or at ingest).</li></ol>
+<h3>Use It</h3>
+<table><thead><tr><th>System</th><th>Notes</th></tr></thead><tbody><tr><td>Apache Druid</td><td>The pattern's pioneer; time-partitioned segments</td></tr><tr><td>ClickHouse</td><td>General columnar speed demon; increasingly the default</td></tr><tr><td>Apache Pinot</td><td>Built at LinkedIn for user-facing, high-QPS analytics</td></tr><tr><td>Materialize / RisingWave</td><td>Streaming materialized views as the product</td></tr><tr><td>Tinybird</td><td>Managed ClickHouse-based APIs over streams</td></tr></tbody></table>
+<h3>War Story</h3>
+<p>Apache Pinot was built at LinkedIn to power the member-facing "Who Viewed Your Profile" analytics — OLAP queries served to <i>every user</i> interactively, not just internal analysts, a use case documented in LinkedIn engineering posts and Pinot's papers. Druid, born at Metamarkets around 2011 for ad-tech dashboards, published its design in a 2014 paper. Both prove the category's founding claim: with the right segment design, "analytics" can be a product feature with p99s in milliseconds.</p>
+<h3>Checkpoint</h3>
+<ul><li>Why does real-time analytics need a different engine than both the OLTP database and the batch warehouse?</li><li>How does the hot-segment/cold-segment design deliver both second-level freshness and fast scans?</li><li>When would a streaming materialized view beat scan-on-query, and what flexibility do you give up?</li></ul>
+<h2 id="lesson-10"><span class="lnum">10</span> Build a Search Engine From Scratch</h2>
+<p><b>MOTTO:</b> You don't understand BM25 until your own code ranks the right document first.</p>
+<h3>The Problem</h3>
+<p>You've now met tokenization, inverted indexes, and BM25 as separate ideas. Time to make them one artifact: a working search engine — index a corpus, run ranked queries, return top-k — in ~80 lines of dependency-free Python. Everything Lucene does is an optimization of what you're about to write.</p>
+<h3>The Concept</h3>
+<p>Three stages, one pipeline: <b>analyze</b> text into terms → build the <b>inverted index</b> with term frequencies (plus doc lengths for normalization) → <b>score</b> query terms against postings with BM25 and heap out the top-k.</p>
+<pre><code>  &quot;The cat sat...&quot; ──analyze──&gt; [cat, sat] ──index──&gt; postings + doc lengths
+                                                          |
+  &quot;cat&quot;           ──analyze──&gt; [cat] ──────score──&gt; BM25 ──&gt; ranked doc IDs</code></pre>
+<h3>Build It</h3>
+<pre><code>import math, re, heapq
+from collections import defaultdict, Counter
+
+TOKEN = re.compile(r&quot;[a-z0-9]+&quot;)
+STOP = {&quot;the&quot;, &quot;a&quot;, &quot;an&quot;, &quot;and&quot;, &quot;or&quot;, &quot;of&quot;, &quot;to&quot;, &quot;in&quot;, &quot;is&quot;, &quot;it&quot;}
+
+def analyze(text):
+    return [t for t in TOKEN.findall(text.lower()) if t not in STOP]
+
+class SearchEngine:
+    def __init__(self, k1=1.2, b=0.75):
+        self.k1, self.b = k1, b
+        self.postings = defaultdict(dict)   # term -&gt; {doc_id: tf}
+        self.doc_len = {}                   # doc_id -&gt; token count
+
+    def index(self, doc_id, text):
+        terms = analyze(text)
+        self.doc_len[doc_id] = len(terms)
+        for term, tf in Counter(terms).items():
+            self.postings[term][doc_id] = tf
+
+    def _idf(self, term):
+        n, df = len(self.doc_len), len(self.postings.get(term, {}))
+        return math.log(1 + (n - df + 0.5) / (df + 0.5))   # always positive
+
+    def search(self, query, k=5):
+        avgdl = sum(self.doc_len.values()) / len(self.doc_len)
+        scores = defaultdict(float)
+        for term in analyze(query):
+            idf = self._idf(term)
+            for doc_id, tf in self.postings.get(term, {}).items():
+                norm = 1 - self.b + self.b * self.doc_len[doc_id] / avgdl
+                scores[doc_id] += idf * tf * (self.k1 + 1) / (tf + self.k1 * norm)
+        return heapq.nlargest(k, scores.items(), key=lambda kv: kv[1])
+
+# Drive it:
+docs = {
+    1: &quot;The cat sat on the mat. The cat was happy.&quot;,
+    2: &quot;Dogs and cats are common household pets.&quot;,
+    3: &quot;Distributed systems require consensus protocols like Raft.&quot;,
+    4: &quot;The mat was red. A very red mat indeed, a mat of mats.&quot;,
+}
+se = SearchEngine()
+for doc_id, text in docs.items():
+    se.index(doc_id, text)
+print(se.search(&quot;cat on a mat&quot;))   # doc 1 first: has both terms, sane length
+print(se.search(&quot;consensus&quot;))      # doc 3: rare term, huge IDF</code></pre>
+<p>Extensions worth attempting: positional postings for phrase queries; snippet highlighting; incremental indexing with segment merges; then swap <code>postings</code> for sorted on-disk runs and feel Lucene's design pressures firsthand.</p>
+<h3>Use It</h3>
+<p>This toy is honestly comparable, in structure, to SQLite FTS5 and Tantivy's core loop. What production adds: compressed on-disk postings, segments and merging, faceting/aggregations, distribution (Lesson 03), and analysis chains for real languages (CJK tokenization, stemming, synonyms).</p>
+<h3>War Story</h3>
+<p>Doug Cutting wrote Lucene in 1999 as a side project in Java — then a contrarian language choice for performance software — and gave it to Apache in 2001. The same Cutting later co-created Nutch and Hadoop; a remarkable share of this phase and the next traces to one engineer's open-source side projects. Lucene's core is still recognizably the loop you just wrote, twenty-five years of optimization deep.</p>
+<h3>Checkpoint</h3>
+<ul><li>In the demo corpus, why does doc 4's mat-spam not let it crush doc 1 on the query "cat on a mat"? (Name both BM25 mechanisms involved.)</li><li>What breaks in this implementation at 100M documents, and which production techniques (from Lessons 01–03) fix each break?</li><li>Add-a-feature thought experiment: what must change in the index structure to support the phrase query "cat sat"?</li></ul>
+  </article>
+  <div class="pager">
+    <a href="10-microservices.html">← 🧩 Phase 10</a>
+    <span class="spacer"></span>
+    <a href="12-big-data-and-streams.html">Phase 12 🌊 →</a>
+  </div>
+</div>
+</body>
+</html>
