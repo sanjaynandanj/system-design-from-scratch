@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design From Scratch — 226 lessons, 20 phases</title>
+<meta name="description" content="An exhaustive, free, open-source system design curriculum. 226 lessons across 20 phases — every system rebuilt from the hardware up.">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg-alt: #11151f;
+    --card: #151a26;
+    --border: #232a3b;
+    --text: #d8dee9;
+    --muted: #8892a6;
+    --accent: #4fd6be;
+    --accent2: #82aaff;
+    --warn: #ffc777;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.8rem 2rem;
+    background: rgba(11,14,20,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 0.85rem;
+  }
+  nav .logo { font-weight: 700; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  nav .logo span { color: var(--text); }
+  nav a { color: var(--muted); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+  header.hero { padding: 5rem 0 3.5rem; text-align: center; }
+  .hero .kicker { font-family: var(--mono); color: var(--accent); font-size: 0.9rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.15; margin: 0.8rem 0 1.2rem; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.sub { color: var(--muted); max-width: 620px; margin: 0 auto 2rem; font-size: 1.1rem; }
+  .hero .ascii {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+    white-space: pre; overflow-x: auto; margin: 0 auto 2.2rem; display: inline-block; text-align: left;
+  }
+  .btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono); font-size: 0.9rem; padding: 0.7rem 1.5rem;
+    border-radius: 8px; border: 1px solid var(--border); color: var(--text);
+    background: var(--card); cursor: pointer; transition: all .15s;
+  }
+  .btn:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-1px); }
+  .btn.primary { background: var(--accent); color: #06251f; border-color: var(--accent); font-weight: 700; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 3rem 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; text-align: center; }
+  .stat .num { font-family: var(--mono); font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat .label { color: var(--muted); font-size: 0.85rem; }
+
+  section { padding: 3.5rem 0; border-top: 1px solid var(--border); }
+  h2.sec { font-size: 1.7rem; margin-bottom: 0.4rem; }
+  h2.sec::before { content: "## "; color: var(--accent); font-family: var(--mono); }
+  p.secsub { color: var(--muted); margin-bottom: 2rem; }
+
+  .beats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+  .beat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; }
+  .beat b { font-family: var(--mono); color: var(--warn); display: block; margin-bottom: 0.3rem; }
+  .beat span { color: var(--muted); font-size: 0.9rem; }
+
+  #progress-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+  .pbar-row { display: flex; align-items: center; gap: 1rem; margin: 0.6rem 0; font-family: var(--mono); font-size: 0.85rem; }
+  .pbar-row .plabel { width: 110px; color: var(--muted); }
+  .pbar { flex: 1; height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+  .pbar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width .4s; }
+  .pbar-row .pnum { width: 90px; text-align: right; color: var(--text); }
+  #reset-progress { margin-top: 0.8rem; font-size: 0.75rem; background: none; border: none; color: var(--muted); cursor: pointer; font-family: var(--mono); text-decoration: underline; }
+  #reset-progress:hover { color: var(--warn); }
+
+  .phase { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.8rem; overflow: hidden; }
+  .phase-head { display: flex; align-items: center; gap: 0.9rem; padding: 1rem 1.2rem; cursor: pointer; user-select: none; }
+  .phase-head:hover { background: var(--bg-alt); }
+  .phase-head .emoji { font-size: 1.4rem; }
+  .phase-head .info { flex: 1; min-width: 0; }
+  .phase-head .pname { font-weight: 600; }
+  .phase-head .pname .pnum { font-family: var(--mono); color: var(--accent); margin-right: 0.5rem; }
+  .phase-head .ptag { color: var(--muted); font-size: 0.82rem; }
+  .phase-head .pmeta { text-align: right; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+  .phase-head .mini-bar { width: 90px; height: 6px; background: var(--bg); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+  .phase-head .mini-bar > div { height: 100%; background: var(--accent); width: 0%; }
+  .phase-head .chev { color: var(--muted); transition: transform .2s; font-family: var(--mono); }
+  .phase.open .chev { transform: rotate(90deg); }
+  .lessons { display: none; border-top: 1px solid var(--border); padding: 0.6rem 1.2rem 1rem; }
+  .phase.open .lessons { display: block; }
+  .lesson { display: flex; align-items: center; gap: 0.7rem; padding: 0.4rem 0.3rem; border-radius: 6px; font-size: 0.92rem; }
+  .lesson:hover { background: var(--bg-alt); }
+  .lesson input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+  .lesson .lnum { font-family: var(--mono); color: var(--muted); font-size: 0.78rem; width: 24px; flex-shrink: 0; }
+  .lesson.done label { color: var(--muted); text-decoration: line-through; }
+  .lesson label { cursor: pointer; }
+  .expand-all { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; margin-bottom: 1rem; }
+  .expand-all:hover { color: var(--text); }
+
+  .code-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; }
+  .code-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; font-size: 0.88rem; }
+  .code-card code { font-family: var(--mono); color: var(--warn); font-size: 0.85rem; }
+  .code-card p { color: var(--muted); font-size: 0.82rem; margin-top: 0.3rem; }
+
+  #glossary-search {
+    width: 100%; padding: 0.7rem 1rem; margin-bottom: 1.2rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--mono); font-size: 0.9rem;
+  }
+  #glossary-search:focus { outline: none; border-color: var(--accent); }
+  .term { padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  .term b { font-family: var(--mono); color: var(--accent); }
+  .term span { color: var(--muted); font-size: 0.92rem; }
+
+  footer { border-top: 1px solid var(--border); padding: 2.5rem 0 3rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+  footer .clone { font-family: var(--mono); background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: inline-block; padding: 0.5rem 1rem; margin: 1rem 0; color: var(--text); font-size: 0.8rem; }
+  footer .links { display: flex; gap: 1.5rem; justify-content: center; margin-top: 1rem; font-family: var(--mono); }
+
+  @media (max-width: 640px) {
+    nav { gap: 0.9rem; padding: 0.8rem 1rem; overflow-x: auto; }
+    .phase-head .ptag { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#top">sdfs<span>://</span>system-design-from-scratch</a>
+  <a href="#how">How</a>
+  <a href="#curriculum">Curriculum</a>
+  <a href="#code">Code</a>
+  <a href="#glossary">Glossary</a>
+  <a href="#about">About</a>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="kicker">free · open-source · exhaustive</div>
+    <h1>System Design<br><em>From Scratch</em></h1>
+    <p class="sub" id="hero-sub">226 lessons. 20 phases. Every system rebuilt from the hardware up
+    before a single cloud service gets name-dropped.</p>
+    <div class="ascii">┌─────────┐      ┌─────────┐      ┌─────────┐
+│ CLIENT  │─────▶│   LB    │─────▶│ SERVER  │──┐
+└─────────┘      └─────────┘      └─────────┘  │
+                                      │        ▼
+                                 ┌────▼───┐ ┌──────┐
+                                 │ CACHE  │ │  DB  │
+                                 └────────┘ └──────┘</div>
+    <div class="btns">
+      <a class="btn primary" href="#curriculum">Start Learning ↓</a>
+      <a class="btn" href="../README.md">Read the README</a>
+    </div>
+    <div class="stats wrap">
+      <div class="stat"><div class="num" id="stat-lessons">226</div><div class="label">lessons</div></div>
+      <div class="stat"><div class="num" id="stat-phases">20</div><div class="label">phases</div></div>
+      <div class="stat"><div class="num" id="stat-code">12</div><div class="label">from-scratch builds</div></div>
+      <div class="stat"><div class="num" id="stat-hours">~180</div><div class="label">hours of content</div></div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <h2 class="sec">How this works</h2>
+    <p class="secsub">Cloud products are rented; mental models are owned. Every lesson cycles through
+    seven beats — intuition before jargon, mechanism before tools, and a quiz so you can't lie to yourself.</p>
+    <div class="beats">
+      <div class="beat"><b>MOTTO</b><span>The whole lesson in one sentence.</span></div>
+      <div class="beat"><b>PROBLEM</b><span>The concrete pain that makes this topic exist.</span></div>
+      <div class="beat"><b>CONCEPT</b><span>Analogies and ASCII diagrams before any jargon.</span></div>
+      <div class="beat"><b>BUILD IT</b><span>The mechanism, from scratch — code included.</span></div>
+      <div class="beat"><b>USE IT</b><span>The production tools, and their tradeoffs.</span></div>
+      <div class="beat"><b>WAR STORY</b><span>A real outage, paper, or engineering legend.</span></div>
+      <div class="beat"><b>CHECKPOINT</b><span>Quiz questions. Can't answer? Re-read.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="curriculum">
+  <div class="wrap">
+    <h2 class="sec">Curriculum</h2>
+    <p class="secsub">Tick lessons off as you go — progress is stored in your browser.</p>
+
+    <div id="progress-panel">
+      <div class="pbar-row"><div class="plabel">lessons</div><div class="pbar"><div id="bar-lessons"></div></div><div class="pnum" id="num-lessons">0 / 226</div></div>
+      <div class="pbar-row"><div class="plabel">phases</div><div class="pbar"><div id="bar-phases"></div></div><div class="pnum" id="num-phases">0 / 20</div></div>
+      <button id="reset-progress">reset progress</button>
+    </div>
+
+    <button class="expand-all" id="expand-all">expand all</button>
+    <div id="phases"></div>
+  </div>
+</section>
+
+<section id="code">
+  <div class="wrap">
+    <h2 class="sec">From-scratch builds</h2>
+    <p class="secsub">Dependency-free Python implementations of the primitives that run the internet.
+    Each is a lesson in itself — run <code style="font-family:var(--mono);color:var(--warn)">python code/&lt;file&gt;.py</code>.</p>
+    <div class="code-grid" id="code-grid"></div>
+  </div>
+</section>
+
+<section id="glossary">
+  <div class="wrap">
+    <h2 class="sec">Glossary</h2>
+    <p class="secsub">The vocabulary of system design, one honest sentence at a time.</p>
+    <input id="glossary-search" type="text" placeholder="filter terms… (e.g. 'raft', 'cache')">
+    <div id="terms"></div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <h2 class="sec">About</h2>
+    <p class="secsub" style="margin-bottom:0.8rem">
+      <b style="color:var(--text)">Frameworks change. Fundamentals compound.</b></p>
+    <p style="color:var(--muted)">When you know <i>why</i> Kafka partitions exist, every message queue makes sense.
+    When you've built consistent hashing by hand, every sharded database is familiar.
+    This curriculum goes from the spinning disk to the multi-region deployment — 20 phases forming
+    a dependency chain, ending in whiteboard case studies, interview mastery, and capstones you actually ship.
+    MIT licensed. No paywalls. Runs on your laptop.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>System Design From Scratch · MIT License</div>
+    <div class="clone">git clone https://github.com/YOUR_USERNAME/system-design-from-scratch</div>
+    <div class="links">
+      <a href="#curriculum">Curriculum</a>
+      <a href="#code">Code</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#top">Top</a>
+    </div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="glossary.js"></script>
+<script>
+  const LS_KEY = "sdfs-progress";
+  const load = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
+  const save = (p) => localStorage.setItem(LS_KEY, JSON.stringify(p));
+  let progress = load();
+
+  const CODE_FILES = [
+    ["consistent_hashing.py", "Hash ring with virtual nodes — watch keys barely move when nodes join."],
+    ["lru_cache.py", "O(1) LRU with a hand-rolled doubly-linked list."],
+    ["rate_limiter.py", "Token bucket, leaky bucket, and sliding window log."],
+    ["bloom_filter.py", "Probabilistic membership — measure the false-positive rate yourself."],
+    ["vector_clock.py", "Causality tracking — detect concurrent events."],
+    ["lsm_tree.py", "Memtable, SSTables, and compaction."],
+    ["gossip.py", "Epidemic rumor spreading across a cluster."],
+    ["load_balancer.py", "Round-robin, weighted, least-connections, consistent-hash."],
+    ["raft_lite.py", "Leader election and log replication over 5 nodes."],
+    ["message_queue.py", "Partitioned log with consumer groups and offsets."],
+    ["inverted_index.py", "Tokenize, index, and rank with BM25."],
+    ["url_shortener.py", "Base62 and a tiny end-to-end system."]
+  ];
+
+  // Curriculum accordion
+  const phasesEl = document.getElementById("phases");
+  CURRICULUM.forEach(ph => {
+    const div = document.createElement("div");
+    div.className = "phase";
+    div.innerHTML = `
+      <div class="phase-head">
+        <div class="emoji">${ph.emoji}</div>
+        <div class="info">
+          <div class="pname"><span class="pnum">${String(ph.id).padStart(2,"0")}</span>${ph.name}</div>
+          <div class="ptag">${ph.tagline}</div>
+        </div>
+        <div class="pmeta">
+          <div class="pcount" id="pcount-${ph.id}">0 / ${ph.lessons.length}</div>
+          <div class="mini-bar"><div id="pbar-${ph.id}"></div></div>
+        </div>
+        <div class="chev">▶</div>
+      </div>
+      <div class="lessons">
+        ${ph.lessons.map((l, i) => {
+          const id = `p${ph.id}-l${i}`;
+          return `<div class="lesson" id="row-${id}">
+            <span class="lnum">${String(i+1).padStart(2,"0")}</span>
+            <input type="checkbox" id="${id}" data-phase="${ph.id}">
+            <label for="${id}">${l}</label>
+          </div>`;
+        }).join("")}
+      </div>`;
+    phasesEl.appendChild(div);
+    div.querySelector(".phase-head").addEventListener("click", () => div.classList.toggle("open"));
+  });
+
+  function refresh() {
+    let done = 0, phasesDone = 0;
+    CURRICULUM.forEach(ph => {
+      let pd = 0;
+      ph.lessons.forEach((_, i) => {
+        const id = `p${ph.id}-l${i}`;
+        const checked = !!progress[id];
+        const box = document.getElementById(id);
+        box.checked = checked;
+        document.getElementById(`row-${id}`).classList.toggle("done", checked);
+        if (checked) { done++; pd++; }
+      });
+      document.getElementById(`pcount-${ph.id}`).textContent = `${pd} / ${ph.lessons.length}`;
+      document.getElementById(`pbar-${ph.id}`).style.width = (pd / ph.lessons.length * 100) + "%";
+      if (pd === ph.lessons.length) phasesDone++;
+    });
+    const total = STATS.lessons;
+    document.getElementById("bar-lessons").style.width = (done / total * 100) + "%";
+    document.getElementById("num-lessons").textContent = `${done} / ${total}`;
+    document.getElementById("bar-phases").style.width = (phasesDone / STATS.phases * 100) + "%";
+    document.getElementById("num-phases").textContent = `${phasesDone} / ${STATS.phases}`;
+  }
+
+  phasesEl.addEventListener("change", e => {
+    if (e.target.matches("input[type=checkbox]")) {
+      if (e.target.checked) progress[e.target.id] = 1; else delete progress[e.target.id];
+      save(progress);
+      refresh();
+    }
+  });
+
+  document.getElementById("reset-progress").addEventListener("click", () => {
+    if (confirm("Reset all progress?")) { progress = {}; save(progress); refresh(); }
+  });
+
+  let expanded = false;
+  document.getElementById("expand-all").addEventListener("click", (e) => {
+    expanded = !expanded;
+    document.querySelectorAll(".phase").forEach(p => p.classList.toggle("open", expanded));
+    e.target.textContent = expanded ? "collapse all" : "expand all";
+  });
+
+  // Code grid
+  document.getElementById("code-grid").innerHTML = CODE_FILES.map(([f, d]) =>
+    `<div class="code-card"><code>${f}</code><p>${d}</p></div>`).join("");
+
+  // Glossary
+  const termsEl = document.getElementById("terms");
+  function renderGlossary(filter) {
+    const q = (filter || "").toLowerCase();
+    termsEl.innerHTML = GLOSSARY
+      .filter(([t, d]) => !q || t.toLowerCase().includes(q) || d.toLowerCase().includes(q))
+      .map(([t, d]) => `<div class="term"><b>${t}</b> — <span>${d}</span></div>`).join("")
+      || `<div class="term"><span>no matches — try another term</span></div>`;
+  }
+  document.getElementById("glossary-search").addEventListener("input", e => renderGlossary(e.target.value));
+  renderGlossary("");
+
+  // Stats from data
+  document.getElementById("stat-lessons").textContent = STATS.lessons;
+  document.getElementById("stat-phases").textContent = STATS.phases;
+  document.getElementById("hero-sub").innerHTML =
+    `${STATS.lessons} lessons. ${STATS.phases} phases. Every system rebuilt from the hardware up before a single cloud service gets name-dropped.`;
+
+  refresh();
+</script>
+</body>
+</html>
