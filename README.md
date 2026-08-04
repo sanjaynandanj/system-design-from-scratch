@@ -40,7 +40,7 @@ Every lesson cycles through the same seven beats:
 | **WAR STORY** | A real-world outage, paper, or engineering legend |
 | **CHECKPOINT** | Quiz questions — if you can't answer, re-read |
 
-## The 20 Phases
+## The 22 Phases
 
 ```mermaid
 flowchart TD
